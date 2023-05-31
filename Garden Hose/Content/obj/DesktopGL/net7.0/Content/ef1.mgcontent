@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SourceFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/Content/ef1.fx</SourceFile>
+  <SourceTime>2023-04-24T19:17:40.7402488+03:00</SourceTime>
+  <DestFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/Content/bin/DesktopGL/Content/ef1.xnb</DestFile>
+  <DestTime>2023-04-24T19:17:44.2167962+03:00</DestTime>
+  <Importer>EffectImporter</Importer>
+  <ImporterTime>2022-07-26T14:44:56+03:00</ImporterTime>
+  <Processor>EffectProcessor</Processor>
+  <ProcessorTime>2022-07-26T14:44:56+03:00</ProcessorTime>
+  <Parameters>
+    <Key>DebugMode</Key>
+    <Value>Auto</Value>
+  </Parameters>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>
