@@ -1,8 +1,10 @@
 ﻿using GardenHose.Engine.Frame.UI.Animation;
+using GardenHose.Engine.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 
@@ -11,30 +13,41 @@ namespace GardenHose.Engine.Frame.UI.Item;
 public class TextBox : DrawableItem
 {
     // Fields.
-    public Color TextColor;
-
-    public string Text
+    public bool IsTypeable
     {
-        get { return _text; }
+        get => IsTypeable;
         set
         {
-            // Invalid value fixes and early exits.
-            if (value == null) value = "";
-            else if (value.Contains('\t'))
-            {
-                throw new ArgumentException("Tabs break the TextBox's wrapping (visually). Won't fix.");
-            }
-            _text = value;
-
-            FoldText();
+            _isTypeable = value;
+            if (_isTypeable) MainGame.Instance.Window.TextInput += OnUserType;
+            else MainGame.Instance.Window.TextInput -= OnUserType;
         }
     }
 
-    public int MaxPixelsPerLine
+    public bool PreventTypingOverflow = false;
+    public bool AllowNewlineTyping = true;
+    public uint MaxCharacters = uint.MaxValue;
+
+    public string Text
     {
-        get => _pixelsPerLine;
-        set => _pixelsPerLine = Math.Max(1, value);
+        get { return _realText; }
+        set
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            _realText = value;
+
+            _wrappedText = value;
+            if (WrapText) FoldText();
+        }
     }
+
+    public float MaxPixelsPerLine
+    {
+        get => _maxPixelsPerLine;
+        set => _maxPixelsPerLine = Math.Max(1, value);
+    }
+
+    public bool WrapText = true;
 
     public DynamicFont Font
     {
@@ -42,20 +55,20 @@ public class TextBox : DrawableItem
         set => _font = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public Vector2 RotationOrigin
-    {
-        get => _rotationOrigin;
-        set => _rotationOrigin = value;
-    }
+    public Vector2 TextOrigin = new Vector2();
 
-    public Vector2 TextSizePixels { get => _font.FontSprite.MeasureString(_text); }
+    public Vector2 TextSizePixels { get => _font.FontAsset.MeasureString(_wrappedText); }
 
 
     // Private fields.
-    private string _text;
-    private int _pixelsPerLine;
+    private string _wrappedText;
+    private string _realText;
+
+    private float _maxPixelsPerLine;
+
     private DynamicFont _font;
-    private Vector2 _rotationOrigin;
+
+    private bool _isTypeable;
 
 
     // Constructors.
@@ -67,20 +80,20 @@ public class TextBox : DrawableItem
         DynamicFont font,
         string text,
         Color color,
-        int maxPixelsPerLine)
-        : base (position, scale, rotation)
+        float maxPixelsPerLine)
+        : base(position, scale, rotation)
     {
         Font = font;
-        Text = text;
-        TextColor = color;
         MaxPixelsPerLine = maxPixelsPerLine;
+        Text = text;
+        Tint = color;
     }
 
 
     // Methods.
-    public void SetTextureOrigin(TextureOrigin origin)
+    public void SetTextOrigin(TextureOrigin origin)
     {
-        _rotationOrigin.X = ((int)origin % 3) switch
+        TextOrigin.X = ((int)origin % 3) switch
         {
             0 => 0f,
             1 => TextSizePixels.X / 2f,
@@ -88,7 +101,7 @@ public class TextBox : DrawableItem
             _ => 0f
         };
 
-        _rotationOrigin.Y = ((int)origin / 3) switch
+        TextOrigin.Y = ((int)origin / 3) switch
         {
             0 => 0f,
             1 => TextSizePixels.Y / 2f,
@@ -101,74 +114,91 @@ public class TextBox : DrawableItem
     // Private methods.
     private void FoldText()
     {
-        if (!_text.Contains(' ')) return;
+        StringBuilder NewText = new(_wrappedText);
+        int StartIndex = 0; // Start of sentence.
+        int EndIndex = 0; // End of sentence.
+        int SpaceIndex = -1; // Index of last found space or tab. -1 means it doesn't exist.
+        char Letter;
+        float PartLength;
 
-        // Fully wrapping the text.
-        StringBuilder Text = new(_text);
-        int i = 0;
-        int LineStartIndex = 0;
-        int PixelsInLine = 0;
-        bool CurLineHasSpace = false;
-
-        for (; i < Text.Length; i++)
+        for (int Index = 0; (Index < _wrappedText.Length) && (Index <= MaxCharacters); Index++, EndIndex++)
         {
-            // Set info for line.
-            PixelsInLine = (int)Font.FontSprite.MeasureString(
-                _text.Substring(LineStartIndex, i - LineStartIndex)).X;
-            if (!CurLineHasSpace && Text[i] == ' ') CurLineHasSpace = true;
+            Letter = _wrappedText[Index];
 
-
-            // Logic.
-            if (PixelsInLine > MaxPixelsPerLine)
+            if (Letter is ' ' or '\t') SpaceIndex = Index;
+            else if (Letter == '\n')
             {
-                if (CurLineHasSpace) ReplacePrevSpace();
-                else ReplaceNextSpace();
-                i++;
-
-                LineStartIndex = i;
-                CurLineHasSpace = false;
+                SpaceIndex = -1;
+                StartIndex = Index + 1;
+                EndIndex = StartIndex;
+                continue;
             }
 
-        }
-
-        _text = Text.ToString();
-
-
-        // Local functions.
-        void ReplaceNextSpace()
-        {
-            for (; i < Text.Length; i++)
+            PartLength = Font.FontAsset.MeasureString(_wrappedText.Substring(StartIndex, EndIndex - StartIndex)).X;
+            if ((PartLength > MaxPixelsPerLine) && (SpaceIndex != -1))
             {
-                if (Text[i] != ' ') continue;
-                Text[i] = '\n';
-                break;
+                NewText[SpaceIndex] = '\n';
+
+                StartIndex = SpaceIndex + 1;
+                EndIndex = Index;
+                SpaceIndex = -1;
             }
         }
 
-        void ReplacePrevSpace()
-        {
-            for (; i > 0; i--)
-            {
-                if (Text[i] != ' ') continue;
-                Text[i] = '\n';
-                break;
-            }
-        }
+        _wrappedText = NewText.ToString();
     }
 
 
     // Inherited methods.
     public override void Draw()
     {
+        base.Draw();
+
         if (IsVisible) GameFrame.DrawBatch.DrawString(
-            _font.FontSprite,
-            _text,
+            _font.FontAsset,
+            _wrappedText,
             RealPosition,
-            TextColor,
+            RealColorMask,
             Rotation,
-            _rotationOrigin,
+            TextOrigin,
             RealScale,
             SpriteEffects.None,
             1f);
+    }
+
+
+    // Private methods.
+    private void OnUserType(object sender, TextInputEventArgs args)
+    {
+        if (args.Key == Keys.Back)
+        {
+            Text = Text.Length == 0 ? String.Empty : _realText.Substring(0, _realText.Length - 1);
+        }
+
+        if (_realText.Length >= MaxCharacters) return;
+
+        string Typed = null;
+        if (args.Character is >= ' ' and <= '~')
+        {
+            Typed = args.Character.ToString();
+        }
+        else if (args.Key == Keys.Enter)
+        {
+            if (AllowNewlineTyping) Typed = "\n";
+        }
+        else if (args.Key == Keys.Tab) Typed = "    ";
+        else
+        {
+            Logger.Warning($"Couldn't resolve pressed key for {nameof(TextBox)}" +
+                    $"\nKey pressed: \"{args.Key}\", Character: \"{args.Character}\", Font: \"{Font.Name}\"");
+            return;
+        }
+
+        if (PreventTypingOverflow &&
+            (Font.FontAsset.MeasureString(Typed).X 
+            + Font.FontAsset.MeasureString(_realText).X
+            > _maxPixelsPerLine)) return;
+
+        Text = _realText + Typed;
     }
 }

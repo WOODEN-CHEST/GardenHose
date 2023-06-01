@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Input;
 using System.Threading;
 using System.Reflection;
 using System.IO;
+using GardenHose.Engine.Frame.UI;
 
 namespace GardenHose;
 
@@ -38,17 +39,24 @@ public class MainGame : Game
     {
         base.Initialize();
 
+        // Fields.
         Window.AllowUserResizing = true;
         IsFixedTimeStep = false;
 
+        // Display
+        DisplayInfo.SetTargetSize(1920f, 1080f);
+
+        // Assets.
         AssetManager.BasePath = Path.Combine( 
             Path.GetDirectoryName(Assembly.GetAssembly(this.GetType()).Location), 
             Content.RootDirectory);
         AssetManager.ExtraPath = null;
         AssetManager.CreateAssetEntries();
 
-        DisplayInfo.SetTargetSize(1920f, 1080f);
+        LoadPersistentContent();
+        
 
+        // Game frames.
         GameFrame.BackgroundColor = Color.Black;
         GameFrame.ActiveFrame = new FrameMain();
     }
@@ -63,5 +71,13 @@ public class MainGame : Game
     protected override void Draw(GameTime gameTime)
     {
         GameFrame.DrawAll(gameTime);
+    }
+
+
+    // Private methods.
+    private void LoadPersistentContent()
+    {
+        // Fonts.
+        DynamicFont.AddFont("default", "default");
     }
 }

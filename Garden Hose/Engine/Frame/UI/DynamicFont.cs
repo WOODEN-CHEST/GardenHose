@@ -9,7 +9,9 @@ namespace GardenHose.Engine.Frame.UI;
 public class DynamicFont : IDisposable
 {
     // Fields.
-    public SpriteFont FontSprite { get; private set; }
+    public SpriteFont FontAsset { get; private set; }
+
+    public readonly string Name;
 
     public float Scale
     {
@@ -22,7 +24,7 @@ public class DynamicFont : IDisposable
 
 
     // Private static fields.
-    private static readonly Dictionary<string, DynamicFont> s_fonts;
+    private static readonly Dictionary<string, DynamicFont> s_fonts = new();
 
 
     // Private fields.
@@ -31,10 +33,11 @@ public class DynamicFont : IDisposable
 
 
     // Constructors.
-    public DynamicFont(string relativePath)
+    public DynamicFont(string name, string relativePath)
     {
         _relativePath = Path.Combine(AssetManager.DIR_FONTS, relativePath);
-        FontSprite = AssetManager.GetFont(_relativePath);
+        FontAsset = AssetManager.GetFont(_relativePath);
+        Name = name;
     }
 
 
@@ -42,8 +45,7 @@ public class DynamicFont : IDisposable
     public static void AddFont(string name, string relativePath)
     {
         if (string.IsNullOrEmpty(name)) throw new ArgumentException($"Invalid font name: \"{name}\"");
-
-        s_fonts.Add(name, new DynamicFont(relativePath));
+        s_fonts.Add(name, new DynamicFont(name, relativePath));
     }
 
     public static void ClearFonts()
@@ -60,6 +62,6 @@ public class DynamicFont : IDisposable
     {
         AssetManager.DisposeFont(_relativePath);
         _relativePath = null;
-        FontSprite = null;
+        FontAsset = null;
     }
 }

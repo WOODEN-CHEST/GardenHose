@@ -5,10 +5,8 @@ using Microsoft.Xna.Framework;
 using GardenHose.Engine.IO;
 using GardenHose.Engine;
 using GardenHose.Engine.Frame.UI.Animation;
-using Microsoft.Xna.Framework.Media;
+using GardenHose.Engine.Frame.UI;
 using System;
-using System.Diagnostics;
-using GardenHose.Engine.Logging;
 
 namespace GardenHose.Frames;
 
@@ -34,6 +32,7 @@ public class FrameMain : GameFrame
     /* Layer1 */
     public Layer Layer1;
     public SpriteItem Test;
+    public TextBox Text;
 
 
     // Private fields.
@@ -105,6 +104,14 @@ public class FrameMain : GameFrame
         Test.Opacity = 255;
         Test.Brightness = 255;
         Layer1.AddDrawable(Test);
+
+        Text = new(new Vector2(200, 200), new Vector2(1f, 1f), 0f, DynamicFont.GetFont("default"),
+            "abcd", Color.Brown, float.MaxValue);
+        Text.IsTypeable = true;
+        Text.AllowNewlineTyping = false;
+        Text.MaxCharacters = 30;
+
+        Layer1.AddDrawable(Text);
     }
 
     // Inehrited methods.
