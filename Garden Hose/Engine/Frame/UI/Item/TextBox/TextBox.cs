@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 
@@ -24,69 +23,36 @@ public class TextBox : DrawableItem
         }
     }
 
+    public bool WrapText = true;
     public bool PreventTypingOverflow = false;
     public bool AllowNewlineTyping = true;
-    public uint MaxCharacters = uint.MaxValue;
-
-    public string Text
-    {
-        get { return _realText; }
-        set
-        {
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            _realText = value;
-
-            _wrappedText = value;
-            if (WrapText) FoldText();
-        }
-    }
 
     public float MaxPixelsPerLine
     {
         get => _maxPixelsPerLine;
         set => _maxPixelsPerLine = Math.Max(1, value);
     }
-
-    public bool WrapText = true;
-
-    public DynamicFont Font
-    {
-        get => _font;
-        set => _font = value ?? throw new ArgumentNullException(nameof(value));
-    }
-
-    public Vector2 TextOrigin = new Vector2();
-
     public Vector2 TextSizePixels { get => _font.FontAsset.MeasureString(_wrappedText); }
+    public uint MaxCharacters = uint.MaxValue;
+
+    public Vector2 TextOrigin = new();
+
+    public string Text { get => _realText; }
 
 
     // Private fields.
-    private string _wrappedText;
+    private bool _isTypeable;
+
     private string _realText;
+    private string _wrappedText;
 
     private float _maxPixelsPerLine;
 
-    private DynamicFont _font;
-
-    private bool _isTypeable;
-
 
     // Constructors.
-    public TextBox(
-        Vector2 position,
-        Vector2 scale,
-        float rotation,
-
-        DynamicFont font,
-        string text,
-        Color color,
-        float maxPixelsPerLine)
-        : base(position, scale, rotation)
+    public TextBox(TextComponent text)
     {
-        Font = font;
-        MaxPixelsPerLine = maxPixelsPerLine;
-        Text = text;
-        Tint = color;
+
     }
 
 
@@ -195,7 +161,7 @@ public class TextBox : DrawableItem
         }
 
         if (PreventTypingOverflow &&
-            (Font.FontAsset.MeasureString(Typed).X 
+            (Font.FontAsset.MeasureString(Typed).X
             + Font.FontAsset.MeasureString(_realText).X
             > _maxPixelsPerLine)) return;
 

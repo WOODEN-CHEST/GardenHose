@@ -1,14 +1,8 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System;
+﻿using GardenHose.Engine.Frame.UI.Animation;
 using GardenHose.Engine.IO;
-using GardenHose.Engine.Frame.UI.Item;
-using GardenHose.Engine.Frame.UI.Animation;
-using Microsoft.Xna.Framework.Audio;
-using System.Numerics;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
 
 namespace GardenHose.Engine.Frame;
 
@@ -18,7 +12,8 @@ public partial class GameFrame
     // Fields.
     public readonly List<Layer> Layers = new();
     public readonly HashSet<IUpdateableItem> UpdateableItems = new();
-    
+    public readonly HashSet<InputListener> InputListeners = new();
+
 
     public string Name
     {
@@ -43,7 +38,7 @@ public partial class GameFrame
 
 
     // Constructors.
-    public GameFrame(string name) 
+    public GameFrame(string name)
     {
         Name = name;
     }
@@ -129,8 +124,8 @@ public partial class GameFrame
     {
         foreach (var Animation in _animations) Animation.Dispose();
         foreach (var Sound in _sounds) Sound.Dispose();
-
         foreach (var Item in UpdateableItems) Item.Dispose();
+        foreach (var Listener in InputListeners) Listener.StopListening();
     }
 
     protected virtual void OnEnd()

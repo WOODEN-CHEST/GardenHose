@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+namespace GardenHose.Engine.IO;
 
-namespace GardenHose.Engine.Frame.UI.Item;
-
-public interface IUpdateableItem : IDisposable
+public enum MouseButton
 {
-    public void Update();
+    Any,
+    Left,
+    Middle,
+    Right
 }

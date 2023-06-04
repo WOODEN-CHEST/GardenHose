@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using GardenHose.Engine.Frame.UI.Animation;
+﻿using GardenHose.Engine.Frame.UI.Animation;
+using System;
 
 namespace GardenHose.Engine.Frame;
 

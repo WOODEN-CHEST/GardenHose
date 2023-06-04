@@ -1,16 +1,11 @@
-﻿using Microsoft.Xna.Framework;
-using System;
-
-using GardenHose.Engine.IO;
-using GardenHose.Engine.Logging;
+﻿using GardenHose.Engine;
 using GardenHose.Engine.Frame;
-using GardenHose.Engine;
-using GardenHose.Frames;
-using Microsoft.Xna.Framework.Input;
-using System.Threading;
-using System.Reflection;
-using System.IO;
 using GardenHose.Engine.Frame.UI;
+using GardenHose.Engine.IO;
+using GardenHose.Frames;
+using Microsoft.Xna.Framework;
+using System.IO;
+using System.Reflection;
 
 namespace GardenHose;
 
@@ -47,14 +42,14 @@ public class MainGame : Game
         DisplayInfo.SetTargetSize(1920f, 1080f);
 
         // Assets.
-        AssetManager.BasePath = Path.Combine( 
-            Path.GetDirectoryName(Assembly.GetAssembly(this.GetType()).Location), 
+        AssetManager.BasePath = Path.Combine(
+            Path.GetDirectoryName(Assembly.GetAssembly(this.GetType()).Location),
             Content.RootDirectory);
         AssetManager.ExtraPath = null;
         AssetManager.CreateAssetEntries();
 
         LoadPersistentContent();
-        
+
 
         // Game frames.
         GameFrame.BackgroundColor = Color.Black;

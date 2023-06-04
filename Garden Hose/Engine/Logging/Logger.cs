@@ -71,7 +71,7 @@ public static class Logger
 
     public static void Critical(string message) => Log(LogLevel.CRITICAL, message);
 
-    public static void Log(LogLevel level, string message) 
+    public static void Log(LogLevel level, string message)
     {
         StringBuilder FullMessage = new(message.Length + 30);
         DateTime Time = DateTime.Now;

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using GardenHose.Engine.Frame.UI.Animation;
-using Microsoft.Xna.Framework.Audio;
+﻿using Microsoft.Xna.Framework.Audio;
+using System;
 
 namespace GardenHose.Engine.Frame;
 

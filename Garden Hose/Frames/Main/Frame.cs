@@ -1,11 +1,10 @@
-﻿using GardenHose.Engine.Frame;
-using GardenHose.Engine.Frame.UI.Item;
-
-using Microsoft.Xna.Framework;
-using GardenHose.Engine.IO;
-using GardenHose.Engine;
-using GardenHose.Engine.Frame.UI.Animation;
+﻿using GardenHose.Engine;
+using GardenHose.Engine.Frame;
 using GardenHose.Engine.Frame.UI;
+using GardenHose.Engine.Frame.UI.Animation;
+using GardenHose.Engine.Frame.UI.Item;
+using GardenHose.Engine.IO;
+using Microsoft.Xna.Framework;
 using System;
 
 namespace GardenHose.Frames;
@@ -44,7 +43,7 @@ public class FrameMain : GameFrame
         CreateAnimations();
         CreateSounds();
         CreateLayers();
-        MouseEventListener.AddClickListener(OnClick, true, MouseClickCondition.OnClick, MouseButton.Left);
+        MouseListener.AddClickListener(OnClick, true, MouseCondition.OnClick, MouseButton.Left);
     }
 
 
@@ -87,10 +86,10 @@ public class FrameMain : GameFrame
     /* Input handlers. */
     public void OnClick(MouseEventInfo info)
     {
-        Test.StartPositionInterpolation(MouseEventListener.VirtualPositionCur, 1f);
+        Test.StartPositionInterpolation(MouseListener.VirtualPositionCur, 1f);
         Test.StartRotationInterpolation(MathF.Atan2(
-            MouseEventListener.VirtualPositionCur.Y - Test.Position.Y,
-            MouseEventListener.VirtualPositionCur.X - Test.Position.X) + MathHelper.PiOver2, 1f);
+            MouseListener.VirtualPositionCur.Y - Test.Position.Y,
+            MouseListener.VirtualPositionCur.X - Test.Position.X) + MathHelper.PiOver2, 1f);
     }
 
 

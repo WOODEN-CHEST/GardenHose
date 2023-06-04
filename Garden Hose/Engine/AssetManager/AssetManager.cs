@@ -84,7 +84,7 @@ public static class AssetManager
     public static SpriteFont GetFont(string relativePath) => GetAsset(s_fonts, relativePath);
 
     public static SpriteEffect GetShader(string relativePath) => GetAsset(s_shaders, relativePath);
-    
+
 
     public static void DisposeTexture(string relativePath) => DisposeUser(s_textures, relativePath);
 
@@ -98,7 +98,7 @@ public static class AssetManager
     /* Manage memory */
     public static void FreeMemory()
     {
-        foreach (var Item in  s_textures.Values) if (Item.Users == 0) Item.UnloadAsset();
+        foreach (var Item in s_textures.Values) if (Item.Users == 0) Item.UnloadAsset();
         foreach (var Item in s_sounds.Values) if (Item.Users == 0) Item.UnloadAsset();
         foreach (var Item in s_fonts.Values) if (Item.Users == 0) Item.UnloadAsset();
         foreach (var Item in s_shaders.Values) if (Item.Users == 0) Item.UnloadAsset();
@@ -117,7 +117,7 @@ public static class AssetManager
         foreach (string EntryPath in Directory.EnumerateFiles(path, "*.xnb"))
         {
             entries.Add(Path.GetRelativePath(s_basePath, EntryPath.Substring(0, EntryPath.LastIndexOf('.'))),
-                new Asset<EntryType>(EntryPath.Substring(0, EntryPath.LastIndexOf('.'))) );
+                new Asset<EntryType>(EntryPath.Substring(0, EntryPath.LastIndexOf('.'))));
         }
     }
 

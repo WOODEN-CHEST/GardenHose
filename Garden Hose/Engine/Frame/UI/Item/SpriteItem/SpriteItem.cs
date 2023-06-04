@@ -1,13 +1,11 @@
 ﻿using GardenHose.Engine.Frame.UI.Animation;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
-public class SpriteItem : DrawableItem
+public class SpriteItem : DrawableItem, ISpriteItem
 {
     // Fields.
     public AnimationInstance ActiveAnimation
@@ -15,39 +13,35 @@ public class SpriteItem : DrawableItem
         get => _activeAnimation;
         set => _activeAnimation = value ?? throw new ArgumentNullException(nameof(value));
     }
-    
+
 
     // Private fields.
     private AnimationInstance _activeAnimation = null;
 
 
     // Constructors.
-    public SpriteItem(Vector2 position, Vector2 scale, float rotation, AnimationInstance animation) 
-        : base(position, scale, rotation)
+    public SpriteItem(AnimationInstance animation)
     {
         ActiveAnimation = animation;
-        Position = position;
     }
 
 
     // Inherited methods.
     public override void Draw()
     {
-        if (!IsVisible) return;
-
         base.Draw();
+        if (!ShouldRender) return;
 
         AnimationFrame Frame = _activeAnimation.GetFrame();
 
-        GameFrame.DrawBatch.Draw(
-        Frame.Texture,
-        RealPosition, // Top left position from which to draw.
-        _activeAnimation.TextureRegion, // Optional region from texture.
-        RealColorMask, // Color tint.
+        GameFrame.DrawBatch.Draw(Frame.Texture,
+        RealPosition,
+        _activeAnimation.TextureRegion,
+        RealColorMask,
         Rotation,
-        Frame.Origin, // Texture origin.
+        Frame.Origin,
         RealScale,
-        SpriteEffects.None, // Effects.
-        1f); // Layer depth.
+        SpriteEffects.None,
+        1f);
     }
 }

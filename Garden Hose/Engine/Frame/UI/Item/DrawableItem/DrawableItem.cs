@@ -1,7 +1,5 @@
-﻿using GardenHose.Engine;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using System;
-using System.Runtime.CompilerServices;
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
@@ -78,7 +76,7 @@ public abstract class DrawableItem : IDrawableItem
 
             RealScale = value;
 
-            if (IsSizeRelative) RealScale *= DisplayInfo.ObjectScale;
+            if (IsSizeRelative) RealScale *= DisplayInfo.ItemScale;
         }
     }
 
@@ -145,12 +143,7 @@ public abstract class DrawableItem : IDrawableItem
 
 
     // Constructors.
-    public DrawableItem(Vector2 position, Vector2 scale, float rotation)
-    {
-        Position = position;
-        Scale = scale;
-        Rotation = rotation;
-    }
+    public DrawableItem() { }
 
 
     // Methods.
@@ -171,7 +164,7 @@ public abstract class DrawableItem : IDrawableItem
 
     public void StartScaleInterpolation(Vector2 end, double timeSeconds)
     {
-        if (timeSeconds <= 0 || !double.IsNormal(timeSeconds)) 
+        if (timeSeconds <= 0 || !double.IsNormal(timeSeconds))
             throw new ArgumentOutOfRangeException(timeSeconds.ToString());
 
         _isScaleInterpolating = true;
@@ -234,7 +227,7 @@ public abstract class DrawableItem : IDrawableItem
 
             Position = GHMath.Interpolate(_posIntStart, _posIntEnd, (float)Progress, PositionIntMethod);
 
-            if (Progress> 1d) _isPositionInterpolating = false;
+            if (Progress > 1d) _isPositionInterpolating = false;
         }
 
         if (_isScaleInterpolating)

@@ -1,12 +1,14 @@
-﻿using GardenHose.Engine.IO;
-using GardenHose.Engine.Logging;
+﻿using GardenHose.Engine.Frame;
+using GardenHose.Engine.IO;
 
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework;
 
 using System;
+using System.Runtime.CompilerServices;
 
-namespace GardenHose.Engine.Frame;
+namespace GardenHose.Engine;
 
 public static class DisplayInfo
 {
@@ -31,9 +33,8 @@ public static class DisplayInfo
 
     public static float XOffset { get; private set; }
     public static float YOffset { get; private set; }
-    public static float XScale { get; private set; }
-    public static float YScale { get; private set; }
-    public static float ObjectScale { get; private set; }
+    public static float ItemScale { get; private set; }
+    public static float InverseItemScale { get; private set; }
 
 
     // Private static fields.
@@ -44,7 +45,7 @@ public static class DisplayInfo
     // Static constructors.
     static DisplayInfo()
     {
-        KeyboardEventListener.AddListener(OnDisplayButtonPress, KeyEventTrigger.OnPress, Keys.F11);
+        UserInput.AddKeyListener(null,KeyCondition.OnPress, Keys.F11, OnDisplayButtonPress);
     }
 
 
@@ -101,6 +102,32 @@ public static class DisplayInfo
     }
 
 
+    /* Adjusting item values. */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void RealToVirtualPosition(ref Vector2 position)
+    {
+        position.X += XOffset;
+        position.Y += YOffset;
+
+        position *= ItemScale;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void VirtualToRealPosition(ref Vector2 position)
+    {
+        position *= InverseItemScale;
+
+        position.X -= XOffset;
+        position.Y -= YOffset;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void RealToVirtualScale(ref Vector2 scale) => scale *= ItemScale;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void VirtualToRealScale(ref Vector2 scale) => scale *= InverseItemScale;
+
+
     // Private static methods.
     private static void SetDisplayData(float width, float height)
     {
@@ -113,9 +140,6 @@ public static class DisplayInfo
 
         if (Ratio > TargetRatio) SetUltraWideRatio();
         else SetNarrowRatio();
-
-        XScale = RealAdjustedWidth / TargetWidth;
-        YScale = RealAdjustedHeight / TargetHeight;
 
         if (!MainGame.GraphicsManager.IsFullScreen)
         {
@@ -133,17 +157,20 @@ public static class DisplayInfo
         {
             foreach (Layer L in GameFrame.GlobalFrame?.Layers) L.OnDisplayChange();
         }
+
+        // Final value calculation.
+        InverseItemScale = 1 / ItemScale;
     }
 
     private static void SetUltraWideRatio()
     {
         RealAdjustedHeight = Height;
-        RealAdjustedWidth = (TargetRatio / Ratio) * Width;
+        RealAdjustedWidth = TargetRatio / Ratio * Width;
 
         XOffset = (Width - RealAdjustedWidth) / 2f;
         YOffset = 0f;
 
-        ObjectScale = Height / TargetHeight;
+        ItemScale = Height / TargetHeight;
     }
 
     private static void SetNarrowRatio()
@@ -152,14 +179,14 @@ public static class DisplayInfo
         RealAdjustedWidth = Width;
 
         XOffset = 0f;
-        YOffset = (Height - (RatioRatio * Height)) / 2f;
+        YOffset = (Height - RatioRatio * Height) / 2f;
 
-        ObjectScale = Width / TargetWidth;
+        ItemScale = Width / TargetWidth;
     }
 
-    private static void OnDisplayButtonPress()
+    private static void OnDisplayButtonPress(object sender, EventArgs args)
     {
-        if (KeyboardEventListener.StateCur.IsKeyDown(Keys.LeftControl)) SnapSizeToRatio();
+        if (UserInput.KeyboardCur.IsKeyDown(Keys.LeftControl)) SnapSizeToRatio();
         else ToggleFullScreen();
     }
 }

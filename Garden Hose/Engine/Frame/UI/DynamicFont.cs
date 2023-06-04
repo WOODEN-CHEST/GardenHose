@@ -6,7 +6,7 @@ using System.IO;
 namespace GardenHose.Engine.Frame.UI;
 
 
-public class DynamicFont : IDisposable
+public sealed class DynamicFont : IDisposable
 {
     // Fields.
     public SpriteFont FontAsset { get; private set; }
