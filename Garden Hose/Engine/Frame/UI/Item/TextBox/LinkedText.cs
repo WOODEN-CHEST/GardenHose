@@ -9,7 +9,7 @@ using System.Text;
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
-public class TextBox : DrawableItem
+public class LinkedText : PositionalItem
 {
     // Fields.
     public bool IsTypeable
@@ -23,42 +23,47 @@ public class TextBox : DrawableItem
         }
     }
 
-    public bool WrapText = true;
-    public bool PreventTypingOverflow = false;
-    public bool AllowNewlineTyping = true;
+    public bool WrapText = false;
+    public bool AllowNewlines = true;
 
     public float MaxPixelsPerLine
     {
         get => _maxPixelsPerLine;
         set => _maxPixelsPerLine = Math.Max(1, value);
     }
-    public Vector2 TextSizePixels { get => _font.FontAsset.MeasureString(_wrappedText); }
-    public uint MaxCharacters = uint.MaxValue;
+    public uint MaxLength = uint.MaxValue;
 
     public Vector2 TextOrigin = new();
 
-    public string Text { get => _realText; }
+    public string Text
+    {
+        get
+        {
+            StringBuilder Text = new(_components[0].Text.Length * _components.Length);
+            foreach (var Component in _components) Text.Append(Component.Text);
+            return Text.ToString();
+        }
+    }
+    public TextComponent[] Components { get => _components; }
 
 
     // Private fields.
-    private bool _isTypeable;
-
-    private string _realText;
-    private string _wrappedText;
-
+    private bool _isTypeable = false;
+    private TextComponent[] _components;
     private float _maxPixelsPerLine;
 
 
     // Constructors.
-    public TextBox(TextComponent text)
+    public LinkedText(TextComponent[] components)
     {
-
+        Components = components;
     }
 
 
     // Methods.
     public void SetTextOrigin(TextureOrigin origin)
     {
+        float 
         TextOrigin.X = ((int)origin % 3) switch
         {
             0 => 0f,
@@ -87,7 +92,7 @@ public class TextBox : DrawableItem
         char Letter;
         float PartLength;
 
-        for (int Index = 0; (Index < _wrappedText.Length) && (Index <= MaxCharacters); Index++, EndIndex++)
+        for (int Index = 0; (Index < _wrappedText.Length) && (Index <= MaxLength); Index++, EndIndex++)
         {
             Letter = _wrappedText[Index];
 
@@ -134,6 +139,26 @@ public class TextBox : DrawableItem
 
 
     // Private methods.
+    private void SetComponents(TextComponentBuilder builer)
+    {
+        if (builer == null) throw new ArgumentNullException(nameof(builer));
+        if (builer.Components.Count == 0) throw new ArgumentException("TextComponent builder's list cannot be empty");
+
+        int NewlineIndex;
+        TextComponent Component;
+        for (int i = 0; i < builer.Components.Count; i++)
+        {
+            Component = builer.Components[i];
+
+            NewlineIndex = Component.Text.IndexOf('\n');
+            if (NewlineIndex == -1) continue;
+
+
+        }
+
+        _components = builer.Build();
+    }
+
     private void OnUserType(object sender, TextInputEventArgs args)
     {
         if (args.Key == Keys.Back)
@@ -141,7 +166,7 @@ public class TextBox : DrawableItem
             Text = Text.Length == 0 ? String.Empty : _realText.Substring(0, _realText.Length - 1);
         }
 
-        if (_realText.Length >= MaxCharacters) return;
+        if (_realText.Length >= MaxLength) return;
 
         string Typed = null;
         if (args.Character is >= ' ' and <= '~')
@@ -150,17 +175,17 @@ public class TextBox : DrawableItem
         }
         else if (args.Key == Keys.Enter)
         {
-            if (AllowNewlineTyping) Typed = "\n";
+            if (AllowNewlines) Typed = "\n";
         }
         else if (args.Key == Keys.Tab) Typed = "    ";
         else
         {
-            Logger.Warning($"Couldn't resolve pressed key for {nameof(TextBox)}" +
+            Logger.Warning($"Couldn't resolve pressed key for {nameof(LinkedText)}" +
                     $"\nKey pressed: \"{args.Key}\", Character: \"{args.Character}\", Font: \"{Font.Name}\"");
             return;
         }
 
-        if (PreventTypingOverflow &&
+        if (LimitLength &&
             (Font.FontAsset.MeasureString(Typed).X
             + Font.FontAsset.MeasureString(_realText).X
             > _maxPixelsPerLine)) return;

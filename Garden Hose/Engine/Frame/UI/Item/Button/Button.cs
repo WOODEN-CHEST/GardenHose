@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace GardenHose.Engine.Frame.UI.Item;
 
 /* Code duplication, yay! */
-public abstract class Button : DrawableItem, IUpdateableItem
+public abstract class Button : ColoredItem, IUpdateableItem
 {
     // Fields.
     public readonly GameFrame ParentFrame;

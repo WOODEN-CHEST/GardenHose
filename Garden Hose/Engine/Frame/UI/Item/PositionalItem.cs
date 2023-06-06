@@ -1,52 +1,13 @@
-﻿using Microsoft.Xna.Framework;
-using System;
+﻿using System;
+using Microsoft.Xna.Framework;
+
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
-public abstract class DrawableItem : IDrawableItem
+public class PositionalItem : IDrawableItem
 {
     // Fields.
-    public bool IsVisible
-    {
-        get => _isVisible;
-        set
-        {
-            _isVisible = value;
-            UpdateShouldRender();
-        }
-    }
-
-    public float Opacity
-    {
-        get => _opacity;
-        set
-        {
-            _opacity = Math.Clamp(value, 0f, 1f);
-            RealColorMask.A = (byte)(255f * _opacity);
-            UpdateShouldRender();
-        }
-    }
-
-    public float Brightness
-    {
-        get => _brightness;
-        set
-        {
-            _brightness = Math.Clamp(value, 0f, 1f);
-            UpdateColorMaskRGB();
-        }
-    }
-
-    public Color Tint
-    {
-        get => _tint;
-        set
-        {
-            _tint = value;
-            _tint.A = RealColorMask.A = (byte)(255f * _opacity);
-            UpdateColorMaskRGB();
-        }
-    }
+    public virtual bool IsVisible { get; set; }
 
     public Vector2 Position
     {
@@ -57,8 +18,8 @@ public abstract class DrawableItem : IDrawableItem
 
             RealPosition = value;
 
-            if (IsPositionScaledX) RealPosition.X = (RealPosition.X) * DisplayInfo.XScale;
-            if (IsPositionScaledY) RealPosition.Y = (RealPosition.Y) * DisplayInfo.YScale;
+            if (IsPositionScaledX) RealPosition.X = (RealPosition.X) * DisplayInfo.ItemScale;
+            if (IsPositionScaledY) RealPosition.Y = (RealPosition.Y) * DisplayInfo.ItemScale;
 
             if (IsPositionOffsetX) RealPosition.X += DisplayInfo.XOffset;
             if (IsPositionOffsetY) RealPosition.Y += DisplayInfo.YOffset;
@@ -112,9 +73,6 @@ public abstract class DrawableItem : IDrawableItem
     protected Vector2 VirtualScale;
     protected Vector2 RealScale;
 
-    protected Color RealColorMask = new Color(255, 255, 255, 255);
-    protected bool ShouldRender { get; private set; } = true;
-
 
     // Private fields.
     private Vector2 _posIntStart;
@@ -136,14 +94,9 @@ public abstract class DrawableItem : IDrawableItem
     private double _rotIntElapsedTime;
     private bool _isRotationInterpolating;
 
-    private bool _isVisible = true;
-    private float _opacity = 1f;
-    private float _brightness = 1f;
-    private Color _tint = new Color(255, 255, 255, 255);
-
 
     // Constructors.
-    public DrawableItem() { }
+    public PositionalItem() { }
 
 
     // Methods.
@@ -195,17 +148,6 @@ public abstract class DrawableItem : IDrawableItem
         _isPositionInterpolating = false;
         _isScaleInterpolating = false;
         _isRotationInterpolating = false;
-    }
-
-
-    // Private methods.
-    private void UpdateShouldRender() => ShouldRender = _isVisible && (RealColorMask.A != 0);
-
-    private void UpdateColorMaskRGB()
-    {
-        RealColorMask.R = (byte)(_tint.R * _brightness);
-        RealColorMask.G = (byte)(_tint.G * _brightness);
-        RealColorMask.B = (byte)(_tint.B * _brightness);
     }
 
 

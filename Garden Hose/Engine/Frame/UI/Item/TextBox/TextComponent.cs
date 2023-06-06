@@ -1,32 +1,43 @@
-﻿using GardenHose.Engine.Frame.UI.Item;
+﻿using GardenHose.Engine.Frame.UI.Animation;
+using GardenHose.Engine.Frame.UI.Item;
 using Microsoft.Xna.Framework;
-using 
+using Microsoft.Xna.Framework.Graphics;
 using System;
 
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
-public class TextComponent : DrawableItem
+public class TextComponent : ColoredItem
 {
     // Fields.
-    public TextComponent NextComponent;
-
     public string Text
     {
         get => _text;
-        set => _text = value ?? throw new ArgumentNullException(nameof(value));
+        set
+        {
+            _text = value ?? throw new ArgumentNullException(nameof(value));
+            UpdateTextSize();
+        }
     }
 
     public DynamicFont TextFont
     {
         get => _textFont;
-        set => _textFont = value ?? throw new ArgumentNullException(nameof(value));
+        set
+        {
+            _textFont = value ?? throw new ArgumentNullException(nameof(value));
+            UpdateTextSize();
+        }
     }
+
+    public Vector2 TextSizePixels { get => _textSizePixels; }
+    public Vector2 TextOrigin = new();
 
 
     // Private fields.
     private string _text;
     private DynamicFont _textFont;
+    private Vector2 _textSizePixels;
 
 
     // Constructors.
@@ -38,26 +49,45 @@ public class TextComponent : DrawableItem
 
 
     // Methods.
-    public TextComponent AddComponent(string text) => new(text, TextFont);
-
-    public TextComponent SetFont(DynamicFont font)
+    public void SetTextOrigin(TextureOrigin origin)
     {
-        TextFont = font;
-        return this;
+        TextOrigin.X = ((int)origin % 3) switch
+        {
+            0 => 0f,
+            1 => TextSizePixels.X / 2f,
+            2 => TextSizePixels.X,
+            _ => 0f
+        };
+
+        TextOrigin.Y = ((int)origin / 3) switch
+        {
+            0 => 0f,
+            1 => TextSizePixels.Y / 2f,
+            2 => TextSizePixels.Y,
+            _ => 0f
+        };
     }
 
-    public TextComponent SetColor(Color color)
-    {
-        Tint = color;
-        return this;
-    }
+
+    // Private methods.
+    private void UpdateTextSize() => _textSizePixels = _textFont.MeasureString(_text);
 
 
     // Inherited methods.
     public override void Draw()
     {
         base.Draw();
-        NextComponent?.Draw();
         if (!ShouldRender) return;
+
+        GameFrame.DrawBatch.DrawString(
+            _textFont.FontAsset,
+            _text,
+            RealPosition,
+            RealColorMask,
+            Rotation,
+            TextOrigin,
+            RealScale,
+            SpriteEffects.None,
+            1f);
     }
 }

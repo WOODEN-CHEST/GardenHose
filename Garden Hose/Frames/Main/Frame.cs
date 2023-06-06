@@ -31,7 +31,7 @@ public class FrameMain : GameFrame
     /* Layer1 */
     public Layer Layer1;
     public SpriteItem Test;
-    public TextBox Text;
+    public LinkedText Text;
 
 
     // Private fields.
@@ -107,8 +107,8 @@ public class FrameMain : GameFrame
         Text = new(new Vector2(200, 200), new Vector2(1f, 1f), 0f, DynamicFont.GetFont("default"),
             "abcd", Color.Brown, float.MaxValue);
         Text.IsTypeable = true;
-        Text.AllowNewlineTyping = false;
-        Text.MaxCharacters = 30;
+        Text.AllowNewlines = false;
+        Text.MaxLength = 30;
 
         Layer1.AddDrawable(Text);
     }

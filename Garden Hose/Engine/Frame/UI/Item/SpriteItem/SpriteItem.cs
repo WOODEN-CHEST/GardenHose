@@ -5,7 +5,7 @@ using System;
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
-public class SpriteItem : DrawableItem, ISpriteItem
+public class SpriteItem : ColoredItem, ISpriteItem
 {
     // Fields.
     public AnimationInstance ActiveAnimation
