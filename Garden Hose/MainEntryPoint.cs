@@ -3,7 +3,7 @@ using GardenHose.Engine.Logging;
 using System;
 using System.Diagnostics;
 
-MainGame Game = new GardenHose.MainGame();
+MainGame Game = new();
 
 try
 {
@@ -12,16 +12,14 @@ try
 }
 catch (Exception e)
 {
-    Logger.Critical($"Game has crashed! {e}");
+    Logger.Critical($"Game has crashed! " +
+        $"Main thread ID: {Environment.CurrentManagedThreadId}. Info: {e}");
 
-    using Process Viewer = new();
-    Viewer.StartInfo.FileName = "explorer";
-    Viewer.StartInfo.Arguments = Logger.FilePath;
-    Viewer.Start();
+    Process.Start(Logger.FilePath);
 }
 finally
 {
     Game.Dispose();
-    Logger.Info("Program ended.");
+    Logger.Info("Game closed.");
     Logger.Dispose();
 }

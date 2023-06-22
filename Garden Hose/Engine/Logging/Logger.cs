@@ -19,22 +19,23 @@ public static class Logger
     public static readonly string FilePath;
 
 
-    // Constructors.
+    // Static constructors.
     static Logger()
     {
         try
         {
             DateTime Time = DateTime.Now;
 
-            string DirectoryPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\GH Logs";
+            string DirectoryPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}" +
+                $"{Path.DirectorySeparatorChar}GH Logs";
             Directory.CreateDirectory(DirectoryPath);
 
             int LogNumber = 0;
             do
             {
                 LogNumber++;
-                FilePath = $"{DirectoryPath}\\" +
-                $"GH{GetFormattedDate(Time)}{(LogNumber > 1 ? $"({LogNumber})" : null)}.txt";
+                FilePath = $"{DirectoryPath}{Path.DirectorySeparatorChar}" +
+                $"GH{GetFormattedDate(Time)}{(LogNumber > 1 ? $"({LogNumber})" : null)}.log";
             }
             while (File.Exists(FilePath));
 
@@ -48,7 +49,7 @@ public static class Logger
                 _ => "th"
             };
 
-            FileWriter.Write(UTF8Encoding.UTF8.GetBytes(
+            FileWriter.Write(Encoding.UTF8.GetBytes(
                 $"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
                 $"for the {LogNumber}{Ordinal} time today.\n" +
                 $"Log generated in \"{Path.GetDirectoryName(FilePath)}\"\n"));
@@ -71,19 +72,19 @@ public static class Logger
 
     public static void Critical(string message) => Log(LogLevel.CRITICAL, message);
 
-    public static void Log(LogLevel level, string message)
+    public static async void Log(LogLevel level, string message)
     {
         StringBuilder FullMessage = new(message.Length + 30);
         DateTime Time = DateTime.Now;
 
         FullMessage.Append($"\n[{GetFormattedTime(Time)}]");
 
-        if (level == LogLevel.Info) FullMessage.Append(" ");
+        if (level == LogLevel.Info) FullMessage.Append(' ');
         else FullMessage.Append($"[{level.ToString()}] ");
 
         FullMessage.Append(message);
 
-        FileWriter.WriteAsync(UTF8Encoding.UTF8.GetBytes(FullMessage.ToString()));
+        await FileWriter.WriteAsync(Encoding.UTF8.GetBytes(FullMessage.ToString()));
     }
 
     public static string GetFormattedTime(DateTime time)

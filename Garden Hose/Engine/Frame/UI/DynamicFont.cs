@@ -36,7 +36,7 @@ public sealed class DynamicFont : IDisposable
     // Constructors.
     public DynamicFont(string name, string relativePath)
     {
-        _relativePath = Path.Combine(AssetManager.DIR_FONTS, relativePath);
+        _relativePath = relativePath;
         FontAsset = AssetManager.GetFont(_relativePath);
         Name = name;
     }

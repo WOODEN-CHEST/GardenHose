@@ -19,7 +19,7 @@ public struct AnimationFrame : IDisposable
     // Contructors.
     public AnimationFrame(Vector2? origin, string relativePath)
     {
-        _relativePath = Path.Combine(AssetManager.DIR_TEXTURES, relativePath);
+        _relativePath = relativePath;
         Texture = AssetManager.GetTexture(_relativePath);
 
         if (origin.HasValue)

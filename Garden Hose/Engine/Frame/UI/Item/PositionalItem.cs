@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
-
+using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
@@ -8,8 +8,9 @@ public class PositionalItem : IDrawableItem
 {
     // Fields.
     public virtual bool IsVisible { get; set; }
+    public virtual Effect Shader { get; set; }
 
-    public Vector2 Position
+    public virtual Vector2 Position
     {
         get => VirtualPosition;
         set
@@ -28,7 +29,7 @@ public class PositionalItem : IDrawableItem
 
     public float Rotation { get; set; }
 
-    public Vector2 Scale
+    public virtual Vector2 Scale
     {
         get => VirtualScale;
         set

@@ -1,5 +1,7 @@
-﻿using GardenHose.Engine.IO;
+﻿using GardenHose.Engine.Extensions;
+using GardenHose.Engine.IO;
 using Microsoft.Xna.Framework;
+using System;
 
 
 namespace GardenHose.Engine.Frame.UI.Item;
@@ -7,9 +9,35 @@ namespace GardenHose.Engine.Frame.UI.Item;
 public struct ButtonComponent
 {
     // Fields.
-    public ButtonShape Shape;
+    public readonly ButtonShape Shape;
     public Vector2 Position;
+
     public Vector2 Size;
+    public float Radius
+    {
+        set => Size.X = value * value;
+        get => MathF.Sqrt(Size.X);
+    }
+
+    public float Rotation
+    {
+        get => _rotation;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid button rotation: \"{value}\"");
+            }
+
+            _rotation = value;
+            _isRotated = value is not -0f and not 0f;
+        }
+    }
+
+
+    // Private fields.
+    private float _rotation = 0f;
+    private bool _isRotated = false;
 
 
     // Constructors.
@@ -24,7 +52,7 @@ public struct ButtonComponent
     {
         Shape = ButtonShape.Circle;
         Position = position;
-        Size.X = radius;
+        Radius = radius;
     }
 
 
@@ -37,6 +65,9 @@ public struct ButtonComponent
         }
 
         Vector2 Mouse = UserInput.VirtualMouseCur;
+
+        if (_isRotated) Mouse.Rotate(_rotation);
+
         return ((Mouse.X >= Position.X) && (Mouse.X <= Position.X + Size.X))
             && ((Mouse.Y >= Position.Y) && (Mouse.Y <= Position.Y + Size.Y));
     }

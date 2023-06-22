@@ -1,5 +1,6 @@
 ﻿using GardenHose.Engine.Frame.UI.Animation;
 using GardenHose.Engine.IO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -14,16 +15,18 @@ public partial class GameFrame
     public readonly HashSet<IUpdateableItem> UpdateableItems = new();
     public readonly HashSet<InputListener> InputListeners = new();
 
-
     public string Name
     {
         get => name;
         set
         {
-            if (String.IsNullOrEmpty(value)) throw new ArgumentException(nameof(value));
+            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value.Length == 0) throw new ArgumentException("GameFrame's name is empty");
             name = value;
         }
     }
+
+    public bool IsLoaded { get; private set; } = false;
 
 
     // Protected fields.
@@ -33,8 +36,6 @@ public partial class GameFrame
     // Private fields.
     private readonly List<FrameAnimation> _animations = new();
     private readonly List<FrameSound> _sounds = new();
-
-    private bool isInitialized = false;
 
 
     // Constructors.
@@ -64,13 +65,13 @@ public partial class GameFrame
             // Set the shader if needed.
             if (Shader != L.Shader)
             {
-                if (BatchStarted) DrawBatch.End();
+                if (BatchStarted) s_drawBatch.End();
                 BatchStarted = false;
             }
             if (!BatchStarted)
             {
                 Shader = L.Shader;
-                DrawBatch.Begin(SpriteSortMode.Deferred,
+                s_drawBatch.Begin(SpriteSortMode.Deferred,
                     BlendState.NonPremultiplied,
                     SamplerState.LinearClamp,
                     DepthStencilState.None,
@@ -83,7 +84,7 @@ public partial class GameFrame
             L.Draw();
         }
 
-        DrawBatch.End();
+        s_drawBatch.End();
     }
 
     public virtual void Restart()
@@ -96,14 +97,14 @@ public partial class GameFrame
     /* Management */
     protected FrameAnimation CreateAnimation(Func<Animation> animationCreator)
     {
-        FrameAnimation Anim = new FrameAnimation(animationCreator);
+        FrameAnimation Anim = new(animationCreator);
         _animations.Add(Anim);
         return Anim;
     }
 
     protected FrameSound CreateSound(string relativePath)
     {
-        FrameSound Sound = new FrameSound(relativePath);
+        FrameSound Sound = new(relativePath);
         _sounds.Add(Sound);
         return Sound;
     }
@@ -112,7 +113,7 @@ public partial class GameFrame
     /* Events */
     protected virtual void Load()
     {
-
+        IsLoaded = true;
     }
 
     protected virtual void OnStart()
@@ -124,8 +125,10 @@ public partial class GameFrame
     {
         foreach (var Animation in _animations) Animation.Dispose();
         foreach (var Sound in _sounds) Sound.Dispose();
-        foreach (var Item in UpdateableItems) Item.Dispose();
+        foreach (var Item in UpdateableItems) Item.Delete();
         foreach (var Listener in InputListeners) Listener.StopListening();
+
+        IsLoaded = false;
     }
 
     protected virtual void OnEnd()

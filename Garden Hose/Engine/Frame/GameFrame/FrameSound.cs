@@ -16,7 +16,7 @@ public class FrameSound : IDisposable
     // Constructors.
     public FrameSound(string relativePath)
     {
-        _relativePath = _relativePath ?? throw new ArgumentNullException(nameof(_relativePath));
+        _relativePath = relativePath ?? throw new ArgumentNullException(nameof(relativePath));
         Sound = null;
     }
 

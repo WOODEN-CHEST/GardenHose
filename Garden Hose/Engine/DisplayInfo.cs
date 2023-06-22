@@ -106,19 +106,19 @@ public static class DisplayInfo
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RealToVirtualPosition(ref Vector2 position)
     {
-        position.X += XOffset;
-        position.Y += YOffset;
+        position.X -= XOffset;
+        position.Y -= YOffset;
 
-        position *= ItemScale;
+        position *= InverseItemScale;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void VirtualToRealPosition(ref Vector2 position)
     {
-        position *= InverseItemScale;
+        position *= ItemScale;
 
-        position.X -= XOffset;
-        position.Y -= YOffset;
+        position.X += XOffset;
+        position.Y += YOffset;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

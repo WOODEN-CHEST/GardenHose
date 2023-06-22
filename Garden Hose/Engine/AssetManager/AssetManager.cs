@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Audio;
+﻿using GardenHose.Engine.Translatable;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -47,10 +48,11 @@ public static class AssetManager
     private static string s_basePath = null;
     private static string s_extraPath = null;
 
-    private static Dictionary<string, Asset<Texture2D>> s_textures = new();
-    private static Dictionary<string, Asset<SoundEffect>> s_sounds = new();
-    private static Dictionary<string, Asset<SpriteFont>> s_fonts = new();
-    private static Dictionary<string, Asset<SpriteEffect>> s_shaders = new();
+    private static readonly Dictionary<string, MonoGameAsset<Texture2D>> s_textures = new();
+    private static readonly Dictionary<string, MonoGameAsset<SoundEffect>> s_sounds = new();
+    private static readonly Dictionary<string, MonoGameAsset<SpriteFont>> s_fonts = new();
+    private static readonly Dictionary<string, MonoGameAsset<SpriteEffect>> s_shaders = new();
+
 
 
     // Static constructors.
@@ -69,30 +71,55 @@ public static class AssetManager
         ScanPack(s_basePath);
 
         if (s_extraPath == null) return;
-        foreach (string PackPath in Directory.GetDirectories(s_extraPath))
-        {
-            ScanPack(PackPath);
-        }
+        //foreach (string PackPath in Directory.GetDirectories(s_extraPath))
+        //{
+        //    ScanPack(PackPath);
+        //}
     }
 
 
-    /* Obtaining assets */
-    public static Texture2D GetTexture(string relativePath) => GetAsset(s_textures, relativePath);
+    /* Obtaining or disposing assets */
+    public static Texture2D GetTexture(string relativePath)
+    {
+        return GetAsset(s_textures, Path.Combine(DIR_TEXTURES, relativePath));
+    }
 
-    public static SoundEffect GetSound(string relativePath) => GetAsset(s_sounds, relativePath);
+    public static SoundEffect GetSound(string relativePath)
+    {
+        return GetAsset(s_sounds, Path.Combine(DIR_SOUNDS, relativePath));
+    }
 
-    public static SpriteFont GetFont(string relativePath) => GetAsset(s_fonts, relativePath);
+    public static SpriteFont GetFont(string relativePath)
+    {
+        return GetAsset(s_fonts, Path.Combine(DIR_FONTS, relativePath));
+    }
 
-    public static SpriteEffect GetShader(string relativePath) => GetAsset(s_shaders, relativePath);
+    public static SpriteEffect GetShader(string relativePath)
+    {
+        return GetAsset(s_shaders, Path.Combine(DIR_SHADERS, relativePath));
+    }
 
 
-    public static void DisposeTexture(string relativePath) => DisposeUser(s_textures, relativePath);
+    public static void DisposeTexture(string relativePath)
+    {
+        DisposeUser(s_textures, Path.Combine(DIR_TEXTURES, relativePath));
+    }
 
-    public static void DisposeSound(string relativePath) => DisposeUser(s_sounds, relativePath);
+    public static void DisposeSound(string relativePath)
+    {
+        DisposeUser(s_sounds, Path.Combine(DIR_SOUNDS, relativePath));
+    }
 
-    public static void DisposeFont(string relativePath) => DisposeUser(s_fonts, relativePath);
+    public static void DisposeFont(string relativePath)
+    {
+        DisposeUser(s_fonts, Path.Combine(DIR_FONTS, relativePath));
+    }
 
-    public static void DisposeShader(string relativePath) => DisposeUser(s_shaders, relativePath);
+    public static void DisposeShader(string relativePath)
+    {
+
+        DisposeUser(s_shaders, Path.Combine(DIR_SHADERS, relativePath));
+    }
 
 
     /* Manage memory */
@@ -106,7 +133,7 @@ public static class AssetManager
 
 
     // Private methods.
-    private static void CreateEntries<EntryType>(in Dictionary<string, Asset<EntryType>> entries, in string path)
+    private static void CreateEntries<EntryType>(in Dictionary<string, MonoGameAsset<EntryType>> entries, in string path)
         where EntryType : class
     {
         foreach (string NewPath in Directory.EnumerateDirectories(path))
@@ -116,8 +143,10 @@ public static class AssetManager
 
         foreach (string EntryPath in Directory.EnumerateFiles(path, "*.xnb"))
         {
-            entries.Add(Path.GetRelativePath(s_basePath, EntryPath.Substring(0, EntryPath.LastIndexOf('.'))),
-                new Asset<EntryType>(EntryPath.Substring(0, EntryPath.LastIndexOf('.'))));
+            string FullPathWithoutExt = Path.Combine(Path.GetDirectoryName(EntryPath), Path.GetFileNameWithoutExtension(EntryPath));
+
+            entries.Add(Path.GetRelativePath(s_basePath, FullPathWithoutExt),
+                new MonoGameAsset<EntryType>(FullPathWithoutExt));
         }
     }
 
@@ -127,18 +156,17 @@ public static class AssetManager
         foreach (var Entry in s_sounds.Values) Entry.UnloadAsset();
         foreach (var Entry in s_fonts.Values) Entry.UnloadAsset();
         foreach (var Entry in s_shaders.Values) Entry.UnloadAsset();
-
+        
         s_textures.Clear();
         s_sounds.Clear();
         s_fonts.Clear();
         s_shaders.Clear();
     }
 
-    private static AssetType GetAsset<AssetType>(in Dictionary<string, Asset<AssetType>> assets, string relativePath)
+    private static AssetType GetAsset<AssetType>(in Dictionary<string, MonoGameAsset<AssetType>> assets, string relativePath)
         where AssetType : class
     {
-        Asset<AssetType> GameAsset;
-        if (!assets.TryGetValue(relativePath, out GameAsset))
+        if (!assets.TryGetValue(relativePath, out MonoGameAsset<AssetType> GameAsset))
         {
             throw new KeyNotFoundException($"Asset entry \"{relativePath}\" does not exist");
         }
@@ -163,11 +191,10 @@ public static class AssetManager
         if (Directory.Exists(ItemsPath)) CreateEntries(s_shaders, ItemsPath);
     }
 
-    private static void DisposeUser<AssetType>(in Dictionary<string, Asset<AssetType>> assets, string path)
+    private static void DisposeUser<AssetType>(in Dictionary<string, MonoGameAsset<AssetType>> assets, string path)
         where AssetType : class
     {
-        Asset<AssetType> GameAsset;
-        if (!assets.TryGetValue(path, out GameAsset)) return;
+        if (!assets.TryGetValue(path, out MonoGameAsset<AssetType> GameAsset)) return;
         GameAsset.DisposeUser();
     }
 }

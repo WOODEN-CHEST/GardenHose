@@ -34,7 +34,7 @@ public class SpriteItem : ColoredItem, ISpriteItem
 
         AnimationFrame Frame = _activeAnimation.GetFrame();
 
-        GameFrame.DrawBatch.Draw(Frame.Texture,
+        GameFrame.s_drawBatch.Draw(Frame.Texture,
         RealPosition,
         _activeAnimation.TextureRegion,
         RealColorMask,

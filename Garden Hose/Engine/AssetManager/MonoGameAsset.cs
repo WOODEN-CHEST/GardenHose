@@ -3,7 +3,7 @@
 
 namespace GardenHose.Engine;
 
-public struct Asset<AssetType> where AssetType : class
+public struct MonoGameAsset<AssetType> where AssetType : class
 {
     // Fields.
     public uint Users { get; private set; }
@@ -14,7 +14,7 @@ public struct Asset<AssetType> where AssetType : class
 
 
     // Constructors.
-    public Asset(string path)
+    public MonoGameAsset(string path)
     {
         if (string.IsNullOrEmpty(path)) throw new ArgumentNullException($"Invalid asset path");
         _absolutePath = path;

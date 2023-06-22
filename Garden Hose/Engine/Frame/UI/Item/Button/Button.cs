@@ -1,4 +1,5 @@
 ﻿using GardenHose.Engine.IO;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +11,7 @@ public abstract class Button : ColoredItem, IUpdateableItem
 {
     // Fields.
     public readonly GameFrame ParentFrame;
-    public bool IsUpdated = true;
+    public bool IsUpdated { get; set; } = true;
     public ButtonComponent[] Components
     {
         get => _components;
@@ -146,8 +147,16 @@ public abstract class Button : ColoredItem, IUpdateableItem
 
         bool IsMouseOver = IsMouseOverButton();
 
-        if (IsMouseOver && !_mouseOverPrev) OnHover?.Invoke(this, EventArgs.Empty);
-        else if (!IsMouseOver && _mouseOverPrev) OnUnHover?.Invoke(this, EventArgs.Empty);
+        if (IsMouseOver && !_mouseOverPrev && (OnHover != null))
+        {
+            Mouse.SetCursor(MouseCursor.Hand);
+            OnHover.Invoke(this, EventArgs.Empty);
+        }
+        else if (!IsMouseOver && _mouseOverPrev && (OnUnHover != null))
+        {
+            Mouse.SetCursor(MouseCursor.Arrow);
+            OnUnHover.Invoke(this, EventArgs.Empty);
+        }
 
         _mouseOverPrev = IsMouseOver;
     }

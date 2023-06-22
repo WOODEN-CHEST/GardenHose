@@ -1,4 +1,5 @@
 ﻿using GardenHose.Engine.Frame.UI.Item;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,9 @@ namespace GardenHose.Engine.Frame;
 
 public class Layer
 {
+    // Private static fields.
+
+
     // Fields.
     public Effect Shader = null;
     public readonly GameFrame ParentFrame;

@@ -30,8 +30,31 @@ public class TextComponentBuilder
 
     public TextComponentBuilder Color(Color color)
     {
+        Components[^1].FullColor = color;
+        return this;
+    }
+
+    public TextComponentBuilder Tint(Color color)
+    {
         Components[^1].Tint = color;
-        Components[^1].Opacity = color.A / (float)byte.MaxValue;
+        return this;
+    }
+
+    public TextComponentBuilder Brightness(float value)
+    {
+        Components[^1].Brightness = value;
+        return this;
+    }
+
+    public TextComponentBuilder Opacity(float value)
+    {
+        Components[^1].Opacity = value;
+        return this;
+    }
+
+    public TextComponentBuilder Visibility(bool isVisible)
+    {
+        Components[^1].IsVisible = isVisible;
         return this;
     }
 
