@@ -8,6 +8,8 @@ public sealed class AnimationInstance
 {
     // Fields.
     public Rectangle? TextureRegion = null;
+    public event EventHandler<AnimEndEventArgs> AnimationEnded;
+    public bool IsLooped = true;
 
     public Animation Anim
     {
@@ -82,8 +84,21 @@ public sealed class AnimationInstance
     public void IncrementFrame()
     {
         _frameIndex += FrameStep;
-        if (_frameIndex > _anim.MaxFrameIndex) _frameIndex = 0;
-        else if (_frameIndex < 0) _frameIndex = _anim.MaxFrameIndex;
+
+        if (_frameIndex > _anim.MaxFrameIndex)
+        {
+            AnimationEnded?.Invoke(this, new AnimEndEventArgs(FinishLocation.End));
+
+            if (IsLooped) _frameIndex = 0;
+            else FrameStep = 0;
+        }
+        else if (_frameIndex < 0)
+        {
+            AnimationEnded?.Invoke(this, new AnimEndEventArgs(FinishLocation.Start));
+
+            if (IsLooped) _frameIndex = _anim.MaxFrameIndex;
+            else FrameStep = 0;
+        }
     }
 
 

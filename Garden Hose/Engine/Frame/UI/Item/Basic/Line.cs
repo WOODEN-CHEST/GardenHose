@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
-
+using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHose.Engine.Frame.UI.Item;
 
@@ -12,36 +12,85 @@ public class Line : ColoredItem
         get => _thickness;
         set
         {
-            if (!float.IsNormal(value)) throw new ArgumentException($"Invalid thickness value: \"{value}\"");
+            if (float.IsNaN(value) || float.IsInfinity(value) || (value < 0f))
+            {
+                throw new ArgumentException($"Invalid line thickness: \"{value}\"");
+            }
+
             _thickness = value;
+            _origin.Y = _thickness / 2f;
+            ShouldDraw = IsDrawingNeeded();
         }
     }
 
-    public Vector2 PositionEnd
+    public float Length
     {
-        get => _virtualPosEnd;
+        get => _length;
         set
         {
-            _virtualPosEnd = value;
+            if (float.IsNaN(value) || float.IsInfinity(value) || (value < 0f))
+            {
+                throw new ArgumentException($"Invalid line length: \"{value}\"");
+            }
 
-            _realPosEnd = value;
-            DisplayInfo.VirtualToRealPosition(ref _realPosEnd);
+            _length = value;
+            ShouldDraw = IsDrawingNeeded();
         }
     }
 
 
     // Private fields.
-    private float _thickness = 0f;
-    private Vector2 _virtualPosEnd = Vector2.Zero;
-    private Vector2 _realPosEnd = Vector2.Zero;
+    private float _thickness;
+    private float _length;
+    private Vector2 _origin = Vector2.Zero;
+
+
+    // Constructors.
+    public Line() { }
+
+    public Line(Vector2 startPosition, Vector2 endPosition, float thickness)
+    {
+        Set(startPosition, endPosition);
+        Thickness = thickness;
+    }
+
+    public Line(Vector2 position, float length, float thickness, float rotation)
+    {
+        Set(position, length, rotation);
+        Thickness = thickness;
+    }
+
+
+    // Methods.
+    public void Set(Vector2 startPosition, Vector2 endPosition)
+    {
+        Set(startPosition, Vector2.Distance(startPosition, endPosition), 
+            MathF.Atan2(endPosition.Y - startPosition.Y, endPosition.X - startPosition.X));
+    }
+
+    public void Set(Vector2 position, float length, float rotation)
+    {
+        Position = position;
+        Length = length;
+        Rotation = rotation;
+    }
 
 
     // Inherited methods.
+    protected override bool IsDrawingNeeded() => base.IsDrawingNeeded() && (_thickness != 0f) && (_length != 0f);
+
     public override void Draw()
     {
         base.Draw();
 
-        if (!ShouldRender) return;
-        GameFrame.DrawLine(Position, PositionEnd, Thickness, RealColorMask);
+        if (!ShouldDraw) return;
+
+        GameFrame.DrawTexture(GameFrame.SinglePixel,
+            RealPosition,
+            null,
+            RealColorMask,
+            Rotation,
+            _origin,
+            new Vector2(_length, _thickness));
     }
 }

@@ -18,23 +18,29 @@ public class LinkedText : PositionalItem
         get => IsTypeable;
         set
         {
+            if (_isTypeable == value) return; 
+
             _isTypeable = value;
             if (_isTypeable) MainGame.Instance.Window.TextInput += OnUserType;
             else MainGame.Instance.Window.TextInput -= OnUserType;
         }
     }
-
+    public Func<bool> TypingCallback { get; set; }
     public bool WrapText = false;
-    public bool AllowNewlines = true;
 
-    public float MaxPixelsPerLine
+    public int MaxLength
     {
-        get => _maxPixelsPerLine;
-        set => _maxPixelsPerLine = Math.Max(1f, value);
+        get => _maxLength;
+        set => _maxLength = Math.Max(value, 0);
     }
-    public uint MaxLength = uint.MaxValue;
+    public Vector2 MaxSize
+    {
+        get => _maxSize;
+        set
+        {
 
-    public Vector2 TextOrigin = new();
+        }
+    }
 
     public string Text
     {
@@ -47,11 +53,14 @@ public class LinkedText : PositionalItem
     }
     public TextComponent[] Components { get => _components; }
 
+    public Vector2 TextOrigin = Vector2.Zero;
+
 
     // Private fields.
     private bool _isTypeable = false;
     private TextComponent[] _components;
-    private float _maxPixelsPerLine = 300f;
+    private Vector2 _maxSize = new(300f, 300f);
+    private int _maxLength = int.MaxValue;
 
 
     // Constructors.
@@ -81,8 +90,83 @@ public class LinkedText : PositionalItem
         };
     }
 
+    public void A(TextComponentBuilder builder)
+    {
+        if (builder.Components.Count != 0)
+        {
+            LimitByLength(builder.Components);
+            LimitBySize(builder.Components);
+            AdjPosition(builder.Components);
+        }
+
+        _components = builder.Build();
+    }
 
     // Private methods.
+    private void LimitByLength(List<TextComponent> components)
+    {
+        if (MaxLength == int.MaxValue) return;
+        if (MaxLength == 0u)
+        {
+            components.Clear();
+            return;
+        }
+
+        int LengthCurrent = 0;
+        TextComponent Component;
+
+        for (int i = 0; i < components.Count; i++)
+        {
+            Component = components[i];
+            LengthCurrent += Component.Text.Length;
+
+            if (LengthCurrent < MaxLength) continue;
+            if (LengthCurrent == MaxLength) break;
+
+            Component.Text = Component.Text[..(MaxLength - (LengthCurrent - Component.Text.Length))];
+
+            if (Component.Text != string.Empty) i++;
+            components = components.GetRange(0, i);
+        }
+    }
+
+    private void LimitBySize(List<TextComponent> components)
+    {
+        if (_maxSize.X == 0 || _maxSize.Y < components[0].TextFont.FontAsset.LineSpacing)
+        {
+            components.Clear();
+            return;
+        }
+
+        for (int i = 0;)
+    }
+
+    private void AdjPosition(List<TextComponent> components)
+    {
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private void FoldText()
     {
         StringBuilder NewText = new(_wrappedText);
@@ -238,6 +322,8 @@ public class LinkedText : PositionalItem
 
     private void OnUserType(object sender, TextInputEventArgs args)
     {
+        if (TypingCallback?.Invoke() ?? false) return;
+
         //if (args.Key == Keys.Back)
         //{
         //    Text = Text.Length == 0 ? String.Empty : _realText.Substring(0, _realText.Length - 1);

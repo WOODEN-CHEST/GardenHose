@@ -89,7 +89,7 @@ public class TextComponent : ColoredItem
     public override void Draw()
     {
         base.Draw();
-        if (!ShouldRender) return;
+        if (!ShouldDraw) return;
 
         GameFrame.s_drawBatch.DrawString(
             _textFont.FontAsset,

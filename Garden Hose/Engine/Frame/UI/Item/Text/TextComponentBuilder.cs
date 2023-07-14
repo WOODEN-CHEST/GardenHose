@@ -1,9 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace GardenHose.Engine.Frame.UI.Item;
@@ -18,6 +14,7 @@ public class TextComponentBuilder
     public TextComponentBuilder(string text, DynamicFont font)
     {
         Components.Add(new TextComponent(text, font));
+        
     }
 
 

@@ -32,7 +32,7 @@ public class SpriteButton : Button, ISpriteItem
     public override void Draw()
     {
         base.Draw();
-        if (!ShouldRender) return;
+        if (!ShouldDraw) return;
 
         AnimationFrame Frame = _activeAnimation.GetFrame();
 

@@ -15,6 +15,7 @@ public class Layer
     // Fields.
     public Effect Shader = null;
     public readonly GameFrame ParentFrame;
+    public int DrawableCount => _drawableItems.Count;
 
 
     // Private fields.
@@ -54,11 +55,5 @@ public class Layer
     public void Draw()
     {
         foreach (var Item in _drawableItems) Item.Draw();
-        GameFrame.DrawCalls++;
-    }
-
-    public void OnDisplayChange()
-    {
-        foreach (var Item in _drawableItems) Item.OnDisplayChange();
     }
 }

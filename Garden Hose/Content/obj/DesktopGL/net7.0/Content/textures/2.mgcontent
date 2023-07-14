@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SourceFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/Content/textures/2.png</SourceFile>
-  <SourceTime>2023-05-14T00:58:44.1536211+03:00</SourceTime>
-  <DestFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/Content/bin/DesktopGL/Content/textures/2.xnb</DestFile>
-  <DestTime>2023-06-05T20:48:19.7604166+03:00</DestTime>
+  <SourceFile>C:/Users/cerna/source/repos/WOODEN-CHEST/GardenHose/Garden Hose/Content/textures/2.png</SourceFile>
+  <SourceTime>2023-06-01T20:01:20.2547089+02:00</SourceTime>
+  <DestFile>C:/Users/cerna/source/repos/WOODEN-CHEST/GardenHose/Garden Hose/Content/bin/DesktopGL/Content/textures/2.xnb</DestFile>
+  <DestTime>2023-07-05T18:26:50.8551597+02:00</DestTime>
   <Importer>TextureImporter</Importer>
-  <ImporterTime>2022-07-26T14:44:56+03:00</ImporterTime>
+  <ImporterTime>2022-07-26T13:44:56+02:00</ImporterTime>
   <Processor>TextureProcessor</Processor>
-  <ProcessorTime>2022-07-26T14:44:56+03:00</ProcessorTime>
+  <ProcessorTime>2022-07-26T13:44:56+02:00</ProcessorTime>
   <Parameters>
     <Key>ColorKeyColor</Key>
     <Value>255,0,255,255</Value>

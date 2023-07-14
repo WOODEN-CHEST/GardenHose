@@ -11,10 +11,9 @@ namespace GardenHose.Engine.Frame;
 public struct GameLoopInfo
 {
     // Fields.
-    public int TotalDraws { get => TextureDraws + StringDraws + BasicDraws; }
+    public int TotalDraws => TextureDraws + StringDraws;
     public int TextureDraws;
     public int StringDraws;
-    public int BasicDraws;
     public int DrawBatchCount;
 
     public TimeSpan DrawTime;
@@ -26,7 +25,6 @@ public struct GameLoopInfo
     {
         TextureDraws = 0;
         StringDraws = 0;
-        BasicDraws = 0;
         DrawBatchCount = 0;
     }
 
@@ -36,7 +34,6 @@ public struct GameLoopInfo
     {
         TextureDraws = 0;
         StringDraws = 0;
-        BasicDraws = 0;
         DrawBatchCount = 0;
     }
 }

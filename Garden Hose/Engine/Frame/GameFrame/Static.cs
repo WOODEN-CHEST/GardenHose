@@ -1,10 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 
@@ -14,8 +12,7 @@ namespace GardenHose.Engine.Frame;
 public partial class GameFrame
 {
     // Static fields.
-    public static readonly GraphicsDevice Graphics;
-    public static readonly ContentManager Content;
+    public static readonly GraphicsDevice GraphicsCard;
     public static GameTime Time { get; private set; }
 
     public static GameFrame ActiveFrame
@@ -47,13 +44,13 @@ public partial class GameFrame
     public static readonly ConcurrentQueue<Action> Actions = new();
     public static GameLoopInfo LoopInfo { get => s_loopInfo; }
 
+    public static readonly Texture2D SinglePixel; 
 
 
     // Private static fields.
     private static GameFrame s_activeFrame;
     private static GameFrame s_globalFrame;
 
-    private static readonly Texture2D s_SinglePixel;
     private static GameLoopInfo s_loopInfo = new();
 
 
@@ -65,12 +62,11 @@ public partial class GameFrame
     // Static constructor.
     static GameFrame()
     {
-        Graphics = MainGame.Instance.GraphicsDevice;
-        s_drawBatch = new SpriteBatch(Graphics);
-        Content = MainGame.Instance.Content;
+        GraphicsCard = MainGame.Instance.GraphicsDevice;
+        s_drawBatch = new SpriteBatch(GraphicsCard);
 
-        s_SinglePixel = new(Graphics, 1, 1);
-        s_SinglePixel.SetData(new Color[] { new(0xFFFFFFFF) });
+        SinglePixel = new(GameFrame.GraphicsCard, 1, 1);
+        SinglePixel.SetData(new Color[] { new(0xFFFFFFFF) });
     }
 
 
@@ -97,7 +93,7 @@ public partial class GameFrame
         Stopwatch DrawTime = Stopwatch.StartNew();
 
 
-        if (DrawBackground) Graphics.Clear(BackgroundColor);
+        if (DrawBackground) GraphicsCard.Clear(BackgroundColor);
         GlobalFrame?.Draw();
         ActiveFrame.Draw();
 
@@ -114,11 +110,9 @@ public partial class GameFrame
         Color color, 
         float rotation,
         Vector2 origin, 
-        Vector2 scale,
-        Effect shader)
+        Vector2 scale)
     {
         s_loopInfo.TextureDraws++;
-        PrepareDrawBatch(shader);
 
         s_drawBatch.Draw(texture,
         position,
@@ -129,58 +123,28 @@ public partial class GameFrame
         scale,
         SpriteEffects.None,
         1f);
-
     }
 
-    public static void DrawString()
+    public static void DrawString(string text,
+        SpriteFont font,
+        Vector2 position,
+        Color color,
+        float rotation,
+        Vector2 origin,
+        Vector2 scale,
+        Effect shader = null)
     {
         s_loopInfo.StringDraws++;
-        PrepareDrawBatch(shader);
-    }
 
-    public static void DrawLine(Vector2 origin, Vector2 destination, float thickness, Color color)
-    {
-        DrawLine(
-            origin,
-            MathF.Atan((destination.Y - origin.Y) / (destination.X - origin.X)),
-            Vector2.Distance(origin, destination),
-            thickness,
-            color);
-    }
-
-    public static void DrawLine(Vector2 origin, float rotation, float length, float thickness, Color color)
-    {
-        s_loopInfo.BasicDraws++;
-
-        length *= DisplayInfo.ItemScale;
-        DisplayInfo.VirtualToRealPosition(ref origin);
-
-        s_drawBatch.Draw(
-            s_SinglePixel,
-            origin,
-            null,
+        s_drawBatch.DrawString(font,
+            text,
+            position,
             color,
             rotation,
-            new Vector2(0f, thickness / 2f),
-            new Vector2(length, thickness),
+            origin,
+            scale,
             SpriteEffects.None,
-            0.5f);
-    }
-
-    public static void DrawRectangle(Rectangle rectangle, Color color)
-    {
-        s_loopInfo.BasicDraws++;
-
-        s_drawBatch.Draw(
-            s_SinglePixel,
-            rectangle.Location.ToVector2(),
-            null,
-            color,
-            0f,
-            Vector2.Zero,
-            rectangle.Size.ToVector2(),
-            SpriteEffects.None,
-            0.5f);
+            1f);
     }
 
 
@@ -205,17 +169,5 @@ public partial class GameFrame
                 GC.Collect();
             });
         });
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void PrepareDrawBatch(Effect shader)
-    {
-        if (s_drawBatchBegun && (shader == s_drawBatchShader)) return;
-
-        if (s_drawBatchBegun) s_drawBatch.End();
-
-        s_loopInfo.DrawBatchCount++;
-        s_drawBatchShader = shader;
-        s_drawBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, effect: shader);
     }
 }

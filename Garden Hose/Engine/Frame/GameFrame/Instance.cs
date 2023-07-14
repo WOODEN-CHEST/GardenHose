@@ -62,12 +62,16 @@ public partial class GameFrame
 
         foreach (Layer L in Layers)
         {
+            // Quick exit
+            if (L.DrawableCount == 0) continue;
+
             // Set the shader if needed.
             if (Shader != L.Shader)
             {
                 if (BatchStarted) s_drawBatch.End();
                 BatchStarted = false;
             }
+
             if (!BatchStarted)
             {
                 Shader = L.Shader;

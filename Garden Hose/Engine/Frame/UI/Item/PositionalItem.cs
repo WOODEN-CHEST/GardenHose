@@ -27,7 +27,19 @@ public class PositionalItem : IDrawableItem
         }
     }
 
-    public float Rotation { get; set; }
+    public float Rotation
+    {
+        get => _rotation;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid {nameof(PositionalItem)} rotation: \"{value}\"");
+            }
+
+            _rotation = value;
+        }
+    }
 
     public virtual Vector2 Scale
     {
@@ -76,6 +88,8 @@ public class PositionalItem : IDrawableItem
 
 
     // Private fields.
+    private float _rotation;
+
     private Vector2 _posIntStart;
     private Vector2 _posIntEnd;
     private double _posIntTargetTime;
@@ -97,7 +111,7 @@ public class PositionalItem : IDrawableItem
 
 
     // Constructors.
-    public PositionalItem() { }
+    public PositionalItem() => DisplayInfo.DisplayChanged += OnDisplayChange;
 
 
     // Methods.
@@ -153,7 +167,7 @@ public class PositionalItem : IDrawableItem
 
 
     // Inherited methods.
-    public virtual void OnDisplayChange()
+    public virtual void OnDisplayChange(object sender, EventArgs args)
     {
         Position = VirtualPosition;
         Scale = VirtualScale;

@@ -36,6 +36,8 @@ public static class DisplayInfo
     public static float ItemScale { get; private set; }
     public static float InverseItemScale { get; private set; }
 
+    public static event EventHandler DisplayChanged;
+
 
     // Private static fields.
     private static int s_windowedWidth = MinWidth;
@@ -45,7 +47,7 @@ public static class DisplayInfo
     // Static constructors.
     static DisplayInfo()
     {
-        UserInput.AddKeyListener(null,KeyCondition.OnPress, Keys.F11, OnDisplayButtonPress);
+        UserInput.AddKeyListener(null, null, KeyCondition.OnPress, Keys.F11, OnDisplayButtonPress);
     }
 
 
@@ -104,28 +106,32 @@ public static class DisplayInfo
 
     /* Adjusting item values. */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RealToVirtualPosition(ref Vector2 position)
+    public static Vector2 RealToVirtualPosition(Vector2 position)
     {
         position.X -= XOffset;
         position.Y -= YOffset;
 
         position *= InverseItemScale;
+
+        return position;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void VirtualToRealPosition(ref Vector2 position)
+    public static Vector2 VirtualToRealPosition(Vector2 position)
     {
         position *= ItemScale;
 
         position.X += XOffset;
         position.Y += YOffset;
+
+        return position;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RealToVirtualScale(ref Vector2 scale) => scale *= ItemScale;
+    public static Vector2 RealToVirtualScale(Vector2 scale) => scale *= ItemScale;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void VirtualToRealScale(ref Vector2 scale) => scale *= InverseItemScale;
+    public static Vector2 VirtualToRealScale(Vector2 scale) => scale *= InverseItemScale;
 
 
     // Private static methods.
@@ -147,19 +153,9 @@ public static class DisplayInfo
             s_windowedHeight = Math.Max(100, (int)Height);
         }
 
-        // Update drawables to match new size.
-        if (GameFrame.ActiveFrame != null)
-        {
-            foreach (Layer L in GameFrame.ActiveFrame.Layers) L.OnDisplayChange();
-        }
-
-        if (GameFrame.GlobalFrame != null)
-        {
-            foreach (Layer L in GameFrame.GlobalFrame?.Layers) L.OnDisplayChange();
-        }
-
-        // Final value calculation.
         InverseItemScale = 1 / ItemScale;
+
+        DisplayChanged?.Invoke(null, EventArgs.Empty);
     }
 
     private static void SetUltraWideRatio()

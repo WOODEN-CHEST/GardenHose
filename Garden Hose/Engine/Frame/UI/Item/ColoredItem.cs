@@ -12,7 +12,7 @@ public abstract class ColoredItem : PositionalItem
         set
         {
             _isVisible = value;
-            UpdateShouldRender();
+            ShouldDraw = IsDrawingNeeded();
         }
     }
 
@@ -23,7 +23,7 @@ public abstract class ColoredItem : PositionalItem
         {
             _opacity = Math.Clamp(value, 0f, 1f);
             RealColorMask.A = (byte)(255f * _opacity);
-            UpdateShouldRender();
+            ShouldDraw = IsDrawingNeeded();
         }
     }
 
@@ -51,7 +51,7 @@ public abstract class ColoredItem : PositionalItem
 
     // Protected fields.
     protected Color RealColorMask = new(255, 255, 255, 255);
-    protected bool ShouldRender { get; private set; } = true;
+    protected bool ShouldDraw = true;
 
 
     // Private fields.
@@ -61,13 +61,11 @@ public abstract class ColoredItem : PositionalItem
     private Color _tint = new(255, 255, 255, 255);
 
 
-    // Constructors.
-    public ColoredItem() { }
+    // Protected methods.
+    protected virtual bool IsDrawingNeeded() => _isVisible && (RealColorMask.A != 0);
 
 
     // Private methods.
-    private void UpdateShouldRender() => ShouldRender = _isVisible && (RealColorMask.A != 0);
-
     private void UpdateColorMaskRGB()
     {
         RealColorMask.R = (byte)(_tint.R * _brightness);

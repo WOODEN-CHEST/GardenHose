@@ -54,6 +54,16 @@
             "rid": "win-x86"
           }
         }
+      },
+      "GardenHoseServer/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v7.0",
+        "compile": {
+          "bin/placeholder/GardenHoseServer.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/GardenHoseServer.dll": {}
+        }
       }
     }
   },
@@ -93,32 +103,38 @@
         "runtimes/win-x86/native/SDL2.dll",
         "runtimes/win-x86/native/soft_oal.dll"
       ]
+    },
+    "GardenHoseServer/1.0.0": {
+      "type": "project",
+      "path": "../GardenHoseServer/GardenHoseServer.csproj",
+      "msbuildProject": "../GardenHoseServer/GardenHoseServer.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "GardenHoseServer >= 1.0.0",
       "MonoGame.Content.Builder.Task >= 3.8.1.303",
       "MonoGame.Framework.DesktopGL >= 3.8.1.303"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {},
+    "C:\\Users\\cerna\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Workstations\\Programming\\Projects\\Garden Hose C# Recreation\\Garden Hose\\Garden Hose\\GardenHose.csproj",
+      "projectUniqueName": "C:\\Users\\cerna\\source\\repos\\WOODEN-CHEST\\GardenHose\\Garden Hose\\GardenHose.csproj",
       "projectName": "GardenHose",
-      "projectPath": "D:\\Workstations\\Programming\\Projects\\Garden Hose C# Recreation\\Garden Hose\\Garden Hose\\GardenHose.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "D:\\Workstations\\Programming\\Projects\\Garden Hose C# Recreation\\Garden Hose\\Garden Hose\\obj\\",
+      "projectPath": "C:\\Users\\cerna\\source\\repos\\WOODEN-CHEST\\GardenHose\\Garden Hose\\GardenHose.csproj",
+      "packagesPath": "C:\\Users\\cerna\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\cerna\\source\\repos\\WOODEN-CHEST\\GardenHose\\Garden Hose\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\cerna\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -127,13 +143,16 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\cerna\\source\\repos\\WOODEN-CHEST\\GardenHose\\GardenHoseServer\\GardenHoseServer.csproj": {
+              "projectPath": "C:\\Users\\cerna\\source\\repos\\WOODEN-CHEST\\GardenHose\\GardenHoseServer\\GardenHoseServer.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -171,7 +190,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.302\\RuntimeIdentifierGraph.json"
       }
     }
   }
