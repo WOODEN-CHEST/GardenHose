@@ -1,0 +1,15 @@
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.csproj.AssemblyReference.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.GeneratedMSBuildEditorConfig.editorconfig
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.AssemblyInfoInputs.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.AssemblyInfo.cs
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.csproj.CoreCompileInputs.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\Tests.exe
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\Tests.deps.json
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\Tests.runtimeconfig.json
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\Tests.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\Tests.pdb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\refint\Tests.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.pdb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.genruntimeconfig.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\ref\Tests.dll

@@ -62,3 +62,4 @@ C:\Users\cerna\Source\Repos\WOODEN-CHEST\GardenHose\Garden Hose\obj\Debug\net7.0
 C:\Users\cerna\Source\Repos\WOODEN-CHEST\GardenHose\Garden Hose\obj\Debug\net7.0\GardenHose.csproj.CopyComplete
 C:\Users\cerna\Source\Repos\WOODEN-CHEST\GardenHose\Garden Hose\obj\Debug\net7.0\GardenHose.genruntimeconfig.cache
 C:\Users\cerna\Source\Repos\WOODEN-CHEST\GardenHose\Garden Hose\obj\Debug\net7.0\ref\GardenHose.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\Content\Models\modeling.xnb

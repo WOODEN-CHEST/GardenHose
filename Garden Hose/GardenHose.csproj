@@ -9,22 +9,17 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <FileAlignment>512</FileAlignment>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <FileAlignment>512</FileAlignment>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Engine\Frame\UI\Item\Button %28Sprite%29\**" />
-    <EmbeddedResource Remove="Engine\Frame\UI\Item\Button %28Sprite%29\**" />
-    <None Remove="Engine\Frame\UI\Item\Button %28Sprite%29\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Engine\Frame\UI\Item\Text\TextBox.cs" />
-    <Compile Remove="Engine\IO\RebindableKeys.cs" />
-  </ItemGroup>
   <ItemGroup>
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
@@ -42,9 +37,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GardenHoseServer\GardenHoseServer.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">
