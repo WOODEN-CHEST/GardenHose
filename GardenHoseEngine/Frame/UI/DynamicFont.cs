@@ -37,7 +37,7 @@ public sealed class DynamicFont : IDisposable
     public DynamicFont(string name, string relativePath)
     {
         _relativePath = relativePath;
-        FontAsset = AssetManager.GetFont(_relativePath);
+        FontAsset = gfdgdfg.GetFont(_relativePath);
         Name = name;
     }
 
@@ -65,7 +65,7 @@ public sealed class DynamicFont : IDisposable
     // Inherited methods.
     public void Dispose()
     {
-        AssetManager.DisposeFont(_relativePath);
+        gfdgdfg.DisposeFont(_relativePath);
         _relativePath = null;
         FontAsset = null;
     }

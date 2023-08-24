@@ -20,8 +20,15 @@ public partial class GameFrame
         get => name;
         set
         {
-            if (value == null) throw new ArgumentNullException(nameof(value));
-            if (value.Length == 0) throw new ArgumentException("GameFrame's name is empty");
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+            if (value.Length == 0)
+            {
+                throw new ArgumentException("GameFrame's name is empty");
+            }
+
             name = value;
         }
     }
@@ -131,6 +138,7 @@ public partial class GameFrame
         foreach (var Sound in _sounds) Sound.Dispose();
         foreach (var Item in UpdateableItems) Item.Delete();
         foreach (var Listener in InputListeners) Listener.StopListening();
+        
 
         IsLoaded = false;
     }

@@ -52,6 +52,10 @@
             "MonoGame.Framework.DesktopGL": {
               "target": "Package",
               "version": "[3.8.1.303, )"
+            },
+            "NAudio": {
+              "target": "Package",
+              "version": "[2.2.0, )"
             }
           },
           "imports": [

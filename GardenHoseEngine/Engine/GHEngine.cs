@@ -1,4 +1,5 @@
 ﻿using GardenHose;
+using GardenHoseEngine.Audio;
 using GardenHoseEngine.Logging;
 using Microsoft.Xna.Framework;
 using System.Diagnostics;
@@ -22,7 +23,8 @@ public sealed class GHEngine : IDisposable
     internal readonly string InternalName;
     internal GHGame Game { get; init; }
     internal GraphicsDeviceManager GraphicsDeviceManager { get; private set; }
-    internal Test AssetManager { get; init; }
+    internal AssetManager AssetManager { get; init; }
+    internal AudioEngine AudioEngine { get; init; }
 
 
     // Private fields.
@@ -46,10 +48,16 @@ public sealed class GHEngine : IDisposable
 
         try 
         {
+            // Engine properties.
             GameName = gameName;
+
+            // MonoGame.
             Game = new();
             GraphicsDeviceManager = new(Game);
+
+            // Engine components.
             AssetManager = new(assetBasePath, assetExtraPath, this, Game);
+            AudioEngine = new();
         }
         catch (Exception e)
         {

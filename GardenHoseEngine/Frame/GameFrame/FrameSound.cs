@@ -30,14 +30,14 @@ public class FrameSound : IDisposable
 
     public void Load()
     {
-        Sound = AssetManager.GetSound(_relativePath);
+        Sound = gfdgdfg.GetSound(_relativePath);
     }
 
 
     // Inherited methods.
     public void Dispose()
     {
-        AssetManager.DisposeSound(_relativePath);
+        gfdgdfg.DisposeSound(_relativePath);
         Sound = null;
         _relativePath = null;
     }

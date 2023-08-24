@@ -7,13 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="MonoGame.Framework">
-      <HintPath>C:\Users\User\.nuget\packages\monogame.framework.desktopgl\3.8.1.303\lib\net6.0\MonoGame.Framework.dll</HintPath>
-    </Reference>
+    <Folder Include="IO\DataFile\Reader\Legacy\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="IO\DataFile\Reader\Legacy\" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="NAudio" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

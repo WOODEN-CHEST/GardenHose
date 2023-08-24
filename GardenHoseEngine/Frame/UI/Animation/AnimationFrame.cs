@@ -20,7 +20,7 @@ public struct AnimationFrame : IDisposable
     public AnimationFrame(Vector2? origin, string relativePath)
     {
         _relativePath = relativePath;
-        Texture = AssetManager.GetTexture(_relativePath);
+        Texture = gfdgdfg.GetTexture(_relativePath);
 
         if (origin.HasValue)
         {
@@ -39,6 +39,6 @@ public struct AnimationFrame : IDisposable
     // Inherited methods.
     public void Dispose()
     {
-        AssetManager.DisposeTexture(_relativePath);
+        gfdgdfg.DisposeTexture(_relativePath);
     }
 }

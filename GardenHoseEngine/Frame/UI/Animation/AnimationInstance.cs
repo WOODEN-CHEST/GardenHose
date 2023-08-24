@@ -9,7 +9,7 @@ public sealed class AnimationInstance
 {
     // Fields.
     public Rectangle? TextureRegion = null;
-    public event EventHandler<AnimEndEventArgs>? AnimationEnded;
+    public event EventHandler<AnimFinishEventArgs>? AnimationFinished;
     public bool IsLooped = true;
 
     public SpriteAnimation Animation
@@ -90,14 +90,14 @@ public sealed class AnimationInstance
 
         if (_frameIndex > _animation.MaxFrameIndex)
         {
-            AnimationEnded?.Invoke(this, new AnimEndEventArgs(FinishLocation.End));
+            AnimationFinished?.Invoke(this, new AnimFinishEventArgs(FinishLocation.End));
 
             if (IsLooped) _frameIndex = 0;
             else FrameStep = 0;
         }
         else if (_frameIndex < 0)
         {
-            AnimationEnded?.Invoke(this, new AnimEndEventArgs(FinishLocation.Start));
+            AnimationFinished?.Invoke(this, new AnimFinishEventArgs(FinishLocation.Start));
 
             if (IsLooped) _frameIndex = _animation.MaxFrameIndex;
             else FrameStep = 0;

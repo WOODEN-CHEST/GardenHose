@@ -153,8 +153,10 @@ public partial class GameFrame
     {
         if (s_activeFrame == newFrame) return;
 
+        // Load new frame.
         await Task.Run(() => newFrame?.Load());
 
+        // Switch frames.
         Actions.Enqueue(() =>
         {
             GameFrame OldFrame = s_activeFrame;
@@ -162,10 +164,11 @@ public partial class GameFrame
             s_activeFrame = newFrame;
             newFrame.OnStart();
 
+            // Unload old frame.
             Task.Run(() =>
             {
                 OldFrame?.Unload();
-                AssetManager.FreeMemory();
+                AssetManager.F
                 GC.Collect();
             });
         });

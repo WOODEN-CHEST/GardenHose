@@ -13,3 +13,11 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.pdb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.genruntimeconfig.cache
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\ref\Tests.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.Asio.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.Core.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.Midi.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.Wasapi.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.WinMM.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\MonoGame.Framework.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.csproj.CopyComplete
