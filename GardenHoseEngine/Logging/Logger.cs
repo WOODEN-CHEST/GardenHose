@@ -16,12 +16,13 @@ public sealed class Logger : IDisposable
 
     // Private fields.
     private readonly StreamWriter _fileWriter;
-    private readonly ConcurrentQueue<string> _messages = new();
-    private Task? _writeTask;
+    private BlockingCollection<string> _messages = new(new ConcurrentQueue<string>());
+    private CancellationTokenSource _cancellationTokenSource = new();
+    private Task _loggerTask;
 
 
     // Constructors.
-    internal Logger(string logDirectory, string processName)
+    internal Logger(string logDirectory, string internalName)
     {
         if (logDirectory == null)
         {
@@ -33,8 +34,6 @@ public sealed class Logger : IDisposable
         }
 
         DateTime Time = DateTime.Now;
-
-        logDirectory = Path.Combine(logDirectory, $"{Path.DirectorySeparatorChar}GH {processName} Logs");
         Directory.CreateDirectory(logDirectory);
 
         LogPath = Path.Combine(logDirectory, "latest.log");
@@ -44,8 +43,11 @@ public sealed class Logger : IDisposable
         }
 
         _fileWriter = new(File.Create(LogPath), Encoding.UTF8);
-        _fileWriter.Write($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
+        _fileWriter.WriteLine($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
             $"Log generated in \"{logDirectory}\"");
+
+        _loggerTask = Task.Factory.StartNew(WriteLog, new CancellationTokenSource().Token, 
+            TaskCreationOptions.LongRunning, TaskScheduler.Default);
     }
 
 
@@ -71,28 +73,7 @@ public sealed class Logger : IDisposable
         FullMessage.Append(level == LogLevel.Info ? ' ' : $"[{level}] ");
         FullMessage.Append(message);
 
-        _messages.Enqueue(FullMessage.ToString());
-
-        if (_writeTask != null && !_writeTask.IsCompleted) return;
-        _writeTask = new(WriteQueuedMessages);
-        _writeTask.Start();
-    }
-
-
-    public void Dispose()
-    {
-        _fileWriter.Flush();
-        _fileWriter.Dispose();
-    }
-
-
-    // Private methods.
-    private void WriteQueuedMessages()
-    {
-        while (!_messages.TryDequeue(out string Message))
-        {
-            _fileWriter.Write(Message);
-        }
+        _messages.Add(FullMessage.ToString());
     }
 
 
@@ -100,7 +81,7 @@ public sealed class Logger : IDisposable
     private static void ArchiveOldLog(string oldLogDirectory, string oldLogPath)
     {
         Directory.CreateDirectory(oldLogDirectory);
-        DateTime LogDate = File.GetCreationTime(oldLogPath);
+        DateTime LogDate = File.GetLastWriteTime(oldLogPath);
 
         string ArchivePath;
         int LogNumber = 0;
@@ -114,7 +95,7 @@ public sealed class Logger : IDisposable
 
         byte[] LogData = File.ReadAllBytes(oldLogPath);
 
-        using ZipArchive Archive = new(File.Open(ArchivePath, FileMode.Create));
+        using ZipArchive Archive = new(File.Open(ArchivePath, FileMode.Create), ZipArchiveMode.Create);
         using Stream EntryStream = Archive.CreateEntry($"{GetFormattedDate(LogDate)}.log",
             CompressionLevel.SmallestSize).Open();
         EntryStream.Write(LogData);
@@ -131,5 +112,35 @@ public sealed class Logger : IDisposable
         return $"{date.Year}y" +
             $"{(date.Month < 10 ? 0 : null)}{date.Month}m" +
             $"{(date.Day < 10 ? 0 : null)}{date.Day}d";
+    }
+
+    private void WriteLog()
+    {
+        try
+        {
+            while (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                _fileWriter.WriteLine(_messages.Take(_cancellationTokenSource.Token));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            while (_messages.TryTake(out string? message))
+            {
+                _fileWriter.WriteLine(message);
+            }
+        }
+    }
+
+
+    // Inherited methods.
+    public void Dispose()
+    {
+        _cancellationTokenSource.Cancel();
+        Info("Logger stopped, goodbye world!");
+        _loggerTask.Wait();
+
+        _fileWriter.Flush();
+        _fileWriter.Dispose();
     }
 }

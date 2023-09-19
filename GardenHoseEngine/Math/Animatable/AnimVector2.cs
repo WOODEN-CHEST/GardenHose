@@ -1,10 +1,10 @@
-﻿using GardenHoseEngine.Frame.UI.Animation;
+﻿using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework;
 
 
 namespace GardenHoseEngine;
 
-public struct AnimVector2
+public class AnimVector2 : ITimeUpdateable
 {
     // Fields.
     public Vector2 Vector;
@@ -36,7 +36,7 @@ public struct AnimVector2
 
             for (_curIndex = MIN_INDEX; _curIndex < _keyframes!.Length; _curIndex++)
             {
-                if (IsIndexSynced()) break;
+                if (IsIndexSyncedWithTime()) break;
             }
         }
     }
@@ -48,7 +48,7 @@ public struct AnimVector2
         {
             if (IsAnimating)
             {
-                throw new InvalidOperationException("Cannot change animation keyframes midanimation.");
+                throw new InvalidOperationException("Cannot change animation key-frames mid animation.");
             }
 
             if (value == null)
@@ -59,7 +59,7 @@ public struct AnimVector2
 
             if (value.Length < 2)
             {
-                throw new ArgumentException($"At least two keyframes are required, got {value.Length}");
+                throw new ArgumentException($"At least two key-frames are required, got {value.Length}");
             }
 
             for (int Index = MIN_INDEX; Index < value.Length; Index++)
@@ -76,6 +76,8 @@ public struct AnimVector2
             _keyframes = value;
         }
     }
+
+    public ITimeUpdater Updater { get; private set; }
 
     public event EventHandler<AnimFinishEventArgs>? AnimationFinished;
 
@@ -96,17 +98,16 @@ public struct AnimVector2
 
 
     // Constructors.
-    public AnimVector2(Vector2 vector, AnimVector2Keyframe[]? keyframes)
+    public AnimVector2(ITimeUpdater updater, Vector2 vector, AnimVector2Keyframe[]? keyframes)
     {
         Vector = vector;
         Keyframes = keyframes;
+        Updater = updater ?? throw new ArgumentNullException(nameof(updater));
     }
 
-    public AnimVector2(Vector2 vector) : this(vector, null) { }
-    
-    public AnimVector2(float value) : this(new(value), null) { }
+    public AnimVector2(ITimeUpdater updater, Vector2 vector) : this(updater, vector, null) { }
 
-    public AnimVector2() : this(Vector2.Zero, null) { }
+    public AnimVector2(ITimeUpdater updater) : this(updater, Vector2.Zero, null) { }
 
 
     // Methods.
@@ -124,19 +125,19 @@ public struct AnimVector2
         }
 
         IsAnimating = true;
+        Updater.AddUpdateable(this);
     }
 
     public void Stop()
     {
         ThrowIfAnimNotSet("stop");
         IsAnimating = false;
+        Updater.RemoveUpdateable(this);
     }
 
     public void Finish()
     {
-        ThrowIfAnimNotSet("finish");
-
-        IsAnimating = false;
+        Stop();
 
         if (_speed > 0d)
         {
@@ -148,27 +149,6 @@ public struct AnimVector2
             SetAnimationData(MIN_INDEX, MIN_TIME, _keyframes![0].Location);
             AnimationFinished?.Invoke(this, new(FinishLocation.Start));
         }
-    }
-
-
-    // Internal methods.
-    internal void Update(TimeSpan passedTime)
-    {
-        if (!IsAnimating) return;
-
-
-        Time += passedTime.TotalSeconds * Speed;
-
-        if (!IsIndexSynced())
-        {
-            SyncIndexWithTime();
-        }
-
-        Vector = GHMath.Interpolate(_keyframes![_curIndex].InterpMethod,
-            _keyframes[_curIndex - 1].Location,
-            _keyframes[_curIndex].Location,
-            (float)((_time - _keyframes[_curIndex - 1].Time) / _keyframes[_curIndex - 1].TimeToNext)
-        );
     }
 
 
@@ -192,52 +172,92 @@ public struct AnimVector2
 
             if (_curIndex < MIN_INDEX)
             {
-                OnAnimationWrap(FinishLocation.Start, MaxIndex, Duration + _time);
+                OnAnimationIndexWrap(FinishLocation.Start, MaxIndex, Duration + _time);
             }
             else if (_curIndex > MaxIndex)
             {
-                OnAnimationWrap(FinishLocation.End, MIN_INDEX, _time - Duration);
+                OnAnimationIndexWrap(FinishLocation.End, MIN_INDEX, _time - Duration);
             }
 
-        } while (!IsIndexSynced());
+        } while (!IsIndexSyncedWithTime());
     }
 
-    private bool IsIndexSynced() => (_keyframes![_curIndex - 1].Time <= _time) && (_time <= _keyframes[_curIndex].Time);
+    private bool IsIndexSyncedWithTime() => (_keyframes![_curIndex - 1].Time <= _time) && (_time <= _keyframes[_curIndex].Time);
 
-    private void OnAnimationWrap(FinishLocation finishLoc, int wrapIndex, double wrapTime)
+    private void OnAnimationIndexWrap(FinishLocation finishLoc, int wrapIndex, double wrapTime)
     {
         AnimationFinished?.Invoke(this, new(finishLoc));
 
         if (IsLooped)
         {
-            _curIndex -= wrapIndex;
-            _time -= wrapTime;
+            _curIndex = wrapIndex;
+            _time = wrapTime;
         }
-        else IsAnimating = false;
+        else Stop();
     }
 
-    private void SetAnimationData(int wrapIndex, double wrapTime, Vector2 location)
+    private void SetAnimationData(int index, double time, Vector2 location)
     {
-        _curIndex -= wrapIndex;
-        _time -= wrapTime;
+        _curIndex = index;
+        _time = time;
         Vector = location;
+    }
+
+
+    // Inherited methods.
+    public void Update(TimeSpan passedTime)
+    {
+        _time += passedTime.TotalSeconds * Speed;
+
+        if (!IsIndexSyncedWithTime())
+        {
+            SyncIndexWithTime();
+        }
+
+        Vector = GHMath.Interpolate(_keyframes![_curIndex].InterpMethod,
+            _keyframes[_curIndex - 1].Location,
+            _keyframes[_curIndex].Location,
+            (float)((_time - _keyframes[_curIndex - 1].Time) / _keyframes[_curIndex - 1].TimeToNext)
+        );
     }
 
 
     // Operators.
     public static implicit operator Vector2(AnimVector2 animVector2) => animVector2.Vector;
 
-    public static implicit operator AnimVector2(Vector2 vector) => new(vector);
+    public static AnimVector2 operator +(AnimVector2 a, AnimVector2 b)
+    {
+        a.Vector += b.Vector;
+        return a;
+    }
 
-    public static AnimVector2 operator +(AnimVector2 a, AnimVector2 b) => a.Vector + b.Vector;
+    public static AnimVector2 operator -(AnimVector2 a, AnimVector2 b)
+    {
+        a.Vector -= b.Vector;
+        return a;
+    }
 
-    public static AnimVector2 operator -(AnimVector2 a, AnimVector2 b) => a.Vector - b.Vector;
+    public static AnimVector2 operator *(AnimVector2 a, AnimVector2 b)
+    {
+        a.Vector *= b.Vector;
+        return a;
+    }
 
-    public static AnimVector2 operator *(AnimVector2 a, AnimVector2 b) => a.Vector * b.Vector;
+    public static AnimVector2 operator *(AnimVector2 a, float scale)
+    {
+        a.Vector *= scale;
+        return a;
+    }
 
-    public static AnimVector2 operator *(AnimVector2 a, float scale) => a.Vector * scale;
+    public static AnimVector2 operator /(AnimVector2 a, AnimVector2 b)
+    {
+        a.Vector /= b.Vector;
+        return a;
+    }
 
-    public static AnimVector2 operator /(AnimVector2 a, AnimVector2 b) => a.Vector / b.Vector;
-
-    public static AnimVector2 operator /(AnimVector2 a, float denominator) => a.Vector * denominator;
+    public static AnimVector2 operator /(AnimVector2 a, float denominator)
+    {
+        a.Vector /= denominator;
+        return a;
+    }
 }

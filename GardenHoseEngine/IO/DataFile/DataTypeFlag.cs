@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace GardenHose.Engine.IO.DataFile;
+namespace GardenHoseEngine.IO.DataFile;
 
 
 [Flags]

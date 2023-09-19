@@ -1,49 +1,45 @@
-﻿using NAudio.Dsp;
+﻿using NAudio.CoreAudioApi;
+using NAudio.Dsp;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using System;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
 namespace GardenHoseEngine.Audio;
 
-internal class AudioEngine : IDisposable
+public class AudioEngine : IDisposable, ISampleProvider
 {
+    // Static fields.
+    public const int MAX_SOUNDS = 128;
+    public const int AUDIO_LATENCY_MS = 30;
+    public TimeSpan ExecutionTime
+    {
+        get { lock (this) { return _executionTime; } }
+    }
+
+
     // Fields.
-    public const int AUDIO_LATENCY_MS = 15;
-
-    public const float PAN_LEFT = 0f;
-    public const float PAN_MIDDLE = 1f;
-    public const float PAN_RIGHT = 2f;
-
-    public const float VOLUME_MIN = 0f;
-    public const float VOLUME_MAX = 1f;
-
-    public const float PITCH_MIN = 0f;
-    public const float PITCH_DEFAULT = 1f;
-    public const float PITCH_MAX = 2f;
-
-    public readonly WaveFormat Format = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
-
+    public WaveFormat WaveFormat => _format;
 
     // Private fields.
-    private readonly DirectSoundOut _outputDevice;
-    private readonly MixingSampleProvider _waveMixer;
-    private readonly BiQuadFilter _biQuadFilter;
+    private readonly WaveFormat _format = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+    private readonly WasapiOut _outputDevice;
+    private readonly List<SoundInstance> _sounds = new(MAX_SOUNDS);
+    private readonly ConcurrentQueue<SoundInstance> _soundsToAdd = new();
+    private readonly ConcurrentQueue<SoundInstance> _soundsToRemove = new();
+    private float[] _soundBuffer;
+    private TimeSpan _executionTime;
 
 
     // Constructors.
     internal AudioEngine()
     {
-
         try
         {
-            _waveMixer = new(Format);
-            _waveMixer.ReadFully = true;
+            _outputDevice = new(AudioClientShareMode.Shared, true, AUDIO_LATENCY_MS);
 
-            _biQuadFilter = BiQuadFilter.AllPassFilter(Format.SampleRate, Format.SampleRate, 1f);
-
-            _outputDevice = new(AUDIO_LATENCY_MS);
-            _outputDevice.Init(_waveMixer);
-            _outputDevice.PlaybackStopped += OnAudioPlaybackStop;
+            _outputDevice.Init(this);
             _outputDevice.Play();
         }
         catch (Exception e)
@@ -54,137 +50,45 @@ internal class AudioEngine : IDisposable
 
 
     // Internal methods.
-    internal void PlaySound(SoundInstance sound)
-    {
-        _waveMixer.AddMixerInput(sound);
-    }
+    internal void AddSound(SoundInstance sound) => _soundsToAdd.Enqueue(sound);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ProcessSound(SoundInstance sound, float[] buffer, int offset, int count)
-    {
-
-        // Apply effects.
-        if (sound.Pan != PAN_MIDDLE)
-        {
-            PanPass(buffer, offset, count, sound.Pan);
-        }
-        if (sound.Pitch != PITCH_DEFAULT)
-        {
-            PitchPass(buffer, offset, count, sound.Pitch);
-        }
-        if (sound.LowPassCutoffFrequency != null)
-        {
-            LowPass(buffer, offset, count, sound.LowPassCutoffFrequency.Value);
-        }
-        if (sound.HighPassCutoffFrequency != null)
-        {
-            HighPass(buffer, offset, count, sound.HighPassCutoffFrequency.Value);
-        }
-        if (sound.Reverb != 0f)
-        {
-            ReverbPass(buffer, offset, count, sound.Reverb);
-        }
-    }
-
-    internal void OnAudioPlaybackStop(object? sender, EventArgs args)
-    {
-
-    }
+    internal void RemoveSound(SoundInstance sound) => _soundsToRemove.Enqueue(sound);
 
 
     // Private methods.
-    /* Individual effect passes */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PanPass(float[] buffer, int offset, int count, float pan)
+    private void EnsureBuffer(int requestedSize)
     {
-        //float LeftVolumeInleft;
-        //float RightVolumeInleft;
-
-        //float LeftVolumeInRight;
-        //float RightVolumeInRight;
-
-        //if (pan < 1f)
-        //{
-        //    LeftVolumeInRight = 0f;
-        //    RightVolumeInRight = pan;
-
-        //    LeftVolumeInleft = 0.5f + (0.5f * pan);
-        //    RightVolumeInleft = 1 - LeftVolumeInleft;
-        //}
-        //else
-        //{
-        //    pan -= 1f;
-
-        //    LeftVolumeInRight = 0f;
-        //    RightVolumeInRight = pan;
-
-        //    LeftVolumeInleft = 0.5f + (0.5f * pan);
-        //    RightVolumeInleft = 1 - LeftVolumeInleft;
-        //}
-
-        const float MIN_MAIN_VOLUME = 0.5f;
-        const float MAX_SECONDARY_VOLUME = 0.5f;
-
-        if (pan < PAN_MIDDLE)
+        if ((_soundBuffer == null) || (requestedSize > _soundBuffer.Length))
         {
-            float LeftVolumeInLeft = MIN_MAIN_VOLUME + (MAX_SECONDARY_VOLUME * pan);
-            float RightVolumeInLeft = 1f - LeftVolumeInLeft;
-            float RightVolume = pan;
-
-            for (int i = offset; i < (offset + count) - 1; i++)
-            {
-                buffer[i] = (buffer[i] * LeftVolumeInLeft) + (buffer[i + 1] * RightVolumeInLeft);
-                buffer[++i] *= RightVolume;
-            }
-        }
-        else
-        {
-            pan = 1f - (pan - 1f);
-
-            float RightVolumeInRight = MIN_MAIN_VOLUME + (MAX_SECONDARY_VOLUME * pan);
-            float LeftVolumeInRight = 1f - RightVolumeInRight;
-            float LeftVolume = pan;
-
-            for (int i = offset; i < (offset + count) - 1; i++)
-            {
-                buffer[i] = (buffer[i] * LeftVolumeInLeft) + (buffer[i + 1] * RightVolumeInLeft);
-                buffer[++i] *= RightVolume;
-            }
+            _soundBuffer = new float[requestedSize];
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PitchPass(float[] buffer, int offset, int count, float pitch)
+    private int FillBufferWithSilence(float[] buffer, int offset, int count)
     {
-        throw new NotFiniteNumberException();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LowPass(float[] buffer, int offset, int count, int cutoffFrequency)
-    {
-        _biQuadFilter.SetLowPassFilter(Format.SampleRate, cutoffFrequency, 2f);
-        
         for (int i = offset; i < (offset + count); i++)
         {
-            buffer[i] = _biQuadFilter.Transform(buffer[i]);
+            buffer[i] = 0f;
         }
+        return count;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void HighPass(float[] buffer, int offset, int count, int cutoffFrequency)
+    private void AddQueuedSounds()
     {
-        _biQuadFilter.SetHighPassFilter(Format.SampleRate, cutoffFrequency, 2f);
-
-        for (int i = offset; i < (offset + count); i++)
+        while (_soundsToAdd.TryDequeue(out var Sound))
         {
-            buffer[i] = _biQuadFilter.Transform(buffer[i]);
+            _sounds.Add(Sound);
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReverbPass(float[] buffer, int offset, int count, float amount)
+    private void RemoveQueuedSounds()
     {
-        throw new NotImplementedException("Reverb not supported.");
+        while (_soundsToRemove.TryDequeue(out var Sound))
+        {
+            _sounds.Remove(Sound);
+        }
     }
 
 
@@ -192,5 +96,51 @@ internal class AudioEngine : IDisposable
     public void Dispose()
     {
         _outputDevice?.Dispose();
+    }
+
+    public int Read(float[] buffer, int offset, int count)
+    {
+        try
+        {
+            // Ensure buffer capacity, add queued sounds, start time measure.
+            DateTime StartTime = DateTime.UtcNow;
+            EnsureBuffer(count);
+            AddQueuedSounds();
+
+            // Early exit (fill with silence).
+            if (_sounds.Count == 0)
+            {
+                return FillBufferWithSilence(buffer, offset, count);
+            }
+
+            // Overwrite buffer data with the first sound.
+            _sounds[0].GetSamples(_soundBuffer, count);
+            for (int i = offset, Source = 0; i < (offset + count); i++, Source++)
+            {
+                buffer[i] = _soundBuffer[Source];
+            }
+
+
+            // Add remaining sounds.
+            for (int SoundIndex = 1; SoundIndex < _sounds.Count; SoundIndex++)
+            {
+                _sounds[SoundIndex].GetSamples(_soundBuffer, count);
+                for (int Target = offset, Source = 0; Target < (offset + count); Target++, Source++)
+                {
+                    buffer[Target] += _soundBuffer[Source];
+                }
+            }
+
+            // Remove queued sounds, stop time measure.
+            RemoveQueuedSounds();
+            _executionTime = DateTime.UtcNow - StartTime;
+            return count;
+        }
+        catch (Exception e)
+        {
+            _outputDevice.Dispose();
+            Console.WriteLine("aaa");
+            return 0;
+        }
     }
 }

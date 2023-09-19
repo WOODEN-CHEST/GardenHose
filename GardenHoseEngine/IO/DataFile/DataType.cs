@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace GardenHose.Engine.IO.DataFile;
+namespace GardenHoseEngine.IO.DataFile;
 
 public enum DataType : byte
 {

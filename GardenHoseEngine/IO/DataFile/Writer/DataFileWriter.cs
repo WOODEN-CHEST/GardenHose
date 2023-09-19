@@ -1,80 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+namespace GardenHoseEngine.IO.DataFile;
 
-namespace GardenHose.Engine.IO.DataFile;
-
-public class DataFileWriter
+public abstract class DataFileWriter : IDataFile
 {
-    // Static fields.
-    public const int CurrentFormatVersion = 1;
+    // Fields.
+    public abstract int FormatVersion { get; }
 
-    public const string FileExtension = ".ghdf";
-
-    public static readonly byte[] s_signatureBytes =
-    { 102, 37, 143, 181, 3, 205, 123, 185, 148, 157, 98, 177, 178, 151, 43, 170 };
-
-
-    // Public fields.
-    public string FilePath { get; private set; }
-
-    public readonly WriteDataCompound BaseCompound = new(null);
+    public IWriteableDataCompound BaseCompound { get; }
 
 
     // Constructors.
-    public DataFileWriter(string filePath)
+    public DataFileWriter(IWriteableDataCompound baseCompound)
     {
-        ArgumentNullException.ThrowIfNull(filePath);
-
-        if (Path.GetExtension(filePath) != FileExtension)
+        if (baseCompound == null)
         {
-            filePath = Path.ChangeExtension(filePath, FileExtension);
+            throw new ArgumentNullException(nameof(baseCompound));
         }
-        
-        FilePath = filePath;
+        if (baseCompound.FormatVersion != FormatVersion)
+        {
+            throw new ArgumentException(
+                $"Unsupported base compound version: {baseCompound.FormatVersion}, expected {FormatVersion}.",
+                nameof(baseCompound));
+        }
+
+        BaseCompound = baseCompound;
     }
 
 
     // Methods.
-    public void WriteToFile(int gameVersion)
+    public abstract void Write(string path, int gameVersion, IWriteableDataCompound dataCompound);
+
+
+    // Internal methods.
+    internal void WriteMetaData(BinaryWriter writer, int gameVersion)
     {
-        try
+        if (writer == null)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-            if (FilePath == null || FilePath == string.Empty)
-            {
-                throw new DirectoryNotFoundException($"Invalid filepath \"{FilePath}\"");
-            }
-
-            using Stream DataStream = File.Create(FilePath);
-
-            WriteMetadata(DataStream, gameVersion);
-            DataStream.Write(BaseCompound.GetData());
-            DataStream.Flush();
-            DataStream.Close();
+            throw new InvalidOperationException("Stream writer is not set.");
         }
-        catch (IOException e)
-        {
-            throw new DataWriteException($"IOException writing DataFile. {e}");
-        }
-        catch (UnauthorizedAccessException e)
-        {
-            throw new DataWriteException($"Denied permission to write file. {e}");
-        }
-    }
 
-
-    // Private methods.
-    private void WriteMetadata(Stream dataStream, int gameVersion)
-    {
-        dataStream.Write(s_signatureBytes);
-        dataStream.Write(BitConverter.GetBytes(CurrentFormatVersion));
-        dataStream.Write(BitConverter.GetBytes(gameVersion));
+        writer.Write(IDataFile.Signature);
+        writer.Write(FormatVersion);
+        writer.Write(gameVersion);
     }
 }

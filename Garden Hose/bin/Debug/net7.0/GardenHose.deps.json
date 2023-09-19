@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v7.0": {
       "GardenHose/1.0.0": {
         "dependencies": {
+          "GardenHoseEngine": "1.0.0",
           "MonoGame.Content.Builder.Task": "3.8.1.303",
           "MonoGame.Framework.DesktopGL": "3.8.1.303",
           "NAudio": "2.2.0"
@@ -149,7 +150,16 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
-      "System.Security.Principal.Windows/4.7.0": {}
+      "System.Security.Principal.Windows/4.7.0": {},
+      "GardenHoseEngine/1.0.0": {
+        "dependencies": {
+          "MonoGame.Framework.DesktopGL": "3.8.1.303",
+          "NAudio": "2.2.0"
+        },
+        "runtime": {
+          "GardenHoseEngine.dll": {}
+        }
+      }
     }
   },
   "libraries": {
@@ -241,6 +251,11 @@
       "sha512": "sha512-ojD0PX0XhneCsUbAZVKdb7h/70vyYMDYs85lwEI+LngEONe/17A0cFaRFqZU+sOEidcVswYWikYOQ9PPfjlbtQ==",
       "path": "system.security.principal.windows/4.7.0",
       "hashPath": "system.security.principal.windows.4.7.0.nupkg.sha512"
+    },
+    "GardenHoseEngine/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

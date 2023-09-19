@@ -1,25 +1,14 @@
 ﻿using GardenHose;
-using System;
-using System.Diagnostics;
+using GardenHose.Frames;
+using GardenHoseEngine;
 
-MainGame Game = new();
-Game.Run();
+using GHEngine Engine = new(new GHEngineStartupSettings()
+{
+    GameName = "GH",
+    InternalName = "gh",
+    VirtualSize = new(1920f, 1080f),
+    StartupFrame = new TestFrame("test")
+});
 
-//try
-//{
-//    Logger.Initialize();
-//    Game.Run();
-//}
-//catch (Exception e)
-//{
-//    Logger.Critical($"Game has crashed! " +
-//        $"Main thread ID: {Environment.CurrentManagedThreadId}. Info: {e}");
-
-//    Process.Start(Logger.FilePath);
-//}
-//finally
-//{
-//    Game.Dispose();
-//    Logger.Info("Game closed.");
-//    Logger.Dispose();
-//}
+GH.Engine = Engine;
+Engine.Execute();

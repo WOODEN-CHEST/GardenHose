@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿
+using NVorbis;
+using System.Collections;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 
@@ -8,14 +11,22 @@ namespace Tests
     {
         static void Main(string[] args)
         {
-            Process(new float[1_000_000_000]);
+            Test();
         }
 
-        static void Process(float[] buffer)
+        static void Test()
         {
-            for (int i = 0; i < buffer.Length - 1; i++)
+            try
             {
-
+                throw new Exception();
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException();
+            }
+            finally
+            {
+                Console.WriteLine("Finally");
             }
         }
     }

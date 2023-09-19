@@ -7,7 +7,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="IO\DataFile\Reader\Legacy\" />
+    <Compile Remove="Frame\Item\Basic\**" />
+    <Compile Remove="Frame\Item\Texta\**" />
+    <Compile Remove="Translatable\**" />
+    <EmbeddedResource Remove="Frame\Item\Basic\**" />
+    <EmbeddedResource Remove="Frame\Item\Texta\**" />
+    <EmbeddedResource Remove="Translatable\**" />
+    <None Remove="Frame\Item\Basic\**" />
+    <None Remove="Frame\Item\Texta\**" />
+    <None Remove="Translatable\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Frame\DynamicFont.cs" />
+    <Compile Remove="Frame\Item\Text\FormattedTextComponent.cs" />
+    <Compile Remove="Frame\Item\Text\TextComponent.cs" />
+    <Compile Remove="Frame\Item\Text\TextComponentCleaner.cs" />
+    <Compile Remove="IO\RebindableKeys.cs" />
   </ItemGroup>
 
   <ItemGroup>

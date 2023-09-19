@@ -1,78 +1,63 @@
-﻿using GardenHose;
+﻿using GardenHoseEngine;
 using GardenHoseEngine.Audio;
+using GardenHoseEngine.Frame;
+using GardenHoseEngine.IO;
 using GardenHoseEngine.Logging;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
 
 
-namespace GardenHoseEngine;
+namespace GardenHose;
 
-public sealed class GHEngine : IDisposable
+
+public class GHEngine : Game
 {
-    // Fields.
-    public Logger Logger { get; init; }
+    // Public fields.
+    public GHEngineStartupSettings StartupSettings { get; private init; }
 
-    public string GameName
-    {
-        get => _gameName;
-        set => _gameName = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    public readonly string GameName;
 
+    public readonly string InternalName;
 
-    // Internal fields.
-    internal readonly string InternalName;
-    internal GHGame Game { get; init; }
-    internal GraphicsDeviceManager GraphicsDeviceManager { get; private set; }
-    internal AssetManager AssetManager { get; init; }
-    internal AudioEngine AudioEngine { get; init; }
+    public Logger Logger { get; private set; }
 
+    public GraphicsDeviceManager GraphicsManager { get; private set; }
 
-    // Private fields.
-    private string _gameName;
+    public Display Display { get; private set; }
 
+    public UserInput UserInput { get; private set; }
+
+    public AudioEngine AudioEngine { get; private set; }
+
+    public AssetManager AssetManager { get; private set; }
+
+    public GameFrameManager FrameManager { get; private set; }
+
+    public Texture2D SinglePixel { get; private set; }
+    
 
     // Constructors.
-    public GHEngine(string internalName,
-        string gameName,
-        string logDirectory,
-        string assetBasePath,
-        string? assetExtraPath)
+    public GHEngine(GHEngineStartupSettings startupSettings) 
     {
-        if (string.IsNullOrWhiteSpace(internalName))
-        {
-            throw new ArgumentNullException(nameof(internalName));
-        }
+        StartupSettings = startupSettings ?? throw new ArgumentNullException(nameof(startupSettings));
 
-        InternalName = internalName;
-        Logger = new(logDirectory, InternalName);
-
-        try 
-        {
-            // Engine properties.
-            GameName = gameName;
-
-            // MonoGame.
-            Game = new();
-            GraphicsDeviceManager = new(Game);
-
-            // Engine components.
-            AssetManager = new(assetBasePath, assetExtraPath, this, Game);
-            AudioEngine = new();
-        }
-        catch (Exception e)
-        {
-            OnCrash(e);
-            throw new Exception($"Failed to create instance of GHEngine. {e}");
-        }
+        GraphicsManager = new(this);
+        GameName = StartupSettings.GameName;
+        InternalName = StartupSettings.InternalName;
     }
 
 
     // Methods.
     public void Execute()
     {
+        Logger = new(Path.Combine(StartupSettings.GameDataRootDirectory, InternalName, "logs"), InternalName);
+
         try
         {
-            Game.Run();
+            Run();
         }
         catch (Exception e)
         {
@@ -80,7 +65,7 @@ public sealed class GHEngine : IDisposable
         }
         finally
         {
-            Dispose();
+            Logger.Dispose();
         }
     }
 
@@ -98,11 +83,54 @@ public sealed class GHEngine : IDisposable
         }
     }
 
+    private void OnUserToggleFullscreenEvent(object? sender, EventArgs args)
+    {
+        if (UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
+        {
+            Display.CorrectWindowedSize();
+        }
+        else Display.IsFullScreen = !Display.IsFullScreen;
+    }
+
 
     // Inherited methods.
-    public void Dispose()
+    protected override void Initialize()
     {
-        Game?.Dispose();
-        Logger?.Dispose();
+        base.Initialize();
+
+        // Create engine components.
+        Display = new(GraphicsManager, Window, StartupSettings.VirtualSize, 
+            StartupSettings.WindowSize, StartupSettings.IsFullScreen);
+        SinglePixel = new(GraphicsManager.GraphicsDevice, 1, 1);
+        SinglePixel.SetData<Color>(new Color[] { Color.White });
+
+
+        UserInput = new(Display, Window);
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(UserInput, this, null, KeyCondition.OnPress,
+            OnUserToggleFullscreenEvent, Keys.F11));
+
+        AudioEngine = new();
+        AssetManager = new(StartupSettings.AssetBasePath, StartupSettings.AssetExtraPath,
+            AudioEngine, Content, GraphicsManager, Logger);
+
+        FrameManager = new(GraphicsManager, Display, AssetManager, 
+            StartupSettings.StartupFrame, StartupSettings.GlobalFrame);
+
+
+        // Set fields.
+        IsMouseVisible = StartupSettings.IsMouseVisible;
+        Window.AllowAltF4 = StartupSettings.AllowAltF4;
+        Window.AllowUserResizing = StartupSettings.AllowUserResizing;
+    }
+
+    protected override void Update(GameTime gameTime)
+    {
+        UserInput.ListenForInput(IsActive);
+        FrameManager.UpdateFrames(gameTime.ElapsedGameTime);
+    }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        FrameManager.DrawFrames(gameTime.ElapsedGameTime);
     }
 }

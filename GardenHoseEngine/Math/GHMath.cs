@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿// Ignore Spelling: Interp
+
+using Microsoft.Xna.Framework;
 using System;
 
 

@@ -235,6 +235,20 @@
             "rid": "win"
           }
         }
+      },
+      "GardenHoseEngine/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v7.0",
+        "dependencies": {
+          "MonoGame.Framework.DesktopGL": "3.8.1.303",
+          "NAudio": "2.2.0"
+        },
+        "compile": {
+          "bin/placeholder/GardenHoseEngine.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/GardenHoseEngine.dll": {}
+        }
       }
     }
   },
@@ -532,10 +546,16 @@
         "useSharedDesignerContext.txt",
         "version.txt"
       ]
+    },
+    "GardenHoseEngine/1.0.0": {
+      "type": "project",
+      "path": "../GardenHoseEngine/GardenHoseEngine.csproj",
+      "msbuildProject": "../GardenHoseEngine/GardenHoseEngine.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "GardenHoseEngine >= 1.0.0",
       "MonoGame.Content.Builder.Task >= 3.8.1.303",
       "MonoGame.Framework.DesktopGL >= 3.8.1.303",
       "NAudio >= 2.2.0"
@@ -573,7 +593,11 @@
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "D:\\Workstations\\Programming\\Projects\\Garden Hose C# Recreation\\Garden Hose\\GardenHoseEngine\\GardenHoseEngine.csproj": {
+              "projectPath": "D:\\Workstations\\Programming\\Projects\\Garden Hose C# Recreation\\Garden Hose\\GardenHoseEngine\\GardenHoseEngine.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

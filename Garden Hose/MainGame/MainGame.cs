@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using NAudio.Dsp;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using System;
+using System.Threading;
 
 namespace GardenHose;
 
@@ -12,13 +12,11 @@ public class MainGame : Game
     // Static fields.
     public static MainGame Instance { get; private set; }
     public static GraphicsDeviceManager GraphicsManager { get; private set; }
-
-    MouseState mouseState;
-    WaveOutEvent PlaybackDevice;
-    MixingSampleProvider Mixer = new(WaveFormat.CreateCustomFormat(WaveFormatEncoding.IeeeFloat,
-        44100, 2, 2 * 44100 * sizeof(float), 8, 32));
-    Passer Filter;
-    AudioFileReader Reader;
+    SpriteBatch Batch;
+    Texture2D Ball;
+    Color Mask = Color.White;
+    public (double R, double G, double B) RealMask = (1d, 1d, 1d);
+    Effect Effect;
 
 
     // Constructors.
@@ -27,6 +25,9 @@ public class MainGame : Game
         GraphicsManager = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         Instance = this;
+        IsFixedTimeStep = false;
+        GraphicsManager.SynchronizeWithVerticalRetrace = false;
+        Window.AllowUserResizing = true;
 
         IsMouseVisible = true;
         GraphicsManager.PreferredBackBufferWidth = 1280;
@@ -37,74 +38,59 @@ public class MainGame : Game
     // Inherited methods.
     protected override void LoadContent()
     {
+        Ball = Content.Load<Texture2D>(@"ball");
+        Effect = Content.Load<Effect>(@"glow");
 
+        Batch = new(GraphicsDevice);
     }
 
-    [STAThread]
+
     protected override void Initialize()
     {
         base.Initialize();
-
-        PlaybackDevice = new();
-
-        //Reader = new AudioFileReader(@"C:\Users\User\Desktop\click2.mp3");
-        //Filter = new(Reader.ToSampleProvider(), 0);
-
-
-        Mixer.ReadFully = true;
-        PlaybackDevice.DesiredLatency = 50;
-        PlaybackDevice.Init(Mixer);
-        PlaybackDevice.Play();
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (Mouse.GetState().LeftButton == ButtonState.Pressed
-             && mouseState.LeftButton == ButtonState.Released)
+        if (Keyboard.GetState().IsKeyDown(Keys.Enter))
         {
-            Mixer.AddMixerInput(new AudioFileReader(@"C:\Users\User\Desktop\click2.mp3").ToSampleProvider());
+
+            RealMask.R = 1d;
+            RealMask.G = 0.1d;
+            RealMask.B = 0.1d;
         }
 
-        mouseState = Mouse.GetState();
+        RealMask.R = Math.Min(1d, RealMask.R + gameTime.ElapsedGameTime.TotalSeconds * 4d);
+        RealMask.G = Math.Min(1d, RealMask.G + gameTime.ElapsedGameTime.TotalSeconds * 4d);
+        RealMask.B = Math.Min(1d, RealMask.B + gameTime.ElapsedGameTime.TotalSeconds * 4d);
+
+        Mask.R = (byte)(byte.MaxValue * RealMask.R);
+        Mask.G = (byte)(byte.MaxValue * RealMask.G);
+        Mask.B = (byte)(byte.MaxValue * RealMask.B);
     }
 
     protected override void Draw(GameTime gameTime)
     {
+        GraphicsDevice.Clear(Color.Brown);
+        Vector4 MaskColor = Vector4.Zero;
 
-    }
-}
-
-internal class Passer : ISampleProvider
-{
-    private ISampleProvider Source;
-    public BiQuadFilter Filter { get; private set; }
-    public int CutoffFrequency
-    {
-        get => _cutoffFrequency;
-        set => _cutoffFrequency = value;
-    }
-    private int _cutoffFrequency;
-
-    public WaveFormat WaveFormat => Source.WaveFormat;
-
-
-
-    public Passer(ISampleProvider source, int frequency)
-    {
-        CutoffFrequency = frequency;
-        Filter = BiQuadFilter.HighPassFilter(44100, CutoffFrequency, 1f);
-        Source = source;
-    }
-
-    public int Read(float[] buffer, int offset, int count)
-    {
-        int changed = Source.Read(buffer, offset, count);
-
-        for (int i = offset; i < (offset + count); i++)
+        Batch.Begin(effect: Effect, blendState: BlendState.AlphaBlend);
+        Vector2 Pos = Vector2.Zero;
+        for (int i = 0; i < 1000; i++)
         {
-            buffer[i] = Filter.Transform(buffer[i]);
-        }
+            Effect.Parameters["Color"].SetValue(MaskColor);
 
-        return changed;
+
+            Batch.Draw(Ball, Pos, Mask);
+            Pos.X += 1f;
+
+            MaskColor.X = (MaskColor.X + 0.01f) % 1f;
+            MaskColor.Y = (MaskColor.Y + 0.01f) % 1f;
+            MaskColor.Z = (MaskColor.Z + 0.01f) % 1f;
+            MaskColor.W = (MaskColor.W + 0.01f) % 1f;
+
+            
+        }
+        Batch.End();
     }
 }

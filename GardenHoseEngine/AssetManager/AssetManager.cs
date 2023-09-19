@@ -1,13 +1,25 @@
-﻿using GardenHoseEngine.Frame;
+﻿// Ignore Spelling: SHADERS Overrideable
+
+using GardenHoseEngine.Audio;
+using GardenHoseEngine.Frame;
+using GardenHoseEngine.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;
 using System.IO;
+using System.IO.Compression;
 
 namespace GardenHoseEngine;
 
+/* It's a bit confusing so explanation, and for me to remember.
+ * Monogame assets -> Stored with monogame content manager.
+ * Custom assets -> Stored in this asset manager.
+ * FullPath = Fully qualified path to file, except its extension. 
+ * RelativePath = Relative path of a file in any pack, no extension. 
+ * Base path = Fully qualified paths to root of asset paths.
+ * Extra path = Fully qualified path to asset packs directory. */
 public class AssetManager
 {
     // Static fields.
@@ -17,8 +29,8 @@ public class AssetManager
     public const string DIR_SHADERS = "shaders";
     public const string DIR_LANGUAGES = "languages";
     public const string DIR_MODELS = "models";
-                                                
-                                                
+
+
     // Fields.
     public readonly string BasePath;
     public readonly string? ExtraPath;
@@ -26,25 +38,41 @@ public class AssetManager
 
 
     // Private fields.
-    private readonly ContentManager _content;
-    private readonly GHEngine _ghEngine;
+    private const string AUDIO_EXTENSION = ".mp3";
+    private const string TEXTURE_EXTENSION = ".png";
+    private const string LANGUAGE_EXTENSION = ".lang";
+
+    private readonly ContentManager _monogameContent;
+    private readonly Audio.AudioEngine _audioEngine;
+    private readonly Logger _logger;
+    private readonly GraphicsDeviceManager _graphicsManager;
 
     private readonly Dictionary<GameFrame, HashSet<object>> _users = new(4);
-    private readonly Dictionary<string, object> _assetEntries = new();
-    private readonly HashSet<string> _overrideAssetPaths = new();
+    private readonly Dictionary<string, object> _assetEntries = new(); // Key = relative asset path. Value =  asset.
+    private readonly Dictionary<string, string> _overrideAssets = new(); // Key = relative asset path. Value = pack name.
+    private readonly HashSet<string> _monogameHandledAssetTypes = new() { DIR_TEXTURES, DIR_SHADERS, DIR_FONTS };
 
 
     // Constructors.
-    internal AssetManager(string basePath, string? extraPath, GHEngine engine, Game game)
+    internal AssetManager(string basePath, string? extraPath, Audio.AudioEngine audioEngine,
+        ContentManager contentManager, GraphicsDeviceManager graphicsManager, Logger logger)
     {
-        _ghEngine = engine;
-        _content = game.Content;
+        _audioEngine = audioEngine ?? throw new ArgumentNullException(nameof(audioEngine));
+        _monogameContent = contentManager ?? throw new ArgumentNullException(nameof(contentManager));
+        _graphicsManager = graphicsManager ?? throw new ArgumentNullException(nameof(graphicsManager));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        BasePath = basePath ?? throw new ArgumentNullException(nameof(basePath));
+
+        if (basePath == null)
+        {
+            throw new ArgumentNullException(nameof(basePath));
+        }
         if (!Path.IsPathFullyQualified(basePath))
         {
-            throw new ArgumentException($"Base path \"{basePath}\" is not fully qualified");
+            throw new ArgumentException($"base path \"{basePath}\" is not fully qualified");
         }
+        BasePath = basePath;
+        _monogameContent.RootDirectory = basePath;
 
         ExtraPath = extraPath;
         if ((extraPath != null) && (!Path.IsPathFullyQualified(extraPath)))
@@ -68,93 +96,126 @@ public class AssetManager
             throw new InvalidOperationException("Cannot scan extra path since it's null");
         }
 
-        string AssetPackPath = Path.Combine(ExtraPath, packName);
-        if (!Directory.Exists(AssetPackPath))
+        string FullAssetPackRootPath = Path.Combine(ExtraPath, packName);
+        if (!Directory.Exists(FullAssetPackRootPath))
         {
             throw new ArgumentException($"Asset pack \"{packName}\" not found.");
         }
 
         // Scan pack.
-        ScanDirectory(AssetPackPath);
+        ScanDirectory(FullAssetPackRootPath);
 
-        void ScanDirectory(string directory)
+        void ScanDirectory(string fullDirPath)
         {
-            if (NonOverridableDirectories.Contains( Path.GetRelativePath(ExtraPath, directory) ))
+            if (NonOverridableDirectories.Contains( Path.GetRelativePath(ExtraPath, fullDirPath) ))
             {
-                _ghEngine.Logger.Info($"Pack \"{AssetPackPath}\" attempted to override" +
-                    $" a non-overridable path \"{directory}\"");
+                _logger.Info($"Pack \"{FullAssetPackRootPath}\" attempted to override" +
+                    $" a non-overridable path \"{fullDirPath}\"");
                 return;
             }
 
-            foreach (string AssetPath in Directory.GetFiles(directory))
+            foreach (string fullAssetPathWithExt in Directory.GetFiles(fullDirPath))
             {
-                _overrideAssetPaths.Add(Path.GetRelativePath(AssetPackPath, AssetPath));
+                _overrideAssets[Path.GetRelativePath(FullAssetPackRootPath, 
+                    Path.ChangeExtension(fullAssetPathWithExt, null))] = packName;
             }
-            foreach (string SubDirectory in Directory.GetDirectories(directory))
+            foreach (string FullSubDirPath in Directory.GetDirectories(fullDirPath))
             {
-                ScanDirectory(SubDirectory);
+                ScanDirectory(FullSubDirPath);
             }
         }
     }
 
-    public void UseAssets(GameFrame user, IEnumerable<string> paths)
+    public void UseAssets(GameFrame user, IEnumerable<string> relativePaths)
     {
-        ThrowIfUnregistered(user);
+        ValidateUser(user);
 
-        if (paths == null)
+        if (relativePaths == null)
         {
-            throw new ArgumentNullException(nameof(paths));
+            throw new ArgumentNullException(nameof(relativePaths));
         }
 
-        foreach (var assetPath in paths)
+        foreach (var relativeAssetPath in relativePaths)
         {
-            UseAsset(user, assetPath);
+            UseAsset(user, relativeAssetPath);
         }
     }
 
-    public void UseAssets(GameFrame user, string directory)
+    public void UseAssets(GameFrame user, string relativeDir)
     {
-        if (string.IsNullOrEmpty(directory))
+        if (string.IsNullOrEmpty(relativeDir))
         {
-            throw new ArgumentNullException(nameof(directory));
+            throw new ArgumentNullException(nameof(relativeDir));
         }
 
-        if (!Directory.Exists( Path.Combine(BasePath, directory) ))
+        if (!Directory.Exists( Path.Combine(BasePath, relativeDir) ))
         {
             throw new DirectoryNotFoundException(
-                $"No directory found with the relative path \"{directory}\"");
+                $"No directory found with the relative path \"{relativeDir}\"");
         }
 
 
-        UseAssets(user, new DirectoryInfo(directory).GetFiles("", SearchOption.AllDirectories)
-            .Select(file => Path.GetRelativePath(BasePath, GetFilePathWithoutExtension(file.FullName))) );
+        UseAssets(user, new DirectoryInfo(relativeDir).GetFiles("*", SearchOption.AllDirectories)
+            .Select( file => Path.GetRelativePath(BasePath, Path.ChangeExtension(file.FullName, null)) )
+            );
+    }
+
+    public void FreeAssets(GameFrame user, IEnumerable<string> relativePaths)
+    {
+        ValidateUser(user);
+
+        if (relativePaths == null)
+        {
+            throw new ArgumentNullException(nameof(relativePaths));
+        }
+
+        foreach (var assetPath in relativePaths)
+        {
+            FreeAssetFromUser(user, assetPath);
+        }
+    }
+
+    public void FreeAsset(GameFrame user, string relativePath)
+    {
+        ValidateUser(user);
+
+        if (relativePath == null)
+        {
+            throw new ArgumentNullException(nameof(relativePath));
+        }
+        FreeAssetFromUser(user, relativePath);
     }
 
 
     /* Getting assets. */
-    public Texture2D GetTexture(GameFrame user, string path)
+    public Texture2D GetTexture(GameFrame user, string relativePath)
     {
-        return GetAsset<Texture2D>(user, path, LoadTexture);
+        return GetAsset<Texture2D>(user, Path.Combine(DIR_TEXTURES, relativePath));
     }
 
-    public SoundEffect GetSoundEffect(GameFrame user, string path)
+    public Sound GetSoundEffect(GameFrame user, string relativePath)
     {
-        return GetAsset<SoundEffect>(user, path, LoadSound);
+        return GetAsset<Sound>(user, Path.Combine(DIR_SOUNDS, relativePath));
     }
 
-    public Effect GetShader(GameFrame user, string path)
+    public Effect GetShader(GameFrame user, string relativePath)
     {
-        return GetAsset<Effect>(user, path, LoadDefault);
+        return GetAsset<Effect>(user, Path.Combine(DIR_SHADERS, relativePath));
     }
 
-    public SpriteFont GetFont(GameFrame user, string path)
+    public SpriteFont GetFont(GameFrame user, string relativePath)
     {
-        return GetAsset<SpriteFont>(user, path, LoadDefault);
+        return GetAsset<SpriteFont>(user, Path.Combine(DIR_FONTS, relativePath));
     }
 
-    public SpriteFont GetLanguage(GameFrame user, string path)
+    public object GetLanguage(GameFrame user, string relativePath)
     {
-        return GetAsset<SpriteFont>(user, path, LoadDefault);
+        return GetAsset<object>(user, Path.Combine(DIR_LANGUAGES, relativePath));
+    }
+
+    public object GetModel(GameFrame user, string relativePath)
+    {
+        return GetAsset<object>(user, Path.Combine(DIR_MODELS, relativePath));
     }
 
 
@@ -181,146 +242,100 @@ public class AssetManager
 
     internal void FreeUnusedAssets()
     {
-        List<string> AssetsToUnload = new(_assetEntries.Count);
+        List<string> relativePaths = new(_assetEntries.Count);
 
         foreach (KeyValuePair<string, object> Asset in _assetEntries)
         {
             if (!IsAssetUsed(Asset.Value))
             {
-                AssetsToUnload.Add(Asset.Key);
+                relativePaths.Add(Asset.Key);
             }
         }
 
-        foreach (var Asset in AssetsToUnload)
+        foreach (var reltivePath in relativePaths)
         {
-            _assetEntries.Remove(Asset);
+            UnloadAsset(reltivePath);
         }
     }
 
 
     // Private methods.
-    /* Loading */
-    private void LoadAsset(string path)
+    /* Loading. */
+    private void LoadAssetDynamic(string relativePath)
     {
-        switch (Path.GetPathRoot(path))
+        bool IsPathOverridden = _overrideAssets.ContainsKey(relativePath);
+        string FullPath = IsPathOverridden
+            ? GetFullOverrideAssetPath(relativePath)
+            : Path.Combine(BasePath, relativePath);
+
+        _assetEntries[relativePath] = relativePath.Split('\\', '/')[0] switch
         {
-            case DIR_TEXTURES:
-                LoadTexture(path);
-                break;
+            DIR_TEXTURES => LoadTexture(FullPath, IsPathOverridden),
 
-            case DIR_SOUNDS:
-                LoadSound(path);
-                break;
+            DIR_SOUNDS => LoadSound(FullPath),
 
-            case DIR_SHADERS:
-                LoadShader(path);
-                break;
+            DIR_SHADERS => LoadShader(FullPath),
 
-            case DIR_FONTS:
-                LoadFont(path);
-                break;
+            DIR_FONTS => LoadFont(FullPath),
 
-            case DIR_LANGUAGES:
-                LoadLanguage(path);
-                break;
+            DIR_LANGUAGES => LoadLanguage(FullPath),
 
-            case DIR_MODELS:
-                LoadModel(path);
-                break;
+            DIR_MODELS => LoadModel(FullPath),
 
-            default:
-                throw new ArgumentOutOfRangeException(nameof(path), 
-                    $"Couldn't resolve type of asset for \"{path}\"");
-        }
+            _ => throw new ArgumentOutOfRangeException(nameof(relativePath),
+                    $"Couldn't resolve type of asset for \"{relativePath}\"")
+        };
     }
 
-    private void LoadMonoGameAsset(string path, Func<object>? overrideCase)
+    private object LoadTexture(string fullPath, bool pathOverridden) 
     {
-        if (_overrideAssetPaths.Contains(path) && (overrideCase != null))
+        if (pathOverridden)
         {
-            _assetEntries[path] = overrideCase.Invoke();
+            return Texture2D.FromFile(_graphicsManager.GraphicsDevice, 
+                Path.ChangeExtension(fullPath, TEXTURE_EXTENSION));
         }
-        else
-        {
-            _assetEntries[path] = _content.Load<object>(path);
-        }
+        return _monogameContent.Load<Texture2D>(fullPath); // Content manager adds extension automatically.
     }
 
-    private void LoadTexture(string path)
+    private object LoadSound(string fullPath)
     {
-        LoadMonoGameAsset(path, () => Texture2D.FromFile(_ghEngine.GraphicsDeviceManager.GraphicsDevice, path));
+        return new Sound(Path.ChangeExtension(fullPath, AUDIO_EXTENSION), _audioEngine);
     }
 
-    private void LoadSound(string path)
+    private object LoadShader(string fullPath) 
     {
-        LoadMonoGameAsset(path, () => SoundEffect.FromFile(path));
+        return _monogameContent.Load<Effect>(fullPath);  // Content manager adds extension automatically.
     }
 
-    private void LoadShader(string path)
+    private object LoadFont(string fullPath) 
     {
-        LoadMonoGameAsset(path, null);
+        return _monogameContent.Load<SpriteFont>(fullPath); // Content manager adds extension automatically.
     }
 
-    private void LoadFont(string path)
-    {
-        LoadMonoGameAsset(path, null);
-    }
-
-    private void LoadLanguage(string path)
+    private object LoadLanguage(string fullPath)
     {
         throw new NotImplementedException();
     }
 
-    private void LoadModel(string path)
+    private object LoadModel(string fullPath)
     {
         throw new NotImplementedException();
     }
 
-    private T GetAsset<T>(GameFrame user, string path, Action<string, AssetEntry> loadFunc)
+    private T GetAsset<T>(GameFrame user, string relativePath)
     {
-        ThrowIfUnregistered(user);
-        if (path == null)
-        {
-            throw new ArgumentNullException(nameof(path));
-        }
-        EnsureAssetEntry(user, path);
-
-        var Asset = _assetEntries[path];
-        if (Asset.Data == null)
-        {
-            loadFunc.Invoke(path, Asset);
-        }
-        return (T)Asset.Data!;
+        ValidateUser(user);
+        UseAsset(user, relativePath);
+        return (T)_assetEntries[relativePath];
     }
 
 
-    /* Assets */
-    private void UseAsset(GameFrame user, string path)
-    {
-        if (_assetEntries.ContainsKey(path))
-        {
-            Asset = new();
-            _assetEntries.Add(path, Asset);
-        }
-
-        _users[user].Add(Asset);
-    }
-
-    private void EnsureAssetEntry(GameFrame user, string path)
-    {
-        if (!_assetEntries.ContainsKey(path))
-        {
-            AssetEntry Asset = new();
-            _assetEntries.Add(path, Asset);
-            _users[user].Add(Asset);
-        }
-    }
-
-    private bool IsAssetUsed(object asset)
+    /* Assets. */
+    private bool IsAssetUsed(object relativeAssetPath)
     {
         foreach (var UserAssets in _users.Values)
         {
-            if (UserAssets.Contains(asset))
+            if (UserAssets.Contains(relativeAssetPath))
             {
                 return true;
             }
@@ -328,10 +343,50 @@ public class AssetManager
 
         return false;
     }
+    
+    private void UseAsset(GameFrame user, string relativePath)
+    {
+        if (!_assetEntries.ContainsKey(relativePath))
+        {
+            LoadAssetDynamic(relativePath);
+        }
+        _users[user].Add(relativePath);
+    }
+
+    private void FreeAssetFromUser(GameFrame user, string relativePath)
+    {
+        if (!IsAssetUsed(relativePath))
+        {
+            UnloadAsset(relativePath);
+        }
+        _users[user].Remove(relativePath);
+    }
+
+    private void UnloadAsset(string reltivePath)
+    {
+        if (_monogameHandledAssetTypes.Contains(Path.GetPathRoot(reltivePath)!))
+        {
+            // Monogame stores assets with '/' rather than '\'.
+            // Loading an asset does this conversion automatically, but unloading does not.
+            if (_overrideAssets.ContainsKey(reltivePath))
+            {
+                _monogameContent.UnloadAsset(GetFullOverrideAssetPath(reltivePath).Replace('\\', '/'));
+            }
+            else _monogameContent.UnloadAsset(Path.Combine(BasePath, reltivePath).Replace('\\', '/'));
+        }
+        _assetEntries.Remove(reltivePath);
+    }
+
+
+    /* Paths. */
+    private string GetFullOverrideAssetPath(string relativePath)
+    {
+        return Path.Combine(ExtraPath!, Path.Combine(_overrideAssets[relativePath], relativePath));
+    }
 
 
     /* Other */
-    private void ThrowIfUnregistered(GameFrame gameFrame)
+    private void ValidateUser(GameFrame gameFrame)
     {
         if (gameFrame == null)
         {
@@ -343,10 +398,5 @@ public class AssetManager
             throw new ArgumentException($"{nameof(GameFrame)} \"{gameFrame.Name}\" " +
                 $"is not registered as an asset user. ");
         }
-    }
-
-    private string GetFilePathWithoutExtension(string path)
-    {
-        return Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path));
     }
 }

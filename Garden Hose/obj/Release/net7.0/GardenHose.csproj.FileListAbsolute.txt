@@ -31,3 +31,10 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\Content\textures\3.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\Content\textures\screen.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\Content\Models\modeling.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\Content\sounds\ar.ogg
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.Asio.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.Core.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.Midi.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.Wasapi.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\NAudio.WinMM.dll

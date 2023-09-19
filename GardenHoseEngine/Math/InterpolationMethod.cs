@@ -1,6 +1,6 @@
 ﻿namespace GardenHoseEngine;
 
-public enum InterpolationMethod : byte
+public enum InterpolationMethod
 {
     Linear = 0,
     EaseIn,

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GardenHoseEngine;
 
-public class RandomSequence<T>
+public class RandomSequence<T> : IEnumerable<T>
 {
     // Fields.
     public T[] Items
@@ -46,10 +47,9 @@ public class RandomSequence<T>
     // Methods.
     public T GetItem()
     {
-        if (_index == -1)
+        if (_index < 0)
         {
             Randomize();
-            _index = _items.Length - 1;
         }
 
         return _items[_index--];
@@ -64,5 +64,28 @@ public class RandomSequence<T>
             RandIndex = Random.Shared.Next(_items.Length);
             (_items[RandIndex], _items[Index]) = (_items[Index], _items[RandIndex]);
         }
+
+        _index = _items.Length - 1;
+    }
+
+    // Inherited methods.
+    public IEnumerator<T> GetEnumerator()
+    {
+        Randomize();
+
+        for (; _index > 0; _index--)
+        {
+            yield return _items[_index];
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+
+    // Operators.
+    public T this[int index]
+    {
+        get => _items[index];
+        set => _items[index] = value;
     }
 }

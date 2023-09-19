@@ -9,7 +9,7 @@ namespace GardenHoseEngine;
 
 internal class EnumValueException : ArgumentOutOfRangeException
 {
-    public EnumValueException(string paramNAme, string enumName, object enumValue, int enumValueInt)
-        : base($"Invalid {paramNAme} value for enum type {enumName}: \"{enumValue}\" (int: {enumValueInt})")
+    public EnumValueException(string paramName, string enumName, object enumValue, int enumValueInt)
+        : base(paramName, $"Invalid value for enum type {enumName}: \"{enumValue}\" (int: {enumValueInt})")
     { }
 }
