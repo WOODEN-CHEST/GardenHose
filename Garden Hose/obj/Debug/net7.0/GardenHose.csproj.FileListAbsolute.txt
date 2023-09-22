@@ -64,10 +64,15 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\GardenHoseEngine.dll
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\GardenHoseEngine.pdb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\sounds\amongus yell.mp3
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\back.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ball.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\default\huge.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\default\large.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\default\medium.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\default\small.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\default\tiny.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\logo.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\monogame_logo.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\connector.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\normal\panel.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\receiver.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\receiver_lights.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\receiver_light_parts.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\normal\glow.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\logo_small.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\logo_tiny.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\geeich.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\geeich_large.xnb

@@ -14,22 +14,22 @@ namespace GardenHoseEngine;
 public record class GHEngineStartupSettings
 {
     // Fields.
-    public string InternalName { get; init; }
-    public string GameName { get; init; }
+    public string InternalName { get; set; }
+    public string GameName { get; set; }
 
-    public string GameDataRootDirectory { get; init; }
-    public string AssetBasePath { get; init; }
-    public string? AssetExtraPath { get; init; }
+    public string GameDataRootDirectory { get; set; }
+    public string AssetBasePath { get; set; }
+    public string? AssetExtraPath { get; set; }
 
-    public Vector2 VirtualSize { get; init; }
-    public Vector2? WindowSize { get; init; }
-    public bool IsFullScreen { get; init; }
-    public bool IsMouseVisible { get; init; }
-    public bool AllowAltF4 { get; init; }
-    public bool  AllowUserResizing { get; init; }
+    public Vector2 VirtualSize { get; set; }
+    public Vector2? WindowSize { get; set; }
+    public bool IsFullScreen { get; set; }
+    public bool IsMouseVisible { get; set; }
+    public bool AllowAltF4 { get; set; }
+    public bool  AllowUserResizing { get; set; }
 
-    public IGameFrame StartupFrame { get; init; }
-    public IGameFrame GlobalFrame { get; init; }
+    public IGameFrame StartupFrame { get; set; }
+    public IGameFrame GlobalFrame { get; set; }
 
 
     // Constructors.

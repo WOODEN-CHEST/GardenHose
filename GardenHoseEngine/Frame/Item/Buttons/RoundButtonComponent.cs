@@ -10,9 +10,6 @@ namespace GardenHoseEngine.Frame.Item.Buttons;
 public struct RoundButtonComponent : IButtonComponent
 {
     // Fields.
-
-    public Vector2 Offset { get; set; } = Vector2.Zero;
-
     public float Radius
     {
         get => _radius;
@@ -22,24 +19,21 @@ public struct RoundButtonComponent : IButtonComponent
         }
     }
 
-    public Vector2 Size { get; set; } = Vector2.One;
-
 
     // Private fields.
     private float _radius;
 
 
     // Constructors.
-    public RoundButtonComponent(Vector2 offset, float radius)
+    public RoundButtonComponent(float radius)
     {
-        Offset = offset;
         Radius = radius;
     }
 
 
     // Inherited methods.
-    public bool IsLocationOverButton(Vector2 locationToTest, Vector2 origin)
+    public bool IsLocationOverButton(Vector2 locationToTest, Vector2 origin, Vector2 scale)
     {
-        return Vector2.Distance(origin + Offset, locationToTest) <= _radius * Size.X;
+        return Vector2.Distance(origin, locationToTest) <= _radius * scale.X;
     }
 }

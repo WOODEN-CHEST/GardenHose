@@ -41,7 +41,10 @@ public sealed class DataFileReaderVersion1 : DataFileReader
             _reader = new(File.OpenRead(filePath));
             using (_reader)
             {
-                ReadMetaData(_reader, filePath, versionReadCallback);
+                if (ReadMetaData(_reader, filePath, versionReadCallback))
+                {
+                    return null;
+                }
                 return ReadBase();
             }
         }

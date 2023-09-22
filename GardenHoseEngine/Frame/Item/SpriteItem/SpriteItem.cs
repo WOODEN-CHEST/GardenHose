@@ -17,19 +17,21 @@ public class SpriteItem : ColoredItem, ISpriteItem
         set => _activeAnimation = value ?? throw new ArgumentNullException(nameof(value));
     }
 
+    public Vector2 TextureSize => new(ActiveAnimation.GetFrame().Texture.Width, ActiveAnimation.GetFrame().Texture.Height);
+
 
     // Private fields.
     private AnimationInstance _activeAnimation;
 
 
     // Constructors.
-    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer, 
+    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer, 
         AnimationInstance animationInstance) : base(updater, converter, drawer)
     {
         ActiveAnimation = animationInstance;
     }
 
-    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer,
+    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer,
         SpriteAnimation animation) : base(updater, converter, drawer)
     {
         ActiveAnimation = animation.CreateInstance(updater);

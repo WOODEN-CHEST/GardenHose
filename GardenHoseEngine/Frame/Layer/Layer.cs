@@ -1,4 +1,5 @@
-﻿using GardenHoseEngine.Frame.Item;
+﻿using GardenHoseEngine.Collections;
+using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -13,7 +14,11 @@ public class Layer : ILayer
 
     public Effect? Shader { get; set; }
 
-    public IDrawer Drawer => this;
+    public IDrawer? Drawer
+    {
+        get => this;
+        set { }
+    }
 
     public float Brightness
     {
@@ -41,14 +46,14 @@ public class Layer : ILayer
 
 
     // Private fields.
-    private readonly List<IDrawableItem> _drawableItems = new();
-    private readonly Dictionary<IDrawableItem, Effect> _drawableItemsWithShader = new();
+    private readonly DiscreteTimeList<IDrawableItem> _drawableItems = new();
+    private readonly DiscreteTimeList<(IDrawableItem Item, Effect Shader)> _drawableItemsWithShader = new();
 
     private ColorMask _colorMask = new();
     
 
     // Constructors.
-    public Layer(GraphicsDeviceManager graphicsManager, string name)
+    public Layer(string name)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
     }
@@ -68,7 +73,7 @@ public class Layer : ILayer
         }
         else
         {
-            _drawableItemsWithShader.Add(item, item.Shader);
+            _drawableItemsWithShader.Add((item, item.Shader));
         }
 
     }
@@ -86,7 +91,7 @@ public class Layer : ILayer
             return;
         }
 
-        _drawableItemsWithShader.Remove(item);
+        _drawableItemsWithShader.Remove((item, item.Shader));
     }
 
     public void OnShaderChange(IDrawableItem item)
@@ -97,12 +102,13 @@ public class Layer : ILayer
 
     public void ClearDrawableItems()
     {
-        _drawableItems.Clear();
-        _drawableItemsWithShader.Clear();
+        _drawableItems.ForceClear();
+        _drawableItemsWithShader.ForceClear();
     }
 
     public void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
     {
+        _drawableItems.ApplyChanges();
         DrawShaderlessItems(passedTime, spriteBatch);
         DrawShaderedItems(passedTime, spriteBatch);
     }
@@ -125,10 +131,10 @@ public class Layer : ILayer
     {
         if (_drawableItemsWithShader.Count == 0) return;
 
-        foreach (var ItemAndShader in _drawableItemsWithShader)
+        foreach (var Drawable in _drawableItemsWithShader)
         {
-            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: ItemAndShader.Value);
-            ItemAndShader.Key.Draw(passedTime, spriteBatch);
+            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: Drawable.Shader);
+            Drawable.Item.Draw(passedTime, spriteBatch);
             spriteBatch.End();
         }
     }

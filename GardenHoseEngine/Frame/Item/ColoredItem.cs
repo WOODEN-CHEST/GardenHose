@@ -17,7 +17,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
         }
     }
 
-    public float Opacity
+    public virtual float Opacity
     {
         get => _colorMask.Opacity;
         set
@@ -27,13 +27,13 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
         }
     }
 
-    public float Brightness
+    public virtual float Brightness
     {
         get => _colorMask.Brightness;
         set => _colorMask.Brightness = value;
     }
 
-    public Color Mask
+    public virtual Color Mask
     {
         get => _colorMask.Mask;
         set => _colorMask.Mask = value;
@@ -53,7 +53,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
 
 
     // Constructors.
-    public ColoredItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer) 
+    public ColoredItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer) 
         : base(updater, converter, drawer) { }
 
 

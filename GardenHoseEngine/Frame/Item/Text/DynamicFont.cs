@@ -39,6 +39,11 @@ public class DynamicFont
 
     public SpriteFont SpriteFont { get; private set; }
 
+    public SpriteFont[] Fonts
+    {
+        get => _fonts.ToArray();
+    }
+
 
     // Private fields.
     private DynamicFontScale _scale =  DynamicFontScale.Medium;
@@ -48,7 +53,7 @@ public class DynamicFont
     // Constructors.
     public DynamicFont(SpriteFont[] fonts)
     {
-        if (SpriteFont == null)
+        if (fonts == null)
         {
             throw new ArgumentNullException(nameof(fonts));
         }
@@ -58,7 +63,7 @@ public class DynamicFont
         }
         for (int i =0; i <  FONT_COUNT; i++)
         {
-            if (SpriteFont == null)
+            if (fonts[i] == null)
             {
                 throw new ArgumentException($"Font at index {i} is null.");
             }
@@ -98,4 +103,9 @@ public class DynamicFont
 
     // Operators.
     public static implicit operator SpriteFont(DynamicFont dynamicFont) => dynamicFont.SpriteFont;
+
+    public SpriteFont this[DynamicFontScale scale]
+    {
+        get => _fonts[(int)scale];
+    }
 }

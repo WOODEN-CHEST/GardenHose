@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Animation;
 
-public sealed class AnimationInstance : ITimeUpdateable
+public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
 {
     // Fields.
     public Rectangle? TextureRegion { get; set; } = null;

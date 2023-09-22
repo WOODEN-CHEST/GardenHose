@@ -27,7 +27,7 @@ public class SimpleTextBox : ColoredItem
     }
 
     [MemberNotNull(nameof(_font))]
-    public DynamicFont Font
+    public SpriteFont Font
     {
         get => _font;
         set
@@ -37,11 +37,106 @@ public class SimpleTextBox : ColoredItem
         }
     }
 
-    public Vector2 MaxSize { get; set; } = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+    public Vector2 MaxSize
+    {
+        get => _maxSize;
+        set
+        {
+            _maxSize = value;
+            FormatText();
+        }
+    }
 
-    public int MaxCharacters { get; set; } = int.MaxValue;
+    public int MaxCharacters
+    {
+        get => _maxCharacters;
+        set
+        {
+            _maxCharacters = value;
+            FormatText();
+        }
+    }
+
+    public override Color Mask 
+    { 
+        get => base.Mask; 
+        set
+        {
+            base.Mask = value;
+            if (!_isShadowColorSet)
+            {
+                SetDefaultShadowColor();
+            }
+        }
+    }
+
+    public bool IsShadowEnabled { get; set; } = false;
+
+    public float ShadowOffset { get; set; } = 0.05f;
+
+    public Color? ShadowColor
+    {
+        get => _isShadowColorSet ? null : _shadowColor;
+        set
+        {
+            _isShadowColorSet = value.HasValue;
+
+            if (_isShadowColorSet)
+            {
+                _shadowColor = value.Value;
+            }
+            else
+            {
+                SetDefaultShadowColor();
+            }
+        }
+    }
+
+    public Origin Origin
+    {
+        get => _origin;
+        set
+        {
+            _origin = value;
+            Vector2 NewOrigin = Vector2.Zero;
+            Vector2 TextSize = Font.MeasureString(FormattedText);
+
+            NewOrigin.X = ((int)value % 3) switch
+            {
+                0 => 0f,
+                1 => TextSize.X / 2f,
+                2 => TextSize.X
+            };
+
+            NewOrigin.Y = ((int)value / 3) switch
+            {
+                0 => 0f,
+                1 => TextSize.Y / 2f,
+                2 => TextSize.Y
+            };
+
+            _vectorOrigin = NewOrigin;
+        }
+    }
+
+    public Vector2 VectorOrigin => _vectorOrigin;
+
+    public new Vector2 Scale
+    {
+        get => base.Scale.Vector;
+        set
+        {
+            base.Scale.Vector = value;
+            UpdateVectorOrigin();
+        }
+    }
+
+    public AnimVector2 AnimVectorScale => base.Scale;
+
 
     public Vector2 RealPixelSize { get; private set; }
+
+    
 
 
     // Protected fields.
@@ -50,15 +145,24 @@ public class SimpleTextBox : ColoredItem
 
 
     // Private fields.
-    private DynamicFont _font;
+    private SpriteFont _font;
+    private int _maxCharacters = int.MaxValue;
+    private Vector2 _maxSize = new(float.PositiveInfinity, float.PositiveInfinity);
+
+    private bool _isShadowColorSet = false;
+    private Color _shadowColor;
+
+    private Origin _origin;
+    private Vector2 _vectorOrigin;
 
 
     // Constructors.
-    public SimpleTextBox(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer, DynamicFont font, string text) 
+    public SimpleTextBox(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer, SpriteFont font, string text) 
         : base(updater, converter, drawer)
     {
         _font = font ?? throw new ArgumentNullException(nameof(font));
         Text = text;
+        ShadowColor = null;
     }
 
 
@@ -75,17 +179,20 @@ public class SimpleTextBox : ColoredItem
         if (Text.Length > MaxCharacters)
         {
             Text = Text[0..MaxCharacters];
+            RealText = Text;
         }
 
         FormattedText = string.Join('\n', FormatTextBySize(Text));
         RealPixelSize = Font.MeasureString(FormattedText);
+
+        UpdateVectorOrigin();
     }
 
     // Private methods.
     private IEnumerable<string> FormatTextBySize(string text)
     {
         // Exit if text cannot be formatted.
-        if (!text.Contains(' ')) return Array.Empty<string>();
+        if (!text.Contains(' ')) return text.Split('\n');
 
         if (MaxSize.X <= 0f || MaxSize.Y <= 0f)
         {
@@ -101,20 +208,23 @@ public class SimpleTextBox : ColoredItem
 
         foreach (string Line in UnformattedTextLines)
         {
-            TextHeight += Font.SpriteFont.LineSpacing;
+            // Single line.
+            TextHeight += Font.LineSpacing;
             if (TextHeight > MaxSize.Y) break;
 
-            if (Font.MeasureString(Line).X <= MaxSize.X)
+            float LineLength = Font.MeasureString(Line).X;
+            if (LineLength <= MaxSize.X)
             {
                 FormattedTextLines.Add(Line);
                 continue;
             }
 
+            // Multi-line.
             string[] Lines = FormatLineBySize(Line);
             int LinesAdded = 0;
             for (int i = 0; i < Lines.Length; i++, LinesAdded++)
             {
-                TextHeight += Font.SpriteFont.LineSpacing;
+                TextHeight += Font.LineSpacing;
                 if (TextHeight > MaxSize.Y) break;
 
                 FormattedTextLines.Add(Lines[i]);
@@ -169,42 +279,62 @@ public class SimpleTextBox : ColoredItem
         return FormattedLine.ToString().Split('\n');
     }
 
-
-    // Inherited methods.
-    public override void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    private void SetDefaultShadowColor()
     {
-        if (!IsVisible) return;
-
-        spriteBatch.DrawString(Font,
-            FormattedText,
-            Converter.ToRealPosition(Position),
-            CombinedMask,
-            Rotation,
-            Origin,
-            Converter.ToRealScale(Scale),
-            SpriteEffects.None,
-            IDrawableItem.DEFAULT_LAYER_DEPTH);
+        _shadowColor = new(
+            (int)(CombinedMask.R * 0.4f),
+            (int)(CombinedMask.G * 0.4f),
+            (int)(CombinedMask.B * 0.4f),
+            (CombinedMask.A));
     }
 
-    public override void SetOrigin(Origin origin)
+    private void UpdateVectorOrigin()
     {
-        Vector2 NewOrigin = Vector2.Zero;
-        Vector2 TextSize =Font.MeasureString(FormattedText);
+        Vector2 TextSize = Font.MeasureString(FormattedText);
 
-        NewOrigin.X = ((int)origin % 3) switch
+        _vectorOrigin.X = ((int)_origin % 3) switch
         {
             0 => 0f,
             1 => TextSize.X / 2f,
             2 => TextSize.X
         };
 
-        NewOrigin.Y = ((int)origin / 3) switch
+        _vectorOrigin.Y = ((int)_origin / 3) switch
         {
             0 => 0f,
             1 => TextSize.Y / 2f,
             2 => TextSize.Y
         };
+    }
 
-        SetOrigin(NewOrigin);
+
+    // Inherited methods.
+    public override void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    {
+        if (!IsVisible) return;
+
+        if (IsShadowEnabled)
+        {
+            spriteBatch.DrawString(Font,
+            FormattedText,
+            Converter.ToRealPosition(Position.Vector +
+            new Vector2(Font.LineSpacing, Font.LineSpacing) * ShadowOffset),
+            _shadowColor,
+            Rotation,
+            VectorOrigin,
+            Converter.ToRealScale(Scale),
+            SpriteEffects.None,
+            IDrawableItem.DEFAULT_LAYER_DEPTH);
+        }
+
+        spriteBatch.DrawString(Font,
+            FormattedText,
+            Converter.ToRealPosition(Position),
+            CombinedMask,
+            Rotation,
+            VectorOrigin,
+            Converter.ToRealScale(Scale),
+            SpriteEffects.None,
+            IDrawableItem.DEFAULT_LAYER_DEPTH);
     }
 }

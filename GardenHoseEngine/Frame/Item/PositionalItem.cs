@@ -11,18 +11,15 @@ public class PositionalItem : IDrawableItem
     // Fields.
     public virtual bool IsVisible { get; set; }
 
-    public Effect? Shader { get; set; }
+    public virtual Effect? Shader { get; set; }
 
-    public IDrawer Drawer { get; private init; }
+    public virtual IDrawer? Drawer { get; set; }
 
     public IVirtualConverter Converter { get; private init; }
 
-    public AnimVector2 Position { get; private init; }
+    public virtual AnimVector2 Position { get; private init; }
 
-    public AnimVector2 Scale { get; private init; }
-
-    public Vector2 Origin { get; protected set; } = Vector2.Zero;
-
+    public virtual AnimVector2 Scale { get; private init; }
 
     public float Rotation
     {
@@ -44,7 +41,7 @@ public class PositionalItem : IDrawableItem
 
 
     // Constructors.
-    public PositionalItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer)
+    public PositionalItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer)
     {
         ArgumentNullException.ThrowIfNull(updater, nameof(updater));
         Converter = converter ?? throw new ArgumentNullException(nameof(converter));
@@ -52,17 +49,8 @@ public class PositionalItem : IDrawableItem
         Position = new(updater);
         Scale = new(updater);
         Scale.Vector = Vector2.One;
-        Drawer = drawer ?? throw new ArgumentNullException(nameof(drawer));
-        Drawer.AddDrawableItem(this);
-    }
-
-
-    // Methods.
-    public virtual void SetOrigin(Origin origin) { }
-
-    public virtual void SetOrigin(Vector2 origin)
-    {
-        Origin = origin;
+        Drawer = drawer;
+        Drawer?.AddDrawableItem(this);
     }
 
 

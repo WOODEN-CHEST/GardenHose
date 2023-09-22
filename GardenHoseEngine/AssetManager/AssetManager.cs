@@ -3,6 +3,7 @@
 using GardenHoseEngine.Audio;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Logging;
+using GardenHoseEngine.Translatable;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
@@ -210,7 +211,7 @@ public class AssetManager
 
     public object GetLanguage(GameFrame user, string relativePath)
     {
-        return GetAsset<object>(user, Path.Combine(DIR_LANGUAGES, relativePath));
+        return GetAsset<Language>(user, Path.Combine(DIR_LANGUAGES, relativePath));
     }
 
     public object GetModel(GameFrame user, string relativePath)
@@ -246,7 +247,7 @@ public class AssetManager
 
         foreach (KeyValuePair<string, object> Asset in _assetEntries)
         {
-            if (!IsAssetUsed(Asset.Value))
+            if (!IsAssetUsed(Asset.Key))
             {
                 relativePaths.Add(Asset.Key);
             }
@@ -268,7 +269,7 @@ public class AssetManager
             ? GetFullOverrideAssetPath(relativePath)
             : Path.Combine(BasePath, relativePath);
 
-        _assetEntries[relativePath] = relativePath.Split('\\', '/')[0] switch
+        _assetEntries[relativePath] = GetPathRoot(relativePath) switch
         {
             DIR_TEXTURES => LoadTexture(FullPath, IsPathOverridden),
 
@@ -314,7 +315,7 @@ public class AssetManager
 
     private object LoadLanguage(string fullPath)
     {
-        throw new NotImplementedException();
+        return new LanguageFileParser().ParseLanguage(fullPath);
     }
 
     private object LoadModel(string fullPath)
@@ -331,7 +332,7 @@ public class AssetManager
 
 
     /* Assets. */
-    private bool IsAssetUsed(object relativeAssetPath)
+    private bool IsAssetUsed(string relativeAssetPath)
     {
         foreach (var UserAssets in _users.Values)
         {
@@ -362,19 +363,19 @@ public class AssetManager
         _users[user].Remove(relativePath);
     }
 
-    private void UnloadAsset(string reltivePath)
+    private void UnloadAsset(string relativePath)
     {
-        if (_monogameHandledAssetTypes.Contains(Path.GetPathRoot(reltivePath)!))
+        if (_monogameHandledAssetTypes.Contains(GetPathRoot(relativePath)))
         {
             // Monogame stores assets with '/' rather than '\'.
             // Loading an asset does this conversion automatically, but unloading does not.
-            if (_overrideAssets.ContainsKey(reltivePath))
+            if (_overrideAssets.ContainsKey(relativePath))
             {
-                _monogameContent.UnloadAsset(GetFullOverrideAssetPath(reltivePath).Replace('\\', '/'));
+                _monogameContent.UnloadAsset(GetFullOverrideAssetPath(relativePath).Replace('\\', '/'));
             }
-            else _monogameContent.UnloadAsset(Path.Combine(BasePath, reltivePath).Replace('\\', '/'));
+            else _monogameContent.UnloadAsset(Path.Combine(BasePath, relativePath).Replace('\\', '/'));
         }
-        _assetEntries.Remove(reltivePath);
+        _assetEntries.Remove(relativePath);
     }
 
 
@@ -383,6 +384,8 @@ public class AssetManager
     {
         return Path.Combine(ExtraPath!, Path.Combine(_overrideAssets[relativePath], relativePath));
     }
+
+    private string GetPathRoot(string relativePath) => relativePath.Split('/', '\\')[0];
 
 
     /* Other */

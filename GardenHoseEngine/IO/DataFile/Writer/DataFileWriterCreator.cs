@@ -24,4 +24,15 @@ public static class DataFileWriterCreator
                 $"The version {version} of {nameof(DataFileWriter)} is not supported."),
         };
     }
+
+    public static IWriteableDataCompound GetCompound(int? id, int version = LatestVersion)
+    {
+        return version switch
+        {
+            1 => new WriteableDataCompoundVersion1(1),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(version),
+                $"The version {version} of {nameof(IWriteableDataCompound)} is not supported."),
+        };
+    }
 }

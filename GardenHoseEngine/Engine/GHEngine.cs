@@ -22,6 +22,8 @@ public class GHEngine : Game
 
     public readonly string InternalName;
 
+    public string DataRootPath { get; private set; }
+
     public Logger Logger { get; private set; }
 
     public GraphicsDeviceManager GraphicsManager { get; private set; }
@@ -37,7 +39,7 @@ public class GHEngine : Game
     public GameFrameManager FrameManager { get; private set; }
 
     public Texture2D SinglePixel { get; private set; }
-    
+
 
     // Constructors.
     public GHEngine(GHEngineStartupSettings startupSettings) 
@@ -53,19 +55,19 @@ public class GHEngine : Game
     // Methods.
     public void Execute()
     {
-        Logger = new(Path.Combine(StartupSettings.GameDataRootDirectory, InternalName, "logs"), InternalName);
+        DataRootPath = Path.Combine(StartupSettings.GameDataRootDirectory, InternalName);
+        Logger = new(Path.Combine(DataRootPath, "logs"));
 
         try
         {
             Run();
+            AudioEngine.Dispose();
+            Logger.Dispose();
         }
         catch (Exception e)
         {
             OnCrash(e);
-        }
-        finally
-        {
-            Logger.Dispose();
+            AudioEngine.Dispose();
         }
     }
 
@@ -75,7 +77,7 @@ public class GHEngine : Game
     {
         Logger.Critical($"Game has crashed! " +
         $"Main thread ID: {Environment.CurrentManagedThreadId}. Info: {e}");
-        Dispose();
+        Logger.Dispose();
 
         if (OperatingSystem.IsWindows())
         {
@@ -102,7 +104,7 @@ public class GHEngine : Game
         Display = new(GraphicsManager, Window, StartupSettings.VirtualSize, 
             StartupSettings.WindowSize, StartupSettings.IsFullScreen);
         SinglePixel = new(GraphicsManager.GraphicsDevice, 1, 1);
-        SinglePixel.SetData<Color>(new Color[] { Color.White });
+        SinglePixel.SetData(new Color[] { Color.White });
 
 
         UserInput = new(Display, Window);
@@ -113,20 +115,23 @@ public class GHEngine : Game
         AssetManager = new(StartupSettings.AssetBasePath, StartupSettings.AssetExtraPath,
             AudioEngine, Content, GraphicsManager, Logger);
 
-        FrameManager = new(GraphicsManager, Display, AssetManager, 
-            StartupSettings.StartupFrame, StartupSettings.GlobalFrame);
-
 
         // Set fields.
         IsMouseVisible = StartupSettings.IsMouseVisible;
         Window.AllowAltF4 = StartupSettings.AllowAltF4;
         Window.AllowUserResizing = StartupSettings.AllowUserResizing;
+
+
+        // Start frames.
+        FrameManager = new(GraphicsManager, Display, AssetManager,
+            StartupSettings.StartupFrame, StartupSettings.GlobalFrame);
     }
 
     protected override void Update(GameTime gameTime)
     {
         UserInput.ListenForInput(IsActive);
         FrameManager.UpdateFrames(gameTime.ElapsedGameTime);
+
     }
 
     protected override void Draw(GameTime gameTime)

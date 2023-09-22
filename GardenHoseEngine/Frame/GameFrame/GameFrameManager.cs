@@ -27,6 +27,7 @@ public class GameFrameManager : IGameFrameManager
     private ConcurrentQueue<Action> _actions = new();
     private SpriteBatch _spriteBatch;
     private RenderTarget2D _layerPixelBuffer;
+    private RenderTarget2D _framePixelBuffer;
 
 
     // Constructors.
@@ -41,12 +42,17 @@ public class GameFrameManager : IGameFrameManager
         _assetManager = assetManager ?? throw new ArgumentNullException(nameof(assetManager));
 
         ActiveFrame = activeFrame ?? throw new ArgumentNullException(nameof(activeFrame));
-        ActiveFrame.Load(_assetManager);
-        ActiveFrame.OnStart();
-
         GlobalFrame = globalFrame ?? throw new ArgumentNullException(nameof(globalFrame));
-        GlobalFrame.Load(_assetManager);
-        GlobalFrame.OnStart();
+
+        EnqueueAction( () =>
+        {
+            GlobalFrame.Load(_assetManager);
+            GlobalFrame.OnStart();
+
+            ActiveFrame.Load(_assetManager);
+            ActiveFrame.OnStart();
+        });
+        
 
         _display.DisplayChanged += OnDisplayChangedEvent;
         CreateLayerPixelBuffer();
@@ -69,9 +75,15 @@ public class GameFrameManager : IGameFrameManager
 
     public void DrawFrames(TimeSpan passedTime)
     {
-        _graphicsDeviceManager.GraphicsDevice.Clear(Color.Transparent);
-        ActiveFrame.Draw(passedTime, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer);
-        GlobalFrame.Draw(passedTime, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer);
+        _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(_framePixelBuffer);
+        _graphicsDeviceManager.GraphicsDevice.Clear(Color.Black);
+
+        ActiveFrame.Draw(passedTime, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer, _framePixelBuffer);
+
+        _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(null);
+        _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+        _spriteBatch.Draw(_framePixelBuffer, Vector2.Zero, Color.White);
+        _spriteBatch.End();
     }
 
     public void EnqueueAction(Action action)
@@ -91,14 +103,20 @@ public class GameFrameManager : IGameFrameManager
     [MemberNotNull(nameof(_layerPixelBuffer))]
     private void CreateLayerPixelBuffer()
     {
+        _layerPixelBuffer?.Dispose();
+        _framePixelBuffer?.Dispose();
+
         _layerPixelBuffer = new(_graphicsDeviceManager.GraphicsDevice,
             (int)_display.WindowSize.X, (int)_display.WindowSize.Y, false, SurfaceFormat.Color, 
+            DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+        _framePixelBuffer = new(_graphicsDeviceManager.GraphicsDevice,
+            (int)_display.WindowSize.X, (int)_display.WindowSize.Y, false, SurfaceFormat.Color,
             DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
     }
 
 
     // Inherited methods.
-    public void LoadNextFrame(IGameFrame nextFrame, Action onLoadComplete)
+    public async void LoadNextFrame(IGameFrame nextFrame, Action onLoadComplete)
     {
         if  (NextFrame  != null)
         {
@@ -115,7 +133,7 @@ public class GameFrameManager : IGameFrameManager
 
         NextFrame = nextFrame;
 
-        Task.Run(() =>
+        await Task.Run(() =>
         {
             try
             {

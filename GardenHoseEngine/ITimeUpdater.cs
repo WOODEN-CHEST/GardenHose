@@ -8,7 +8,7 @@ namespace GardenHoseEngine;
 
 public interface ITimeUpdater
 {
-    public void AddUpdateable(ITimeUpdateable item);
+    public void AddUpdateable(ITimeUpdatable item);
 
-    public void RemoveUpdateable(ITimeUpdateable item);
+    public void RemoveUpdateable(ITimeUpdatable item);
 }

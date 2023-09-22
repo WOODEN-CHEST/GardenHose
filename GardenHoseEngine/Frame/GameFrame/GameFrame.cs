@@ -1,4 +1,5 @@
-﻿using GardenHoseEngine.IO;
+﻿using GardenHoseEngine.Collections;
+using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -15,7 +16,7 @@ public class GameFrame : IGameFrame
     [MemberNotNull(nameof(_name))]
     public string Name { get; set; }
 
-    public bool IsLoaded { get; private set; } = false;
+    public bool IsLoaded { get; internal set; } = false;
 
     public ILayer? TopLayer
     {
@@ -33,8 +34,7 @@ public class GameFrame : IGameFrame
     // Private fields.
     private string _name;
     private readonly List<ILayer> _layers = new();
-
-    private readonly HashSet<ITimeUpdateable> _updateableItems = new();
+    private readonly DiscreteTimeList<ITimeUpdatable> _updateableItems = new();
 
 
     // Constructors.
@@ -81,13 +81,13 @@ public class GameFrame : IGameFrame
 
 
     /* Items. */
-    public void AddUpdateable(ITimeUpdateable item)
+    public void AddUpdateable(ITimeUpdatable item)
     {
         ArgumentNullException.ThrowIfNull(item, nameof(item));
         _updateableItems.Add(item);
     }
 
-    public void RemoveUpdateable(ITimeUpdateable item)
+    public void RemoveUpdateable(GardenHoseEngine.ITimeUpdatable item)
     {
         ArgumentNullException.ThrowIfNull(item, nameof(item));
         _updateableItems.Remove(item);
@@ -99,20 +99,25 @@ public class GameFrame : IGameFrame
         {
             Item.ForceRemove();
         }
-        _updateableItems.Clear();
+        _updateableItems.ForceClear();
     }
 
 
     /* Updating and drawing. */
     public virtual void Update(TimeSpan passedTime)
     {
+        _updateableItems.ApplyChanges();
         foreach (var Item in _updateableItems)
         {
             Item.Update(passedTime);
         }
     }
 
-    public virtual void Draw(TimeSpan passedTime, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, RenderTarget2D layerPixelBuffer)
+    public virtual void Draw(TimeSpan passedTime, 
+        GraphicsDevice graphicsDevice, 
+        SpriteBatch spriteBatch, 
+        RenderTarget2D layerPixelBuffer,
+        RenderTarget2D framePixelBuffer)
     {
         if (_layers.Count == 0) return;
 
@@ -123,7 +128,7 @@ public class GameFrame : IGameFrame
             FrameLayer.Draw(passedTime, spriteBatch);
 
 
-            graphicsDevice.SetRenderTarget(null);
+            graphicsDevice.SetRenderTarget(framePixelBuffer);
             spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: FrameLayer.Shader);
             spriteBatch.Draw(layerPixelBuffer, Vector2.Zero, FrameLayer.CombinedMask);
             spriteBatch.End();
@@ -134,6 +139,10 @@ public class GameFrame : IGameFrame
     public virtual void Load(AssetManager assetManager)
     {
         assetManager.RegisterGameFrame(this);
+    }
+
+    public void FinalizeLoad()
+    {
         IsLoaded = true;
     }
 

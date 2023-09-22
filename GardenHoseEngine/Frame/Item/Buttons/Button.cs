@@ -8,14 +8,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Item.Buttons;
 
-/* Code duplication, yay! */
-public class Button : ITimeUpdateable
+
+public class Button : ITimeUpdatable
 {
     // Fields.
     [MemberNotNull(nameof(_components))]
     public IButtonComponent[] Components
     {
-        get => _components.ToArray();
+        get => _components;
         set
         {
             if (value == null)
@@ -32,27 +32,9 @@ public class Button : ITimeUpdateable
         }
     }
 
-    public Vector2 Position
-    {
-        get => _position;
-        set
-        {
-            _position = value;
-        }
-    }
+    public Vector2 Position { get; set; } = Vector2.Zero;
 
-    public Vector2 Scale
-    {
-        get => _scale;
-        set
-        {
-            _scale = value;
-            foreach (var Component in _components)
-            {
-                Component.Size = Scale;
-            }
-        }
-    }
+    public Vector2 Scale { get; set; } = Vector2.One;
 
 
     public ITimeUpdater Updater { get; init; }
@@ -63,9 +45,6 @@ public class Button : ITimeUpdateable
     private readonly UserInput _input;
     private readonly Dictionary<ButtonEvent, (EventHandler Handler, IInputListener? Listener)> _eventHandlers = new();
     private DeltaValue<bool> _isHovered = new(false);
-
-    private Vector2 _position = Vector2.Zero;
-    private Vector2 _scale = Vector2.One;
 
 
     // Constructors.
@@ -129,7 +108,7 @@ public class Button : ITimeUpdateable
     {
         foreach (var Component in _components)
         {
-            if (Component.IsLocationOverButton(locationToTest, Position))
+            if (Component.IsLocationOverButton(locationToTest, Position, Scale))
             {
                 return true;
             }
@@ -252,27 +231,26 @@ public class Button : ITimeUpdateable
 
         if (_isHovered.Current)
         {
-            if (_eventHandlers.ContainsKey(ButtonEvent.Hovering))
-            {
-                _eventHandlers[ButtonEvent.Hovering].Handler.Invoke(this, EventArgs.Empty);
-            }
-            
-
             if (!_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.OnHover))
             {
                 _eventHandlers[ButtonEvent.OnHover].Handler.Invoke(this, EventArgs.Empty);
             }
+
+            if (_eventHandlers.ContainsKey(ButtonEvent.Hovering))
+            {
+                _eventHandlers[ButtonEvent.Hovering].Handler.Invoke(this, EventArgs.Empty);
+            }
         }
         if (!_isHovered.Current)
         {
-            if (_eventHandlers.ContainsKey(ButtonEvent.NotHovering))
-            {
-                _eventHandlers[ButtonEvent.NotHovering].Handler.Invoke(this, EventArgs.Empty);
-            }
-
             if (_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.OnUnhover))
             {
                 _eventHandlers[ButtonEvent.OnUnhover].Handler?.Invoke(this, EventArgs.Empty);
+            }
+
+            if (_eventHandlers.ContainsKey(ButtonEvent.NotHovering))
+            {
+                _eventHandlers[ButtonEvent.NotHovering].Handler.Invoke(this, EventArgs.Empty);
             }
         }
     }

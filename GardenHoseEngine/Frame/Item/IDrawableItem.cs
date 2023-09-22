@@ -13,7 +13,7 @@ public interface IDrawableItem
 
     public Effect? Shader { get; set; }
 
-    public IDrawer Drawer { get; }
+    public IDrawer? Drawer { get; set; }
 
 
     // Methods.

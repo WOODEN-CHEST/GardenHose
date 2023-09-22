@@ -72,6 +72,25 @@ public struct FloatColor
     }
 
 
+    // Static methods.
+    public static FloatColor InterpolateRGB(FloatColor color1, FloatColor color2, float amount)
+    {
+        color1.R = color1.R + (color2.R - color1.R) * amount;
+        color1.G = color1.G + (color2.G - color1.G) * amount;
+        color1.B = color1.B + (color2.B - color1.B) * amount;
+        return color1;
+    }
+
+    public static FloatColor InterpolateRGBA(FloatColor color1, FloatColor color2, float amount)
+    {
+        color1.R = color1.R + (color2.R - color1.R) * amount;
+        color1.G = color1.G + (color2.G - color1.G) * amount;
+        color1.B = color1.B + (color2.B - color1.B) * amount;
+        color1.A = color1.A + (color2.A - color1.A) * amount;
+        return color1;
+    }
+
+
     // Methods.
     public void InvertRGB()
     {

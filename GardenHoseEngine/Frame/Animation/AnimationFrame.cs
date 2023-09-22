@@ -6,7 +6,7 @@ using System.IO;
 
 namespace GardenHoseEngine.Frame.Animation;
 
-public struct AnimationFrame
+public class AnimationFrame
 {
     // Fields.
     public Vector2 Origin { get; private set; }

@@ -1,4 +1,6 @@
-﻿using GardenHoseEngine.Frame;
+﻿using GardenHoseEngine.Collections;
+using GardenHoseEngine.Frame;
+using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -29,8 +31,7 @@ public class UserInput
 
 
     // Private fields.
-    private readonly List<IInputListener> _listeners = new();
-
+    private readonly DiscreteTimeList<IInputListener> _listeners = new();
     private readonly IVirtualConverter _converter;
 
 
@@ -52,7 +53,7 @@ public class UserInput
     // Methods.
     public void AddListener(IInputListener listener) => _listeners.Add(listener);
 
-    public void RemoveListener(IInputListener listener) => _listeners.Remove(listener);
+    public void RemoveListener(IInputListener listener) => _listeners.Add(listener);
 
 
     // Internal methods.
@@ -61,6 +62,7 @@ public class UserInput
         UpdateKeyboardInfo();
         UpdateMouseInfo();
 
+        _listeners.ApplyChanges();
         foreach (var Listener in _listeners)
         {
             Listener.Listen(isWindowFocused);

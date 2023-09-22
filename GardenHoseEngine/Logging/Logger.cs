@@ -22,7 +22,7 @@ public sealed class Logger : IDisposable
 
 
     // Constructors.
-    internal Logger(string logDirectory, string internalName)
+    internal Logger(string logDirectory)
     {
         if (logDirectory == null)
         {

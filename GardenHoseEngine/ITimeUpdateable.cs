@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GardenHoseEngine;
 
-public interface ITimeUpdateable
+public interface ITimeUpdatable
 {
     public ITimeUpdater Updater { get; }
 

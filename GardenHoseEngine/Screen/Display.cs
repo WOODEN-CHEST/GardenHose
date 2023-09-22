@@ -61,6 +61,8 @@ public class Display : IVirtualConverter
         set => SetDisplay(value, IsFullScreen);
     }
 
+    public int? FrameRateLimit { get; set; } = 144;
+
     public Vector2 VirtualSize { get; init; }
 
     

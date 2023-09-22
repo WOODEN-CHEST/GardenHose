@@ -1,10 +1,11 @@
-﻿using GardenHoseEngine.Frame.Animation;
+﻿using GardenHoseEngine.Animatable;
+using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework;
 
 
 namespace GardenHoseEngine;
 
-public class AnimVector2 : ITimeUpdateable
+public class AnimVector2 : ITimeUpdatable
 {
     // Fields.
     public Vector2 Vector;
@@ -30,7 +31,10 @@ public class AnimVector2 : ITimeUpdateable
         get => _time;
         set
         {
-            ThrowIfAnimNotSet("change time for the");
+            if (_keyframes == null)
+            {
+                return;
+            }
 
             _time = Math.Clamp(value, MIN_TIME, Duration);
 
@@ -41,41 +45,7 @@ public class AnimVector2 : ITimeUpdateable
         }
     }
 
-    public AnimVector2Keyframe[]? Keyframes
-    {
-        get => _keyframes!.ToArray();
-        set
-        {
-            if (IsAnimating)
-            {
-                throw new InvalidOperationException("Cannot change animation key-frames mid animation.");
-            }
-
-            if (value == null)
-            {
-                _keyframes = null;
-                return;
-            }
-
-            if (value.Length < 2)
-            {
-                throw new ArgumentException($"At least two key-frames are required, got {value.Length}");
-            }
-
-            for (int Index = MIN_INDEX; Index < value.Length; Index++)
-            {
-                if (value[Index].Time <= value[Index - 1].Time)
-                {
-                    throw new ArgumentException($"Time of keyframe {Index} ({value[Index].Time}) " +
-                        $"is lower or equal to the previous frame ({value[Index - 1].Time}).");
-                }
-
-                value[Index - 1].TimeToNext = value[Index].Time - value[Index - 1].Time;
-            }
-
-            _keyframes = value;
-        }
-    }
+    public AnimVector2Keyframe[]? Keyframes => _keyframes?.ToArray();
 
     public ITimeUpdater Updater { get; private set; }
 
@@ -98,10 +68,13 @@ public class AnimVector2 : ITimeUpdateable
 
 
     // Constructors.
-    public AnimVector2(ITimeUpdater updater, Vector2 vector, AnimVector2Keyframe[]? keyframes)
+    public AnimVector2(ITimeUpdater updater, Vector2 vector, KeyFrameBuilder? keyframes)
     {
         Vector = vector;
-        Keyframes = keyframes;
+        if (keyframes != null)
+        {
+            SetKeyFrames(keyframes);
+        }
         Updater = updater ?? throw new ArgumentNullException(nameof(updater));
     }
 
@@ -111,9 +84,22 @@ public class AnimVector2 : ITimeUpdateable
 
 
     // Methods.
+    public void SetKeyFrames(KeyFrameBuilder builder)
+    {
+        if (IsAnimating)
+        {
+            throw new InvalidOperationException("Cannot change animation key-frames mid animation.");
+        }
+
+        _keyframes = builder.Build();
+    }
+
     public void Start()
     {
-        ThrowIfAnimNotSet("start");
+        if (_keyframes == null)
+        {
+            throw new InvalidOperationException("Cannot start the animation because it is not set.");
+        }
 
         if (_speed > 0d)
         {
@@ -130,13 +116,17 @@ public class AnimVector2 : ITimeUpdateable
 
     public void Stop()
     {
-        ThrowIfAnimNotSet("stop");
         IsAnimating = false;
         Updater.RemoveUpdateable(this);
     }
 
     public void Finish()
     {
+        if (!IsAnimating)
+        {
+            return;
+        }
+
         Stop();
 
         if (_speed > 0d)
@@ -153,15 +143,6 @@ public class AnimVector2 : ITimeUpdateable
 
 
     // Private methods.
-    private void ThrowIfAnimNotSet(string action)
-    {
-        if (_keyframes == null)
-        {
-            throw new InvalidOperationException(
-                $"Cannot {action} animation because the animation is not set (null).");
-        }
-    }
-
     private void SyncIndexWithTime()
     {
         int frameStep = Math.Sign(_speed);
@@ -170,30 +151,56 @@ public class AnimVector2 : ITimeUpdateable
         {
             _curIndex += frameStep;
 
-            if (_curIndex < MIN_INDEX)
+            if ((_curIndex < MIN_INDEX) || (_curIndex > MaxIndex))
             {
-                OnAnimationIndexWrap(FinishLocation.Start, MaxIndex, Duration + _time);
-            }
-            else if (_curIndex > MaxIndex)
-            {
-                OnAnimationIndexWrap(FinishLocation.End, MIN_INDEX, _time - Duration);
+                WrapAnimation(frameStep);
             }
 
         } while (!IsIndexSyncedWithTime());
     }
 
-    private bool IsIndexSyncedWithTime() => (_keyframes![_curIndex - 1].Time <= _time) && (_time <= _keyframes[_curIndex].Time);
-
-    private void OnAnimationIndexWrap(FinishLocation finishLoc, int wrapIndex, double wrapTime)
+    private bool IsIndexSyncedWithTime()
     {
-        AnimationFinished?.Invoke(this, new(finishLoc));
+        return (_keyframes![_curIndex - 1].Time <= _time) && (_time <= _keyframes[_curIndex].Time);
+    }
 
-        if (IsLooped)
+    private void WrapAnimation(int sign)
+    {
+        if (sign == 1)
         {
-            _curIndex = wrapIndex;
-            _time = wrapTime;
+            AnimationFinished?.Invoke(this, new(FinishLocation.End));
+
+            if (IsLooped)
+            {
+                _curIndex = 0;
+                _time = 0d;
+            }
+            else
+            {
+                _curIndex = MaxIndex;
+                _time = _keyframes[MaxIndex].Time;
+            }
         }
-        else Stop();
+        else
+        {
+            AnimationFinished?.Invoke(this, new(FinishLocation.Start));
+
+            if (IsLooped)
+            {
+                _curIndex = MaxIndex;
+                _time = _keyframes[MaxIndex].Time;
+            }
+            else
+            {
+                _curIndex = 0;
+                _time = 0d;
+            }
+        }
+
+        if (!IsLooped)
+        {
+            Stop();
+        }
     }
 
     private void SetAnimationData(int index, double time, Vector2 location)

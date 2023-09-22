@@ -9,7 +9,7 @@ namespace GardenHoseEngine.Frame;
 
 public interface IColorMaskable
 {
-    public float Brightness { get; set; }
+    public  float Brightness { get; set; }
     public float Opacity { get; set; }
     public Color Mask { get; set; }
 

@@ -39,6 +39,8 @@ public interface IGameFrame : ITimeUpdater
     /* Status control. */
     public void Load(AssetManager assetManager);
 
+    public void FinalizeLoad();
+
     public void OnStart();
 
     public void Restart();
@@ -49,7 +51,11 @@ public interface IGameFrame : ITimeUpdater
 
 
     /* Updates and draws. */
-    public void Draw(TimeSpan passedTime, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, RenderTarget2D layerPixelBuffer);
+    public void Draw(TimeSpan passedTime, 
+        GraphicsDevice graphicsDevice, 
+        SpriteBatch spriteBatch, 
+        RenderTarget2D layerPixelBuffer,
+        RenderTarget2D framePixelBuffer);
 
     public void Update(TimeSpan passedTime);
 }
