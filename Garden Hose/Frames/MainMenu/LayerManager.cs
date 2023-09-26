@@ -45,9 +45,9 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
 
 
     // Private methods.
-    private void FadeLayerBrightness(TimeSpan passedTime)
+    private void FadeLayerBrightness(float passedTimeSeconds)
     {
-        _fadeBrightness = Math.Clamp(_fadeBrightness + (float)(passedTime.TotalSeconds * FadeStep), 0f, 1f);
+        _fadeBrightness = Math.Clamp(_fadeBrightness + passedTimeSeconds, 0f, 1f);
         if (_fadeBrightness is 0f or 1f)
         {
             _isFading = false;
@@ -60,8 +60,8 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
 
 
     // Inherited methods.
-    internal override void Update(TimeSpan passedTime)
+    internal override void Update(float passedTimeSeconds)
     {
-        if (_isFading) FadeLayerBrightness(passedTime);
+        if (_isFading) FadeLayerBrightness(passedTimeSeconds);
     }
 }

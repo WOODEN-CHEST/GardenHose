@@ -27,6 +27,6 @@ internal abstract class FrameComponentManager<FrameType> where FrameType : IGame
 
     internal virtual void Unload(AssetManager assetManager) { }
 
-    internal virtual void Update(TimeSpan passedTime) { }
+    internal virtual void Update(float passedTimeSeconds) { }
 
 }

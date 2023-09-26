@@ -9,25 +9,20 @@ namespace Tests
 {
     internal class Program
     {
+        static double PassedTime = 0d;
+        static AutoResetEvent Event = new(false);
+
+        static DateTime InvokeTime;
+
         static void Main(string[] args)
         {
-            Test();
+            float a = MathF.Atan2(4, 1) * (360f / (2*MathF.PI));
         }
 
-        static void Test()
+
+        static void Execute()
         {
-            try
-            {
-                throw new Exception();
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException();
-            }
-            finally
-            {
-                Console.WriteLine("Finally");
-            }
+
         }
     }
 }

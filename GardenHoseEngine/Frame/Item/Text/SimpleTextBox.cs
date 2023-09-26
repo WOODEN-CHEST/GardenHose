@@ -65,7 +65,7 @@ public class SimpleTextBox : ColoredItem
             base.Mask = value;
             if (!_isShadowColorSet)
             {
-                SetDefaultShadowColor();
+                SetShadowColorToDefault();
             }
         }
     }
@@ -87,7 +87,7 @@ public class SimpleTextBox : ColoredItem
             }
             else
             {
-                SetDefaultShadowColor();
+                SetShadowColorToDefault();
             }
         }
     }
@@ -157,8 +157,8 @@ public class SimpleTextBox : ColoredItem
 
 
     // Constructors.
-    public SimpleTextBox(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer, SpriteFont font, string text) 
-        : base(updater, converter, drawer)
+    public SimpleTextBox(IVirtualConverter converter, SpriteFont font, string text) 
+        : base(converter)
     {
         _font = font ?? throw new ArgumentNullException(nameof(font));
         Text = text;
@@ -279,7 +279,7 @@ public class SimpleTextBox : ColoredItem
         return FormattedLine.ToString().Split('\n');
     }
 
-    private void SetDefaultShadowColor()
+    private void SetShadowColorToDefault()
     {
         _shadowColor = new(
             (int)(CombinedMask.R * 0.4f),
@@ -309,7 +309,7 @@ public class SimpleTextBox : ColoredItem
 
 
     // Inherited methods.
-    public override void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
     {
         if (!IsVisible) return;
 

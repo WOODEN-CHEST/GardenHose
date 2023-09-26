@@ -130,12 +130,12 @@ public class GHEngine : Game
     protected override void Update(GameTime gameTime)
     {
         UserInput.ListenForInput(IsActive);
-        FrameManager.UpdateFrames(gameTime.ElapsedGameTime);
+        FrameManager.UpdateFrames((float)gameTime.ElapsedGameTime.TotalSeconds);
 
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        FrameManager.DrawFrames(gameTime.ElapsedGameTime);
+        FrameManager.DrawFrames((float)gameTime.ElapsedGameTime.TotalSeconds);
     }
 }

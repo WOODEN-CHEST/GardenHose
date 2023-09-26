@@ -2,81 +2,148 @@
 using System.Collections.Concurrent;
 using GardenHose.Messages.Server;
 using GardenHose.Messages.Client;
-
+using GardenHoseServer.World;
+using System.Diagnostics;
+using GardenHoseServer.Messages.Reader;
+using GardenHoseServer.Messages.Collector;
 
 namespace GardenHose.Server;
 
 public class GHServer
 {
-    // Static fields.
+    // Fields
+    public const double SecondsPerTick = 0.05d;
 
-
-    // Fields.
-    public bool IsTicking
+    public float SimulationSpeed
     {
-        get => _isTicking;
+        get => _simulationSpeed;
         set
         {
-            if (!_wasStarted)
+            lock (this)
             {
-                throw new ArgumentException("Server has not been started.");
+                _simulationSpeed = Math.Clamp(value, 0f, 10f);
             }
-            else if (_isTicking == value) return;
-
-            _isTicking = value;
-
-            if (_isTicking)
-            {
-                _tickTimer = new(OnTick, null, 50, 50);
-            }
-            else _tickTimer.Dispose();
         }
     }
+
+    public bool IsPaused
+    {
+        get => _isPaused;
+        set
+        {
+            lock (this)
+            {
+                _isPaused = value;
+            }
+        }
+    }
+
+    public bool IsRunning => _serverTickTask.Status == TaskStatus.Running;
+
+    public bool IsRunningSlowly { get; private set; } = false;
 
 
     // Private fields.
-    private readonly ConcurrentQueue<ClientMessage> _clientMessages = new();
-    private readonly ConcurrentQueue<ServerMessage> _serverMessages = new();
+    /* Ticking. */
+    private Task _serverTickTask;
+    private bool _isPaused = false;
+    private CancellationTokenSource _cancellationTokenSource = new();
 
-    private Timer _tickTimer;
-    private bool _isTicking = true;
-    private bool _wasStarted;
+    private float _simulationSpeed = 1f;
+    private Stopwatch _tickTimeMeasurer = new();
+    private float _passedTimeSeconds = 0f;
+    private const float MAXIMUM_PASSED_TIME_SECONDS = 0.05f;
+
+    /*  World. */
+    GameWorld _world = new();
+    MessageWriter _messageWriter = new();
+    MessageReader _messageReader = new();
 
 
     // Constructors.
-
-
-    // Static methods.
+    public GHServer()
+    {
+        _serverTickTask = Task.Factory.StartNew(ServerTask, 
+            _cancellationTokenSource.Token, 
+            TaskCreationOptions.LongRunning, 
+            TaskScheduler.Default);
+    }
 
 
     // Methods.
-    public void PostClientMessage(ClientMessage msg) => _clientMessages.Enqueue(msg);
+    /* Flow control. */
+    public void Start()
+    {
+        if (IsRunning)
+        {
+            return;
+        }
 
-    public bool ReadServerMessage(out ServerMessage msg) => _serverMessages.TryDequeue(out msg);
+        _tickTimeMeasurer.Start();
+        _serverTickTask.Start();
+    }
+
+    public void Stop()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        _cancellationTokenSource.Cancel();
+    }
+
+    /* Messages. */
+    public void PostClientMessage(ClientMessage message)
+    {
+        _messageReader.PostClientMessage(message);
+    }
+
+    public bool ReadServerMessages(out ServerMessage[]? messages)
+    {
+        return _messageWriter.GetMessages(out messages);
+    }
 
 
     // Private methods.
-    private void OnTick(object state)
+    /* Ticking. */
+    private void ServerTask()
     {
-
-    }
-
-    private void ReadMessages()
-    {
-        while (_clientMessages.TryDequeue(out ClientMessage Msg))
+        try
         {
-            throw new NotImplementedException();
+            _world.OnStart();
+            _messageWriter.CreateMessages(_world);
+
+            Tick();
+
+            _world.OnEnd();
+        }
+        catch (Exception e)
+        {
+
         }
     }
 
-    private void Start()
+    private void Tick()
     {
-        _wasStarted = true;
-        IsTicking = true;
-    }
+        while (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            if (!IsRunning || IsPaused)
+            {
+                return;
+            }
 
-    private void End()
-    {
-        _tickTimer.Dispose();
+            _passedTimeSeconds = (float)_tickTimeMeasurer.Elapsed.TotalSeconds;
+            _tickTimeMeasurer.Restart();
+
+            IsRunningSlowly = (_passedTimeSeconds > MAXIMUM_PASSED_TIME_SECONDS);
+            if (IsRunningSlowly)
+            {
+                _passedTimeSeconds = MAXIMUM_PASSED_TIME_SECONDS;
+            }
+
+            _world.Tick(_passedTimeSeconds);
+            _messageWriter.CreateMessages(_world);
+        }
     }
 }

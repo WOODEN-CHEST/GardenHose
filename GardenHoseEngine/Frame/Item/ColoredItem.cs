@@ -44,7 +44,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
 
 
     // Protected fields.
-    protected bool ShouldDraw = true;
+    protected bool _ShouldDraw = true;
 
 
     // Private fields.
@@ -53,13 +53,12 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
 
 
     // Constructors.
-    public ColoredItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer) 
-        : base(updater, converter, drawer) { }
+    public ColoredItem(IVirtualConverter converter) : base(converter) { }
 
 
     // Protected methods.
     protected virtual void UpdateShouldDraw()
     {
-        ShouldDraw = _isVisible && Opacity != 0f;
+        _ShouldDraw = _isVisible && Opacity != 0f;
     }
 }

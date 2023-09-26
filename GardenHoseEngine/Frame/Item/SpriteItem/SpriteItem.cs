@@ -7,17 +7,17 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Item;
 
-public class SpriteItem : ColoredItem, ISpriteItem
+public class SpriteItem : ColoredItem
 {
     // Fields.
     [MemberNotNull(nameof(_activeAnimation))]
-    public AnimationInstance ActiveAnimation
+    public virtual AnimationInstance ActiveAnimation
     {
         get => _activeAnimation;
         set => _activeAnimation = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public Vector2 TextureSize => new(ActiveAnimation.GetFrame().Texture.Width, ActiveAnimation.GetFrame().Texture.Height);
+    public virtual Vector2 TextureSize => new(ActiveAnimation.GetFrame().Texture.Width, ActiveAnimation.GetFrame().Texture.Height);
 
 
     // Private fields.
@@ -25,23 +25,21 @@ public class SpriteItem : ColoredItem, ISpriteItem
 
 
     // Constructors.
-    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer, 
-        AnimationInstance animationInstance) : base(updater, converter, drawer)
+    public SpriteItem(IVirtualConverter converter, AnimationInstance animationInstance) : base(converter)
     {
         ActiveAnimation = animationInstance;
     }
 
-    public SpriteItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer,
-        SpriteAnimation animation) : base(updater, converter, drawer)
+    public SpriteItem(IVirtualConverter converter, SpriteAnimation animation) : base(converter)
     {
-        ActiveAnimation = animation.CreateInstance(updater);
+        ActiveAnimation = animation.CreateInstance();
     }
 
 
     // Inherited methods.
-    public override void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
     {
-        if (!ShouldDraw) return;
+        if (!_ShouldDraw) return;
 
         spriteBatch.Draw(
             ActiveAnimation.GetFrame().Texture,

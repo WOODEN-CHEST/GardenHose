@@ -24,14 +24,14 @@ internal class IntroFrame : GameFrame
     private SpriteAnimation _logoAnim;
     private SpriteItem _logoItem;
 
-    private double _passedTime = -0.5d;
+    private float _passedTime = -0.5f;
     private bool _nextFrameLoaded = false;
 
     private IInputListener _keyboardListener;
     private IInputListener _mouseListener;
 
-    private const double LOGO_TIME_SEC = 5d;
-    private const double LOGO_TIME_SIN_MULTIPLIER = Math.PI / LOGO_TIME_SEC;
+    private const float LOGO_TIME_SEC = 5f;
+    private const float LOGO_TIME_SIN_MULTIPLIER = MathF.PI / LOGO_TIME_SEC;
     private readonly Vector2 _logoStartSize = new(0.6f, 0.6f);
     private readonly Vector2 _logoEndSize = new(0.75f, 0.75f);
 
@@ -43,14 +43,17 @@ internal class IntroFrame : GameFrame
     // Private methods.
     private void CreateLogos()
     {
-        _monogameLogoItem = new(this, GH.Engine.Display, TopLayer!, _monogameLogoAnim);
+        _monogameLogoItem = new(GH.Engine.Display, _monogameLogoAnim);
         _monogameLogoItem.Opacity = 0f;
         _monogameLogoItem.Position.Vector = GH.Engine.Display.VirtualSize / 2f;
         _monogameLogoItem.Scale.SetKeyFrames(new KeyFrameBuilder(_logoStartSize)
             .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
         _monogameLogoItem.Scale.Start();
+        AddItem(_monogameLogoItem);
+        TopLayer!.AddDrawableItem(_monogameLogoItem);
 
-        _logoItem = new(this, GH.Engine.Display, TopLayer!, _logoAnim);
+
+        _logoItem = new(GH.Engine.Display, _logoAnim);
         _logoItem.Opacity = 0f;
         _logoItem.Position.Vector = GH.Engine.Display.VirtualSize / 2f;
         _logoItem.Scale.Vector = Vector2.One; ;
@@ -58,6 +61,8 @@ internal class IntroFrame : GameFrame
             .AddKeyFrame(LOGO_TIME_SEC)
             .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
         _logoItem.Scale.Start();
+        AddItem(_logoItem);
+        TopLayer!.AddDrawableItem(_logoItem);
     }
 
     private void CreateSkipListeners()
@@ -82,11 +87,8 @@ internal class IntroFrame : GameFrame
     {
         base.Load(assetManager);
 
-        _monogameLogoAnim = new(0d, this, assetManager, Origin.Center, "ui/monogame_logo");
-        _logoAnim = new(0d, this, assetManager, Origin.Center, "ui/logo");
-        //LoadSettings();
-
-        FinalizeLoad();
+        _monogameLogoAnim = new(0f, this, assetManager, Origin.Center, "ui/monogame_logo");
+        _logoAnim = new(0f, this, assetManager, Origin.Center, "ui/logo");
     }
 
     public override void OnStart()
@@ -105,11 +107,11 @@ internal class IntroFrame : GameFrame
         GH.Engine.FrameManager.LoadNextFrame(new MainMenuFrame("Main Menu"), () => _nextFrameLoaded = true);
     }
 
-    public override void Update(TimeSpan passedTime)
+    public override void Update(float passedTimeSeconds)
     {
-        base.Update(passedTime);
+        base.Update(passedTimeSeconds);
 
-        _passedTime += passedTime.TotalSeconds;
+        _passedTime += passedTimeSeconds;
 
         if (_passedTime <= LOGO_TIME_SEC)
         {

@@ -10,3 +10,6 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\obj\Debug\net7.0\refint\GardenHoseServer.dll
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\obj\Debug\net7.0\GardenHoseServer.pdb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\obj\Debug\net7.0\ref\GardenHoseServer.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\bin\Debug\net7.0\GardenHoseEngine.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\bin\Debug\net7.0\GardenHoseEngine.pdb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseServer\obj\Debug\net7.0\GardenHoseServer.csproj.CopyComplete

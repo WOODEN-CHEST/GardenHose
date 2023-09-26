@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace GardenHoseEngine.Frame.Item.Text;
 
-public class TypeableSimpleTextBox : SimpleTextBox, GardenHoseEngine.ITimeUpdatable
+public class TypeableSimpleTextBox : SimpleTextBox
 {
     // Fields.
     public bool IsTypeable
@@ -76,8 +76,6 @@ public class TypeableSimpleTextBox : SimpleTextBox, GardenHoseEngine.ITimeUpdata
 
     public Func<bool> TextDeleteCallback { get; set; }
 
-    public ITimeUpdater Updater { get; private set; }
-
 
     // Private fields
     private string[] _formattedLines;
@@ -89,8 +87,8 @@ public class TypeableSimpleTextBox : SimpleTextBox, GardenHoseEngine.ITimeUpdata
     private bool _isFocused;
     private Point _cursorPosition = Point.Zero;
     private Vector2 _cursorPositionVisual = Vector2.Zero;
-    private double _cursorTimeSeconds;
-    private const double CURSOR_BLINK_TIME_SECONDS = 0.53d;
+    private float _cursorTimeSeconds;
+    private const float CURSOR_BLINK_TIME_SECONDS = 0.53f;
 
     private IInputListener _clickListener;
     private IInputListener _endKeyListener;
@@ -103,13 +101,11 @@ public class TypeableSimpleTextBox : SimpleTextBox, GardenHoseEngine.ITimeUpdata
 
 
     // Constructors.
-    public TypeableSimpleTextBox(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer, 
-        Texture2D singlePixel, UserInput input, SpriteFont font, string text) 
-        : base(updater, converter, drawer, font, text)
+    public TypeableSimpleTextBox(IVirtualConverter converter, Texture2D singlePixel, UserInput input, SpriteFont font, string text) 
+        : base(converter, font, text)
     {
         _input = input ?? throw new ArgumentNullException(nameof(input));
         _singlePixel = singlePixel ?? throw new ArgumentNullException(nameof(singlePixel));
-        Updater = updater ?? throw new ArgumentNullException(nameof(updater));
 
         _clickListener = MouseListenerCreator.SingleButton(_input, this, null, true,
                     MouseCondition.OnClick, OnUserRightClickEvent, MouseButton.Left);
@@ -425,23 +421,18 @@ public class TypeableSimpleTextBox : SimpleTextBox, GardenHoseEngine.ITimeUpdata
         _formattedLines = FormattedText.Split('\n');
     }
 
-    public void Update(TimeSpan passedTime)
-    {
-        if (!(IsTypeable && IsFocused) ) return;
-    }
-
-    public override void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
     {
         if (!IsVisible) return;
 
-        base.Draw(passedTime, spriteBatch);
+        base.Draw(passedTimeSeconds, spriteBatch);
 
         if (!IsFocused ) return;
 
-        _cursorTimeSeconds += passedTime.TotalSeconds;
+        _cursorTimeSeconds += passedTimeSeconds;
         if (_cursorTimeSeconds > CURSOR_BLINK_TIME_SECONDS)
         {
-            _cursorTimeSeconds %= CURSOR_BLINK_TIME_SECONDS * 2d;
+            _cursorTimeSeconds %= CURSOR_BLINK_TIME_SECONDS * 2f;
             return;
         }
 

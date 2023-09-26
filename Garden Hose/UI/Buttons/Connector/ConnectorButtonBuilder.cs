@@ -19,20 +19,19 @@ internal partial class ConnectorButton
 
     // Internal static methods.
     /* Rectangle. */
-    internal static ConnectorButton CreateNormal(ITimeUpdater frame, Direction connectDirection, IDrawer? drawer)
+    internal static ConnectorButton CreateNormal(Direction connectDirection)
     {
-        return CreateNormal(frame, connectDirection, Vector2.Zero, drawer);
+        return CreateNormal(connectDirection, Vector2.Zero);
     }
 
-    internal static ConnectorButton CreateNormal(ITimeUpdater frame, Direction connectDirection, Vector2 position, IDrawer? drawer)
+    internal static ConnectorButton CreateNormal(Direction connectDirection, Vector2 position)
     {
-        return CreateNormal(frame, connectDirection, Vector2.Zero, Vector2.One, drawer);
+        return CreateNormal(connectDirection, Vector2.Zero, Vector2.One);
     }
 
-    internal static ConnectorButton CreateNormal(ITimeUpdater frame, Direction connectDirection, Vector2 position,
-        Vector2 scale, IDrawer? drawer)
+    internal static ConnectorButton CreateNormal(Direction connectDirection, Vector2 position, Vector2 scale)
     {
-        return CreateButton(frame, ConnectorButtonShape.Rectangle, connectDirection, position, scale, s_normalSize, drawer);
+        return CreateButton(ConnectorButtonShape.Rectangle, connectDirection, position, scale, s_normalSize);
     }
 
     /* Square */
@@ -43,27 +42,20 @@ internal partial class ConnectorButton
 
 
     // Private static methods.
-    private static ConnectorButton CreateButton(ITimeUpdater frame, 
-        ConnectorButtonShape shape, 
+    private static ConnectorButton CreateButton(ConnectorButtonShape shape, 
         Direction connectDirection, 
         Vector2 position, 
         Vector2 scale,
-        Vector2 size,
-        IDrawer? drawer)
+        Vector2 size)
     {
-        if (frame == null)
-        {
-            throw new ArgumentNullException(nameof(frame));
-        }
-
-        SpriteAnimation PanelAnim;
-        SpriteAnimation GlowAnim;
+        AnimationInstance PanelInstance;
+        AnimationInstance GlowInstance;
 
         switch (shape)
         {
             case ConnectorButtonShape.Rectangle:
-                PanelAnim = s_normalPanelAnim!;
-                GlowAnim = s_normalGlowAnim!;
+                PanelInstance = s_normalPanelInstance!;
+                GlowInstance = s_normalGlowInstance!;
                 break;
 
             default:
@@ -71,9 +63,9 @@ internal partial class ConnectorButton
                     shape.ToString(), (int)shape);
         }
 
-        ConnectorButton Button = new(frame, drawer, connectDirection,
-            new SpriteItem(frame, GH.Engine.Display, drawer, PanelAnim),
-            new SpriteItem(frame, GH.Engine.Display, drawer, GlowAnim),
+        ConnectorButton Button = new(connectDirection,
+            new SpriteItem(GH.Engine.Display, PanelInstance),
+            new SpriteItem(GH.Engine.Display, GlowInstance),
             position, scale, size);
 
         return Button;

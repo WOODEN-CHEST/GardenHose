@@ -14,12 +14,6 @@ public class Layer : ILayer
 
     public Effect? Shader { get; set; }
 
-    public IDrawer? Drawer
-    {
-        get => this;
-        set { }
-    }
-
     public float Brightness
     {
         get => _colorMask.Brightness;
@@ -40,15 +34,12 @@ public class Layer : ILayer
 
     public Color CombinedMask => _colorMask.CombinedMask;
 
-
     public int DrawableItemCount => _drawableItems.Count;
 
 
 
     // Private fields.
-    private readonly DiscreteTimeList<IDrawableItem> _drawableItems = new();
-    private readonly DiscreteTimeList<(IDrawableItem Item, Effect Shader)> _drawableItemsWithShader = new();
-
+    private readonly List<IDrawableItem> _drawableItems = new();
     private ColorMask _colorMask = new();
     
 
@@ -67,15 +58,18 @@ public class Layer : ILayer
             throw new ArgumentNullException(nameof(item));
         }
 
-        if (item.Shader == null)
+        _drawableItems.Add(item);
+    }
+
+    public void AddDrawableItem(IDrawableItem item, int index)
+    {
+        if (item == null)
         {
-            _drawableItems.Add(item);
-        }
-        else
-        {
-            _drawableItemsWithShader.Add((item, item.Shader));
+            throw new ArgumentNullException(nameof(item));
         }
 
+        index = Math.Clamp(index, 0, DrawableItemCount - 1);
+        _drawableItems.Insert(index, item);
     }
 
     public void RemoveDrawableItem(IDrawableItem item)
@@ -85,57 +79,53 @@ public class Layer : ILayer
             throw new ArgumentNullException(nameof(item));
         }
 
-        if (item.Shader == null)
-        {
-            _drawableItems.Remove(item);
-            return;
-        }
-
-        _drawableItemsWithShader.Remove((item, item.Shader));
-    }
-
-    public void OnShaderChange(IDrawableItem item)
-    {
-        RemoveDrawableItem(item);
-        AddDrawableItem(item);
+        _drawableItems.Remove(item);
     }
 
     public void ClearDrawableItems()
     {
-        _drawableItems.ForceClear();
-        _drawableItemsWithShader.ForceClear();
+        _drawableItems.Clear();
     }
 
-    public void Draw(TimeSpan passedTime, SpriteBatch spriteBatch)
+    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
     {
-        _drawableItems.ApplyChanges();
-        DrawShaderlessItems(passedTime, spriteBatch);
-        DrawShaderedItems(passedTime, spriteBatch);
-    }
-
-
-    // Private methods.
-    private void DrawShaderlessItems(TimeSpan passedTime, SpriteBatch spriteBatch)
-    {
-        if (_drawableItems.Count == 0) return;
+        List<IDrawableItem> ShaderedDrawables = new();
 
         spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
         foreach (IDrawableItem Item in _drawableItems)
         {
-            Item.Draw(passedTime, spriteBatch);
+            if (Item.Shader!= null)
+            {
+                ShaderedDrawables.Add(Item);
+                continue;
+            }
+
+            Item.Draw(passedTimeSeconds, spriteBatch);
         }
         spriteBatch.End();
-    }
 
-    private void DrawShaderedItems(TimeSpan passedTime, SpriteBatch spriteBatch)
-    {
-        if (_drawableItemsWithShader.Count == 0) return;
-
-        foreach (var Drawable in _drawableItemsWithShader)
+        if (ShaderedDrawables.Count == 0)
         {
-            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: Drawable.Shader);
-            Drawable.Item.Draw(passedTime, spriteBatch);
-            spriteBatch.End();
+            return;
         }
+
+
+        Effect AppliedShader = ShaderedDrawables[0].Shader!;
+        spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
+
+        foreach (IDrawableItem Item in ShaderedDrawables)
+        {
+            if (AppliedShader != Item.Shader)
+            {
+                spriteBatch.End();
+
+                AppliedShader = Item.Shader!;
+                spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
+            }
+
+            Item.Draw(passedTimeSeconds, spriteBatch);
+        }
+
+        spriteBatch.End();
     }
 }

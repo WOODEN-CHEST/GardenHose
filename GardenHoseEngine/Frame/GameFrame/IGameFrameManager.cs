@@ -14,9 +14,9 @@ public interface IGameFrameManager
 
 
     // Methods.
-    public void UpdateFrames(TimeSpan passedTime);
+    public void UpdateFrames(float passedTimeSeconds);
 
-    public void DrawFrames(TimeSpan passedTime);
+    public void DrawFrames(float passedTimeSeconds);
 
     public void LoadNextFrame(IGameFrame nextFrame, Action onLoadComplete);
     public void JumpToNextFrame();

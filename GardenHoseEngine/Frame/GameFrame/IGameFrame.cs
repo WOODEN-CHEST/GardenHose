@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GardenHoseEngine.Frame;
 
-public interface IGameFrame : ITimeUpdater
+public interface IGameFrame
 {
     // Properties.
     public string Name { get; }
@@ -33,13 +33,19 @@ public interface IGameFrame : ITimeUpdater
 
 
     /* Items. */
-    public void ClearUpdateables();
+    public void AddItem(ITimeUpdatable item);
+
+    public void RemoveItem(ITimeUpdatable item);
+
+    public void ClearItems();
 
 
     /* Status control. */
+    public void BeginLoad(AssetManager assetManager);
+
     public void Load(AssetManager assetManager);
 
-    public void FinalizeLoad();
+    public void FinalizeLoad(AssetManager assetManager);
 
     public void OnStart();
 
@@ -51,11 +57,11 @@ public interface IGameFrame : ITimeUpdater
 
 
     /* Updates and draws. */
-    public void Draw(TimeSpan passedTime, 
+    public void Draw(float passedTimeSeconds, 
         GraphicsDevice graphicsDevice, 
         SpriteBatch spriteBatch, 
         RenderTarget2D layerPixelBuffer,
         RenderTarget2D framePixelBuffer);
 
-    public void Update(TimeSpan passedTime);
+    public void Update(float passedTimeSeconds);
 }

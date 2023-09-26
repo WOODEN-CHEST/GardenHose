@@ -81,39 +81,36 @@ public class GameFrame : IGameFrame
 
 
     /* Items. */
-    public void AddUpdateable(ITimeUpdatable item)
+    public void AddItem(ITimeUpdatable item)
     {
         ArgumentNullException.ThrowIfNull(item, nameof(item));
         _updateableItems.Add(item);
     }
 
-    public void RemoveUpdateable(GardenHoseEngine.ITimeUpdatable item)
+    public void RemoveItem(ITimeUpdatable item)
     {
         ArgumentNullException.ThrowIfNull(item, nameof(item));
         _updateableItems.Remove(item);
     }
 
-    public void ClearUpdateables()
+    public void ClearItems()
     {
-        foreach (var Item in _updateableItems)
-        {
-            Item.ForceRemove();
-        }
-        _updateableItems.ForceClear();
+        _updateableItems.Clear();
     }
 
 
     /* Updating and drawing. */
-    public virtual void Update(TimeSpan passedTime)
+    public virtual void Update(float passedTimeSeconds)
     {
         _updateableItems.ApplyChanges();
+
         foreach (var Item in _updateableItems)
         {
-            Item.Update(passedTime);
+            Item.Update(passedTimeSeconds);
         }
     }
 
-    public virtual void Draw(TimeSpan passedTime, 
+    public virtual void Draw(float passedTimeSeconds, 
         GraphicsDevice graphicsDevice, 
         SpriteBatch spriteBatch, 
         RenderTarget2D layerPixelBuffer,
@@ -125,7 +122,7 @@ public class GameFrame : IGameFrame
         {
             graphicsDevice.SetRenderTarget(layerPixelBuffer);
             graphicsDevice.Clear(Color.Transparent);
-            FrameLayer.Draw(passedTime, spriteBatch);
+            FrameLayer.Draw(passedTimeSeconds, spriteBatch);
 
 
             graphicsDevice.SetRenderTarget(framePixelBuffer);
@@ -136,12 +133,17 @@ public class GameFrame : IGameFrame
     }
 
     /* Status control. */
-    public virtual void Load(AssetManager assetManager)
+    public void BeginLoad(AssetManager assetManager)
     {
         assetManager.RegisterGameFrame(this);
     }
 
-    public void FinalizeLoad()
+    public virtual void Load(AssetManager assetManager)
+    {
+        
+    }
+
+    public void FinalizeLoad(AssetManager assetManager)
     {
         IsLoaded = true;
     }
@@ -158,7 +160,7 @@ public class GameFrame : IGameFrame
 
     public virtual void OnEnd()
     {
-        ClearUpdateables();
+        ClearItems();
     }
 
     public virtual void Unload(AssetManager assetManager)

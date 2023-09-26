@@ -9,7 +9,7 @@ using System;
 namespace GardenHoseEngine.Frame.Item.Buttons;
 
 
-public class SpriteButton
+public class SpriteButton : IDrawableItem, ITimeUpdatable
 {
     // Fields.
     public Button Button { get; init; }
@@ -42,25 +42,47 @@ public class SpriteButton
         }
     }
 
+    public bool IsVisible
+    {
+        get => Sprite.IsVisible; 
+        set => Sprite.IsVisible = value;
+    }
+
+    public Effect? Shader
+    {
+        get => Sprite.Shader;
+        set => Sprite.Shader = value;
+    }
+
 
     // Constructors.
-    public SpriteButton(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer,
-        AnimationInstance animationInstance, UserInput input, params IButtonComponent[] buttonComponents)
+    public SpriteButton(IVirtualConverter converter, AnimationInstance animationInstance, 
+        UserInput input, params IButtonComponent[] buttonComponents)
     {
-        Button = new(input, updater, buttonComponents);
-        Sprite = new(updater, converter, drawer, animationInstance);
+        Button = new(input, buttonComponents);
+        Sprite = new(converter, animationInstance);
     }
 
-    public SpriteButton(ITimeUpdater updater, IVirtualConverter converter, IDrawer drawer,
-        SpriteAnimation animation, UserInput input, params IButtonComponent[] buttonComponents)
-    {
-        Button = new(input, updater, buttonComponents);
-        Sprite = new(updater, converter, drawer, animation);
-    }
+    public SpriteButton(IVirtualConverter converter, SpriteAnimation animation,
+        UserInput input, params IButtonComponent[] buttonComponents)
+        : this(converter, animation.CreateInstance(), input, buttonComponents) { }
 
     public SpriteButton(Button button, SpriteItem item)
     {
         Button = button ?? throw new ArgumentNullException(nameof(button));
         Sprite = item ?? throw new ArgumentNullException(nameof(item));
+    }
+
+
+    // Inherited methods.
+    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    {
+        Sprite.Draw(passedTimeSeconds, spriteBatch);
+    }
+
+    public void Update(float passedTimeSeconds)
+    {
+        Button.Update(passedTimeSeconds);
+        Sprite.Update(passedTimeSeconds);
     }
 }

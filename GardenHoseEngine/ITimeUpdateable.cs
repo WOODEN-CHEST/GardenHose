@@ -8,12 +8,5 @@ namespace GardenHoseEngine;
 
 public interface ITimeUpdatable
 {
-    public ITimeUpdater Updater { get; }
-
-    public void Update(TimeSpan passedTime);
-
-    public virtual void ForceRemove()
-    {
-        Updater.RemoveUpdateable(this);
-    }
+    public void Update(float passedTimeSeconds);
 }

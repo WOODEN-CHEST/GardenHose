@@ -46,10 +46,14 @@ public class GameFrameManager : IGameFrameManager
 
         EnqueueAction( () =>
         {
+            GlobalFrame.BeginLoad(_assetManager);
             GlobalFrame.Load(_assetManager);
+            GlobalFrame.FinalizeLoad(_assetManager);
             GlobalFrame.OnStart();
 
+            ActiveFrame.BeginLoad(_assetManager);
             ActiveFrame.Load(_assetManager);
+            ActiveFrame.FinalizeLoad(_assetManager);
             ActiveFrame.OnStart();
         });
         
@@ -62,23 +66,23 @@ public class GameFrameManager : IGameFrameManager
 
 
     // Methods.
-    public void UpdateFrames(TimeSpan passedTime)
+    public void UpdateFrames(float passedTimeSeconds)
     {
         while (_actions.TryDequeue(out Action? ActionToExecute))
         {
             ActionToExecute!.Invoke();
         }
 
-        ActiveFrame.Update(passedTime);
-        GlobalFrame.Update(passedTime);
+        ActiveFrame.Update(passedTimeSeconds);
+        GlobalFrame.Update(passedTimeSeconds);
     }
 
-    public void DrawFrames(TimeSpan passedTime)
+    public void DrawFrames(float passedTimeSeconds)
     {
         _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(_framePixelBuffer);
         _graphicsDeviceManager.GraphicsDevice.Clear(Color.Black);
 
-        ActiveFrame.Draw(passedTime, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer, _framePixelBuffer);
+        ActiveFrame.Draw(passedTimeSeconds, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer, _framePixelBuffer);
 
         _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(null);
         _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
@@ -137,7 +141,9 @@ public class GameFrameManager : IGameFrameManager
         {
             try
             {
+                nextFrame.BeginLoad(_assetManager);
                 nextFrame.Load(_assetManager);
+                nextFrame.FinalizeLoad(_assetManager);
             }
             catch (Exception e)
             {

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Animation;
 
-public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
+public sealed class AnimationInstance : ITimeUpdatable
 {
     // Fields.
     public Rectangle? TextureRegion { get; set; } = null;
@@ -22,7 +22,7 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
         }
     }
 
-    public double FPS
+    public float FPS
     {
         get => _fps;
         set
@@ -33,7 +33,7 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
             }
 
             _fps = value;
-            _secondsPerFrame = 1d / _fps;
+            _secondsPerFrame = 1f / _fps;
             FrameStep = value >= 0f ? 1 : -1;
 
             UpdateIsAnimating();
@@ -54,9 +54,7 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
             _frameStep = value;
             UpdateIsAnimating();
         }
-    } 
-
-    public ITimeUpdater Updater { get; init; }
+    }
 
     public event EventHandler<AnimFinishEventArgs>? AnimationFinished;
 
@@ -68,15 +66,14 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
     private int _frameStep = 1;
 
     private bool _isAnimating = true;
-    private double _fps;
-    private double _secondsSinceFrameSwitch;
-    private double _secondsPerFrame;
+    private float _fps;
+    private float _secondsSinceFrameSwitch;
+    private float _secondsPerFrame;
 
 
     // Constructors.
-    internal AnimationInstance(SpriteAnimation animation, ITimeUpdater updater)
+    internal AnimationInstance(SpriteAnimation animation)
     {
-        Updater = updater ?? throw new ArgumentNullException(nameof(updater));
         Animation  = animation;
         FPS = Animation.DefaultFPS;
     }
@@ -98,12 +95,6 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
     private void UpdateIsAnimating()
     {
         _isAnimating = !(_fps == 0f || _frameStep == 0 || _animation.MaxFrameIndex == 0);
-
-        if (_isAnimating)
-        {
-            Updater.AddUpdateable(this);
-        }
-        else Updater.RemoveUpdateable(this);
     }
 
 
@@ -139,9 +130,11 @@ public sealed class AnimationInstance : GardenHoseEngine.ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(TimeSpan passedTime)
+    public void Update(float passedTimeSeconds)
     {
-        _secondsSinceFrameSwitch += passedTime.TotalSeconds;
+        if (!_isAnimating) return;
+
+        _secondsSinceFrameSwitch += passedTimeSeconds;
         if (_secondsSinceFrameSwitch > _secondsPerFrame)
         {
             _secondsSinceFrameSwitch -= _secondsPerFrame;

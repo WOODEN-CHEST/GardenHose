@@ -43,21 +43,21 @@ internal partial class ConnectorButton
 
     internal static void LoadNormalButton(AssetManager assetManager, GameFrame owner)
     {
-        s_normalPanelAnim = new(0d, owner, assetManager, Origin.Center, "ui/buttons/connector/normal/panel");
-        s_normalGlowAnim = new(0d, owner, assetManager, Origin.Center, "ui/buttons/connector/normal/glow");
+        s_normalPanelAnim = new(0f, owner, assetManager, Origin.Center, "ui/buttons/connector/normal/panel");
+        s_normalGlowAnim = new(0f, owner, assetManager, Origin.Center, "ui/buttons/connector/normal/glow");
 
-        s_connectorInstance = s_normalPanelAnim.CreateInstance(owner);
-        s_normalGlowInstance = s_normalGlowAnim.CreateInstance(owner);
+        s_normalPanelInstance = s_normalPanelAnim.CreateInstance();
+        s_normalGlowInstance = s_normalGlowAnim.CreateInstance();
     }
 
     internal static void LoadConnectorAndReceiver(AssetManager assetManager, GameFrame owner)
     {
-        s_connectorAnim = new(0d, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/connector");
-        s_receiverAnim = new(0d, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/receiver");
-        s_receiverLightsAnim = new(0d, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/receiver_lights");
+        s_connectorAnim = new(0f, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/connector");
+        s_receiverAnim = new(0f, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/receiver");
+        s_receiverLightsAnim = new(0f, owner, assetManager, Origin.CenterLeft, "ui/buttons/connector/receiver_lights");
 
-        s_connectorInstance = s_connectorAnim.CreateInstance(owner);
-        s_receiverInstance = s_receiverAnim.CreateInstance(owner);
-        s_receiverLightsInstance = s_receiverLightsAnim.CreateInstance(owner);
+        s_connectorInstance = s_connectorAnim.CreateInstance();
+        s_receiverInstance = s_receiverAnim.CreateInstance();
+        s_receiverLightsInstance = s_receiverLightsAnim.CreateInstance();
     }
 }

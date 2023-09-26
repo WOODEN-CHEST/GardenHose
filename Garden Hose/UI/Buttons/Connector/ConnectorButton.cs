@@ -7,52 +7,24 @@ using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Item.Buttons;
 using GardenHoseEngine.Frame.Item.Text;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
 namespace GardenHose.UI.Buttons.Connector;
 
-internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
+internal partial class ConnectorButton : ITimeUpdatable, IDrawableItem
 {
     // Fields.
-    public ITimeUpdater Updater { get; private init; }
+    public bool IsVisible { get; set; } = true;
+    public Effect? Shader { get; set; }
 
 
     // Internal fields.
-    internal IDrawer? Drawer
-    {
-        get => _panel.Drawer;
-        set
-        {
-            IDrawer Drawer = _panel.Drawer;
-
-            if (value == Drawer) return;
-
-            
-            if (Drawer != null)
-            {
-                RemoveAllDrawables();
-            }
-
-            _panel.Drawer = value;
-            _glow.Drawer = value;
-            _connector.Drawer = value;
-            _receiver.Drawer = value;
-            _receiverLights.Drawer = value;
-            _text.Drawer = value;
-
-            if (value != null)
-            {
-                AddAllDrawables();
-            }
-        }
-    }
-
     internal bool IsClickable { get; set; } = true;
 
     internal bool IsClickingResetOnClick { get; set; } = true;
 
-    internal bool IsUpdated { get; set; } = true;
 
     internal bool IsEnabled
     {
@@ -64,11 +36,12 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
             _isEnabled = value;
             if (_isEnabled)
             {
-                Enable();
+                IsClickable = true;
+                CreateButtonHandlers();
             }
             else
             {
-                Disable();
+                _button.ClearEventHandlers();
             }
         }
     }
@@ -128,12 +101,14 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
 
     // Private fields.
     private AnimVector2 _position;
+    private Vector2 _scale;
 
     /* Button properties */
     private readonly Vector2 _size;
-    private Vector2 _scale;
-    private readonly Direction _connectDirection;
-    private readonly Vector2 _directionUnitVector;
+    private readonly Vector2 _halfSize;
+    private readonly Vector2 _directionUnit;
+    
+    
 
     private bool _isEnabled = true;
 
@@ -152,9 +127,9 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
         set => _clickColorAmount = Math.Clamp(value, 0f, 1f);
     }
     private float _clickColorAmount = 0f;
-    private const double CLICK_COLOR_FADE_SPEED = 2.5d;
-    private const double COLOR_CHANGE_SPEED_UP = 12d;
-    private const double COLOR_CHANGE_SPEED_DOWN =4d;
+    private const float CLICK_COLOR_FADE_SPEED = 2.5f;
+    private const float COLOR_CHANGE_SPEED_UP = 12f;
+    private const float COLOR_CHANGE_SPEED_DOWN =4f;
 
     /* Functional button object. */
     private readonly Button _button;
@@ -166,17 +141,13 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
     private const float MAX_CONNECTION_STRENGTH = 1f;
     private const float MIN_CONNECTION_STRENGTH = 0f;
     private Vector2 _receiverDistance;
-    private const float RECEIVER_MAX_DISTANCE = 100f;
+    private const float MAX_RECEIVER_DISTANCE = 100f;
 
     /* Bounce animation. */
-    private float BounceProgress
-    {
-        get => _bouncePeriod;
-        set => _bouncePeriod = Math.Clamp(value, 0f, MathF.PI);
-    }
-    private float _bouncePeriod = MathF.PI;
     private const float MAX_BOUNCE_DISTANCE = 15f;
     private const float BOUNCE_SPEED = 5f * MathF.PI;
+    private float _bouncePeriod = MathF.PI;
+    
 
 
     /* Text. */
@@ -184,47 +155,58 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
 
 
     // Constructors.
-    private ConnectorButton(ITimeUpdater updater,
-        IDrawer? drawer,
-        Direction connectDirection,
+    private ConnectorButton(Direction connectDirection,
         SpriteItem panel,
         SpriteItem glow,
         Vector2 position,
         Vector2 scale,
         Vector2 size)
     {
-        Updater = updater;
-        Updater.AddUpdateable(this);
-
-        _connectDirection = connectDirection;
-        _size = size;
-
+        // Create components.
         _panel = panel;
         _glow = glow;
-        _connector = new(updater, GH.Engine.Display, drawer, s_connectorInstance!);
-        _receiver = new(updater, GH.Engine.Display, drawer, s_receiverInstance!);
-        _receiverLights = new(updater, GH.Engine.Display, drawer, s_receiverLightsInstance!);
+        _connector = new(GH.Engine.Display, s_connectorInstance!);
+        _receiver = new(GH.Engine.Display, s_receiverInstance!);
+        _receiverLights = new(GH.Engine.Display, s_receiverLightsInstance!);
 
-        _button = new(GH.Engine.UserInput, updater, new RectangleButtonComponent());
+        _button = new(GH.Engine.UserInput, new RectangleButtonComponent());
         CreateButtonHandlers();
 
-        _text = new(updater, GH.Engine.Display, drawer, GlobalFrame.GeEichFontLarge, string.Empty);
-        _text.Origin = Origin.Center;
-        _text.IsShadowEnabled = true;
-        _text.ShadowColor = new(50, 50, 50, 255);
-        _text.ShadowOffset = 0.08f;
-
-        _position = new(updater, position);
-        Scale = scale;
-        SyncItemRotations();
+        _text = new(GH.Engine.Display, GlobalFrame.GeEichFontLarge, string.Empty)
+        {
+            Origin = Origin.Center,
+            IsShadowEnabled = true,
+            ShadowColor = new(50, 50, 50, 255),
+            ShadowOffset = 0.08f
+        };
         
-        _directionUnitVector = connectDirection switch
+
+        // Assign readonly properties.
+        _directionUnit = connectDirection switch
         {
             Direction.Right => new(1f, 0f),
             Direction.Left => new(-1f, 0f),
             Direction.Up => new(0f, -1f),
             Direction.Down => new(0f, 1f),
         };
+        _size = size;
+        _halfSize = _size / 2f;
+        float Rotation = connectDirection switch
+        {
+            Direction.Right => 0f,
+            Direction.Left => MathF.PI,
+            Direction.Up => -(MathF.PI / 2f),
+            Direction.Down => MathF.PI / 2f,
+            _ => throw new EnumValueException(nameof(connectDirection), nameof(Direction),
+                    connectDirection.ToString(), (int)connectDirection)
+        };
+        _connector.Rotation = Rotation;
+        _receiver.Rotation = Rotation;
+        _receiverLights.Rotation = Rotation;
+
+        // Assign changeable properties. 
+        _position = new(position);
+        Scale = scale;
     }
 
     // Private methods.
@@ -257,75 +239,25 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
     private void SyncItemPositions()
     {
         // Bounce.
-        float BounceDistance = MathF.Sin(_bouncePeriod) * MAX_BOUNCE_DISTANCE;
+        Vector2 BounceDistance =  (-_directionUnit) * MathF.Sin(_bouncePeriod) * MAX_BOUNCE_DISTANCE;
+        Vector2 VisualPosition = _position + BounceDistance;
 
-        Vector2 Position = _position;
-        Position.X -= BounceDistance * _directionUnitVector.X;
-        Position.Y -= BounceDistance * _directionUnitVector.Y;
+        // Main positions.
+        _panel.Position.Vector = VisualPosition;
+        _glow.Position.Vector = VisualPosition;
+        _button.Position = Position;
+        _text.Position.Vector = VisualPosition;
+        _text.Position.Vector.Y += 5f;
 
-        // Set positions.
-        _panel.Position.Vector = Position;
-        _glow.Position.Vector = Position;
-        _button.Position = _position; // On purpose.
-
-        Vector2 ConnectorPosition = Position;
-        Vector2 ReceiverPosition = Position;
-
-        switch (_connectDirection)
-        {
-            case Direction.Right:
-                ConnectorPosition += new Vector2((_size.X / 2f) * Scale.X, 0f);
-                ReceiverPosition = ConnectorPosition;
-                ReceiverPosition.X += (1f - _connectionStrengthDelta.Current) * RECEIVER_MAX_DISTANCE;
-                break;
-
-            case Direction.Left:
-                ConnectorPosition += new Vector2(-((_size.X / 2f) * Scale.X), 0f);
-                ReceiverPosition = ConnectorPosition;
-                ReceiverPosition.X -= (1f - _connectionStrengthDelta.Current) * RECEIVER_MAX_DISTANCE;
-                break;
-
-            case Direction.Up:
-                ConnectorPosition += new Vector2(0f, -((_size.Y / 2f) * Scale.Y));
-                ReceiverPosition = ConnectorPosition;
-                ReceiverPosition.Y -= (1f - _connectionStrengthDelta.Current) * RECEIVER_MAX_DISTANCE;
-                break;
-
-            case Direction.Down:
-                ConnectorPosition += new Vector2(0f, (_size.Y / 2f) * Scale.Y);
-                ReceiverPosition = ConnectorPosition;
-                ReceiverPosition.Y += (1f - _connectionStrengthDelta.Current) * RECEIVER_MAX_DISTANCE;
-                break;
-
-            default:
-                throw new EnumValueException(nameof(_connectDirection), nameof(Direction),
-                    _connectDirection.ToString(), (int)_connectDirection);
-        }
+        // Connector and receiver positions.
+        Vector2 ConnectorPosition = VisualPosition + (_halfSize * _directionUnit) * Scale;
+        Vector2 ReceiverPosition = ConnectorPosition + (_directionUnit * (1f - ConnectionStrength) * MAX_RECEIVER_DISTANCE);
 
         _connector.Position.Vector = ConnectorPosition;
         _receiver.Position.Vector = ReceiverPosition;
         _receiverLights.Position.Vector = ReceiverPosition;
 
-        _text.Position.Vector = Position;
-        _text.Position.Vector.Y += 5f;
-    }
-
-    private void SyncItemRotations()
-    {
-        float Rotation = (_connectDirection) switch
-        {
-            Direction.Right => 0f,
-            Direction.Left => MathF.PI,
-            Direction.Up => -(MathF.PI / 2f),
-            Direction.Down => MathF.PI / 2f,
-
-            _ => throw new EnumValueException(nameof(_connectDirection), nameof(Direction),
-                    _connectDirection.ToString(), (int)_connectDirection)
-        };
-
-        _connector.Rotation = Rotation;
-        _receiver.Rotation = Rotation;
-        _receiverLights.Rotation = Rotation;
+        
     }
 
     private void SyncConnectionProperties()
@@ -355,30 +287,6 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
 
 
     /* Other */
-    private void Disable()
-    {
-        Updater.RemoveUpdateable(this);
-
-        _button.ClearEventHandlers();
-
-        if (Drawer != null)
-        {
-            AddAllDrawables();
-        }
-    }
-
-    private void Enable()
-    {
-        Updater.AddUpdateable(this);
-
-        CreateButtonHandlers();
-
-        if (Drawer != null)
-        {
-            RemoveAllDrawables();
-        }
-    }
-
     private void CreateButtonHandlers()
     {
         _button.SetEventHandler(ButtonEvent.OnHover, OnButtonHoverEvent);
@@ -386,59 +294,45 @@ internal partial class ConnectorButton : ITimeUpdatable, ITimeUpdater
         _button.SetEventHandler(ButtonEvent.LeftClick, OnButtonClickEvent);
     }
 
-    private void AddAllDrawables()
-    {
-        Drawer!.RemoveDrawableItem(_panel);
-        Drawer.RemoveDrawableItem(_glow);
-        Drawer.RemoveDrawableItem(_connector);
-        Drawer.RemoveDrawableItem(_receiver);
-        Drawer.RemoveDrawableItem(_receiverLights);
-        Drawer.RemoveDrawableItem(_text);
-    }
-
-    private void RemoveAllDrawables()
-    {
-        Drawer!.AddDrawableItem(_panel);
-        Drawer.AddDrawableItem(_glow);
-        Drawer.AddDrawableItem(_connector);
-        Drawer.AddDrawableItem(_receiver);
-        Drawer.AddDrawableItem(_receiverLights);
-        Drawer.AddDrawableItem(_text);
-    }
-
 
     // Inherited methods. 
-    public void Update(TimeSpan passedTime)
+    public void Update(float passedTimeSeconds)
     {
-        if (!IsUpdated) return;
+        if (!IsEnabled) return;
+
+        // Update items.
+        _position.Update(passedTimeSeconds);
+        _button.Update(passedTimeSeconds);
 
         //  Click amount.
-        ClickColorAmount -= (float)(passedTime.TotalSeconds * CLICK_COLOR_FADE_SPEED);
+        ClickColorAmount -= passedTimeSeconds * CLICK_COLOR_FADE_SPEED;
+
+        // Bounce animation.
+        _bouncePeriod = Math.Clamp(_bouncePeriod + (passedTimeSeconds * BOUNCE_SPEED), 0f, MathF.PI);
 
         // Connection.
         if (_isButtonHovered)
         {
-            ConnectionStrength += (float)(passedTime.TotalSeconds * COLOR_CHANGE_SPEED_UP);
+            ConnectionStrength += passedTimeSeconds * COLOR_CHANGE_SPEED_UP;
         }
         else
         {
-            ConnectionStrength -= (float)(passedTime.TotalSeconds * COLOR_CHANGE_SPEED_DOWN);
+            ConnectionStrength -= passedTimeSeconds * COLOR_CHANGE_SPEED_DOWN;
         }
-
-        // Bounce animation.
-        BounceProgress += (float)(passedTime.TotalSeconds * BOUNCE_SPEED);
 
         // Update items.
         SyncItemPositions();
     }
 
-    public void ForceRemove()
+    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
     {
-        Updater.RemoveUpdateable(this);
-        _button.ClearEventHandlers();
+        if (!IsVisible) return;
+
+        _panel.Draw(passedTimeSeconds, spriteBatch);
+        _glow.Draw(passedTimeSeconds, spriteBatch);
+        _connector.Draw(passedTimeSeconds, spriteBatch);
+        _receiver.Draw(passedTimeSeconds, spriteBatch);
+        _receiverLights.Draw(passedTimeSeconds, spriteBatch);
+        _text.Draw(passedTimeSeconds, spriteBatch);
     }
-
-    public void AddUpdateable(ITimeUpdatable item) { }
-
-    public void RemoveUpdateable(ITimeUpdatable item) { }
 }

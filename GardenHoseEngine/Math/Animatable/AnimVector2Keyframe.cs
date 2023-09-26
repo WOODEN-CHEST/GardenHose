@@ -12,22 +12,22 @@ public struct AnimVector2Keyframe
 {
     // Fields.
     public readonly Vector2 Location;
-    public readonly double Time;
+    public readonly float Time;
     public readonly InterpolationMethod InterpMethod;
 
 
     // Internal fields.
-    internal double TimeToNext;
+    internal float TimeToNext;
 
 
     // Constructors,
-    public AnimVector2Keyframe(Vector2 location, double time, InterpolationMethod interpMethod)
+    public AnimVector2Keyframe(Vector2 location, float time, InterpolationMethod interpMethod)
     {
-        if (double.IsNegative(time))
+        if (float.IsNegative(time))
         {
             throw new ArgumentException($"Keyframe time cannot be negative: {time}");
         }
-        if (!double.IsFinite(time))
+        if (!float.IsFinite(time))
         {
             throw new ArgumentException($"Invalid keyframe time: {time}");
         }

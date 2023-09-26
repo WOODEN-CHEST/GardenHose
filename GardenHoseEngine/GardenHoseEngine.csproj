@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Frame\Item\Basic\**" />
     <Compile Remove="Frame\Item\Texta\**" />
-    <EmbeddedResource Remove="Frame\Item\Basic\**" />
     <EmbeddedResource Remove="Frame\Item\Texta\**" />
-    <None Remove="Frame\Item\Basic\**" />
     <None Remove="Frame\Item\Texta\**" />
   </ItemGroup>
 

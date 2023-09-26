@@ -13,9 +13,7 @@ public interface IDrawableItem
 
     public Effect? Shader { get; set; }
 
-    public IDrawer? Drawer { get; set; }
-
 
     // Methods.
-    public void Draw(TimeSpan passedTime, SpriteBatch spriteBatch);
+    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch);
 }

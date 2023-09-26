@@ -1,19 +1,7 @@
-﻿using GardenHose.Frames.Global;
-using GardenHose.UI;
-using GardenHose.UI.Buttons.Connector;
-using GardenHoseEngine;
-using GardenHoseEngine.Animatable;
+﻿using GardenHoseEngine;
 using GardenHoseEngine.Frame;
-using GardenHoseEngine.Frame.Item;
-using GardenHoseEngine.Frame.Item.Text;
 using GardenHoseEngine.IO;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Frames.MainMenu;
 
@@ -31,8 +19,8 @@ internal partial class MainMenuFrame : GameFrame
     public MainMenuFrame(string? name) : base(name)
     {
         LayerManager = new(this);
-        ButtonManager = new(this);
-        BackgroundManager = new(this);
+        BackgroundManager = new(this, LayerManager.BackgroundLayer);
+        ButtonManager = new(this, LayerManager.UILayer);
     }
 
 
@@ -44,9 +32,6 @@ internal partial class MainMenuFrame : GameFrame
         LayerManager.Load(assetManager);
         ButtonManager.Load(assetManager);
         BackgroundManager.Load(assetManager);
-            
-
-        FinalizeLoad();
     }
 
     public override void OnStart()
@@ -65,10 +50,18 @@ internal partial class MainMenuFrame : GameFrame
         GH.Engine.IsMouseVisible = true;
     }
 
-    public override void Update(TimeSpan passedTime)
+    public override void Update(float passedTimeSeconds)
     {
-        LayerManager.Update(passedTime);
+        base.Update(passedTimeSeconds);
+        LayerManager.Update(passedTimeSeconds);
+    }
 
-        base.Update(passedTime);
+    public override void Draw(float passedTimeSeconds,
+        GraphicsDevice graphicsDevice, 
+        SpriteBatch spriteBatch,
+        RenderTarget2D layerPixelBuffer,
+        RenderTarget2D framePixelBuffer)
+    {
+        base.Draw(passedTimeSeconds, graphicsDevice, spriteBatch, layerPixelBuffer, framePixelBuffer);  
     }
 }

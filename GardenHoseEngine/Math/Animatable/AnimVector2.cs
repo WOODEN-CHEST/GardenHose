@@ -9,15 +9,17 @@ public class AnimVector2 : ITimeUpdatable
 {
     // Fields.
     public Vector2 Vector;
+
     public bool IsLooped { get; set; } = false;
+
     public bool IsAnimating { get; private set; }
 
-    public double Speed
+    public float Speed
     {
         get => _speed;
         set
         {
-            if (!double.IsFinite(value) || value is 0d or -0d)
+            if (!double.IsFinite(value) || value is 0f or -0f)
             {
                 throw new ArgumentException($"Invalid animation speed: {value}");
             }
@@ -26,7 +28,7 @@ public class AnimVector2 : ITimeUpdatable
         }
     }
 
-    public double Time
+    public float Time
     {
         get => _time;
         set
@@ -47,40 +49,37 @@ public class AnimVector2 : ITimeUpdatable
 
     public AnimVector2Keyframe[]? Keyframes => _keyframes?.ToArray();
 
-    public ITimeUpdater Updater { get; private set; }
-
     public event EventHandler<AnimFinishEventArgs>? AnimationFinished;
 
 
     // Private fields.
     private const int MIN_INDEX = 1;
-    private const double MIN_TIME = 0d;
-    private const double MIN_ANIMATION_SPEED = -1e6d;
-    private const double MAX_ANIMATION_SPEED = 1e6d;
+    private const float MIN_TIME = 0f;
+    private const float MIN_ANIMATION_SPEED = -1e6f;
+    private const float MAX_ANIMATION_SPEED = 1e6f;
 
-    private double Duration => _keyframes![^1].Time;
+    private float Duration => _keyframes![^1].Time;
     private int MaxIndex => _keyframes!.Length - 1;
 
-    private double _speed = 1d;
+    private float _speed = 1f;
     private AnimVector2Keyframe[]? _keyframes = null;
-    private double _time = 0f;
+    private float _time = 0f;
     private int _curIndex = 0;
 
 
     // Constructors.
-    public AnimVector2(ITimeUpdater updater, Vector2 vector, KeyFrameBuilder? keyframes)
+    public AnimVector2(Vector2 vector, KeyFrameBuilder? keyframes)
     {
         Vector = vector;
         if (keyframes != null)
         {
             SetKeyFrames(keyframes);
         }
-        Updater = updater ?? throw new ArgumentNullException(nameof(updater));
     }
 
-    public AnimVector2(ITimeUpdater updater, Vector2 vector) : this(updater, vector, null) { }
+    public AnimVector2(Vector2 vector) : this(vector, null) { }
 
-    public AnimVector2(ITimeUpdater updater) : this(updater, Vector2.Zero, null) { }
+    public AnimVector2() : this(Vector2.Zero) { }
 
 
     // Methods.
@@ -111,13 +110,11 @@ public class AnimVector2 : ITimeUpdatable
         }
 
         IsAnimating = true;
-        Updater.AddUpdateable(this);
     }
 
     public void Stop()
     {
         IsAnimating = false;
-        Updater.RemoveUpdateable(this);
     }
 
     public void Finish()
@@ -173,12 +170,12 @@ public class AnimVector2 : ITimeUpdatable
             if (IsLooped)
             {
                 _curIndex = 0;
-                _time = 0d;
+                _time = 0f;
             }
             else
             {
                 _curIndex = MaxIndex;
-                _time = _keyframes[MaxIndex].Time;
+                _time = _keyframes![MaxIndex].Time;
             }
         }
         else
@@ -188,12 +185,12 @@ public class AnimVector2 : ITimeUpdatable
             if (IsLooped)
             {
                 _curIndex = MaxIndex;
-                _time = _keyframes[MaxIndex].Time;
+                _time = _keyframes![MaxIndex].Time;
             }
             else
             {
                 _curIndex = 0;
-                _time = 0d;
+                _time = 0f;
             }
         }
 
@@ -203,7 +200,7 @@ public class AnimVector2 : ITimeUpdatable
         }
     }
 
-    private void SetAnimationData(int index, double time, Vector2 location)
+    private void SetAnimationData(int index, float time, Vector2 location)
     {
         _curIndex = index;
         _time = time;
@@ -212,9 +209,11 @@ public class AnimVector2 : ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(TimeSpan passedTime)
+    public void Update(float passedTimeSeconds)
     {
-        _time += passedTime.TotalSeconds * Speed;
+        if (!IsAnimating) return;
+
+        _time += passedTimeSeconds * Speed;
 
         if (!IsIndexSyncedWithTime())
         {

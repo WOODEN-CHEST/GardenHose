@@ -6,14 +6,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHoseEngine.Frame.Item;
 
-public class PositionalItem : IDrawableItem
+public class PositionalItem : IDrawableItem, ITimeUpdatable
 {
     // Fields.
     public virtual bool IsVisible { get; set; }
 
     public virtual Effect? Shader { get; set; }
-
-    public virtual IDrawer? Drawer { get; set; }
 
     public IVirtualConverter Converter { get; private init; }
 
@@ -21,7 +19,7 @@ public class PositionalItem : IDrawableItem
 
     public virtual AnimVector2 Scale { get; private init; }
 
-    public float Rotation
+    public  virtual float Rotation
     {
         get => _rotation;
         set
@@ -41,19 +39,22 @@ public class PositionalItem : IDrawableItem
 
 
     // Constructors.
-    public PositionalItem(ITimeUpdater updater, IVirtualConverter converter, IDrawer? drawer)
+    public PositionalItem(IVirtualConverter converter)
     {
-        ArgumentNullException.ThrowIfNull(updater, nameof(updater));
         Converter = converter ?? throw new ArgumentNullException(nameof(converter));
 
-        Position = new(updater);
-        Scale = new(updater);
+        Position = new();
+        Scale = new();
         Scale.Vector = Vector2.One;
-        Drawer = drawer;
-        Drawer?.AddDrawableItem(this);
     }
 
 
     // Inherited methods.
-    public virtual void Draw(TimeSpan passedTime, SpriteBatch spriteBatch) { }
+    public virtual void Draw(float passedTimeSeconds, SpriteBatch spriteBatch) { }
+
+    public virtual void Update(float passedTimeSeconds)
+    {
+        Scale.Update(passedTimeSeconds);
+        Position.Update(passedTimeSeconds);
+    }
 }

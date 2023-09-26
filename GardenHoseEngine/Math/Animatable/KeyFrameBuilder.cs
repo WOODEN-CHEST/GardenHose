@@ -19,12 +19,12 @@ public class KeyFrameBuilder
 
     public KeyFrameBuilder(Vector2 startPosition, InterpolationMethod defaultInterpolation)
     {
-        _keyframes.Add(new(startPosition, 0d, defaultInterpolation));
+        _keyframes.Add(new(startPosition, 0f, defaultInterpolation));
     }
 
 
     // Methods.
-    public KeyFrameBuilder AddKeyFrame(Vector2 position, double timeToReach, InterpolationMethod interpolation)
+    public KeyFrameBuilder AddKeyFrame(Vector2 position, float timeToReach, InterpolationMethod interpolation)
     {
         if (timeToReach == 0)
         {
@@ -40,17 +40,17 @@ public class KeyFrameBuilder
         return this;
     }
 
-    public KeyFrameBuilder AddKeyFrame(Vector2 position, double timeToReach)
+    public KeyFrameBuilder AddKeyFrame(Vector2 position, float timeToReach)
     {
         return AddKeyFrame(position, timeToReach, _keyframes[^1].InterpMethod);
     }
 
-    public KeyFrameBuilder AddKeyFrame(double timeToReach, InterpolationMethod interpolation)
+    public KeyFrameBuilder AddKeyFrame(float timeToReach, InterpolationMethod interpolation)
     {
         return AddKeyFrame(_keyframes[^1].Location, timeToReach, interpolation);
     }
 
-    public KeyFrameBuilder AddKeyFrame(double timeToReach)
+    public KeyFrameBuilder AddKeyFrame(float timeToReach)
     {
         return AddKeyFrame(_keyframes[^1].Location, timeToReach, _keyframes[^1].InterpMethod);
     }

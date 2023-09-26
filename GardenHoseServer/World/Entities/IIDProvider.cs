@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+namespace GardenHoseServer.World.Entities;
 
-namespace GardenHose.Messages.Client;
-
-public enum ClientMessageType
+internal interface IIDProvider
 {
-
+    public ulong GetID();
 }

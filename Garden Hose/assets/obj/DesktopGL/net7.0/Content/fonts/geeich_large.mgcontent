@@ -3,14 +3,14 @@
   <SourceFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/fonts/geeich_large.spritefont</SourceFile>
   <SourceTime>2023-09-22T13:01:56.1168296+03:00</SourceTime>
   <DestFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/bin/DesktopGL/Content/fonts/geeich_large.xnb</DestFile>
-  <DestTime>2023-09-22T13:05:03.9929817+03:00</DestTime>
+  <DestTime>2023-09-26T11:33:08.5634295+03:00</DestTime>
   <Importer>FontDescriptionImporter</Importer>
   <ImporterTime>2022-07-26T14:44:56+03:00</ImporterTime>
   <Processor>FontDescriptionProcessor</Processor>
   <ProcessorTime>2022-07-26T14:44:56+03:00</ProcessorTime>
   <Parameters>
     <Key>PremultiplyAlpha</Key>
-    <Value>True</Value>
+    <Value>False</Value>
   </Parameters>
   <Parameters>
     <Key>TextureFormat</Key>

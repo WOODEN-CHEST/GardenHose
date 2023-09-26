@@ -37,21 +37,18 @@ public class Button : ITimeUpdatable
     public Vector2 Scale { get; set; } = Vector2.One;
 
 
-    public ITimeUpdater Updater { get; init; }
-
-
     // Private fields.
     private IButtonComponent[] _components;
     private readonly UserInput _input;
     private readonly Dictionary<ButtonEvent, (EventHandler Handler, IInputListener? Listener)> _eventHandlers = new();
     private DeltaValue<bool> _isHovered = new(false);
+    private bool _shouldUpdate = false;
 
 
     // Constructors.
-    public Button(UserInput input, ITimeUpdater updater, params IButtonComponent[] components)
+    public Button(UserInput input, params IButtonComponent[] components)
     {
         _input = input ?? throw new ArgumentNullException(nameof(input));
-        Updater = updater ?? throw new ArgumentNullException(nameof(updater));
         Components = components;
     }
 
@@ -73,7 +70,7 @@ public class Button : ITimeUpdatable
             or ButtonEvent.OnHover or ButtonEvent.OnUnhover)
         {
             _eventHandlers[buttonEvent] = (handler, null);
-            Updater.AddUpdateable(this);
+            UpdateShouldUpdated();
         }
         else
         {
@@ -89,7 +86,8 @@ public class Button : ITimeUpdatable
             _eventHandlers[buttonEvent].Listener?.StopListening();
         }
         _eventHandlers.Remove(buttonEvent);
-        TalkWithUpdaterIfNeeded();
+
+        UpdateShouldUpdated();
     }
 
     public void ClearEventHandlers()
@@ -99,7 +97,8 @@ public class Button : ITimeUpdatable
             HandlerAndListener.Listener?.StopListening();
         }
         _eventHandlers.Clear();
-        Updater.RemoveUpdateable(this);
+
+        UpdateShouldUpdated();
     }
 
     public bool IsMouseOverButton() => IsMouseOverButton(_input.VirtualMousePosition.Current);
@@ -208,25 +207,20 @@ public class Button : ITimeUpdatable
             });
     }
 
-    private void TalkWithUpdaterIfNeeded()
+    private void UpdateShouldUpdated()
     {
-        if (_eventHandlers.ContainsKey(ButtonEvent.OnHover) 
+        _shouldUpdate = _eventHandlers.ContainsKey(ButtonEvent.OnHover)
             || _eventHandlers.ContainsKey(ButtonEvent.OnUnhover)
             || _eventHandlers.ContainsKey(ButtonEvent.Hovering)
-            || _eventHandlers.ContainsKey(ButtonEvent.NotHovering))
-        {
-            Updater.AddUpdateable(this);
-        }
-        else
-        {
-            Updater.RemoveUpdateable(this);
-        }
+            || _eventHandlers.ContainsKey(ButtonEvent.NotHovering);
     }
 
 
     // Inherited methods.
-    public void Update(TimeSpan passedTime)
+    public void Update(float passedTimeSeconds)
     {
+        if (!_shouldUpdate) return;
+
         _isHovered.Update(IsMouseOverButton());
 
         if (_isHovered.Current)
@@ -253,10 +247,5 @@ public class Button : ITimeUpdatable
                 _eventHandlers[ButtonEvent.NotHovering].Handler.Invoke(this, EventArgs.Empty);
             }
         }
-    }
-
-    public void ForceRemove()
-    {
-        ClearEventHandlers();
     }
 }

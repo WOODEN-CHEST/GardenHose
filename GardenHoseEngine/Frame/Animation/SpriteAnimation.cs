@@ -9,12 +9,12 @@ public sealed partial class SpriteAnimation
 
     public int MaxFrameIndex { get; init; }
 
-    public double DefaultFPS
+    public float DefaultFPS
     {
         get => _defaultFPS;
         set
         {
-            if (!double.IsFinite(value))
+            if (!float.IsFinite(value))
             {
                 throw new ArgumentException($"Invalid default animation speed: {value}", nameof(value));
             }
@@ -25,12 +25,12 @@ public sealed partial class SpriteAnimation
 
 
     // Private fields.
-    private double _defaultFPS;
+    private float _defaultFPS;
     private readonly AnimationFrame[] _frames;
 
 
     // Constructors.
-    public SpriteAnimation(double fps, GameFrame owner, AssetManager assetManager,
+    public SpriteAnimation(float fps, IGameFrame owner, AssetManager assetManager,
         Origin? textureOrigin, params string[] relativePaths)
     {
         ArgumentNullException.ThrowIfNull(assetManager, nameof(assetManager));
@@ -52,9 +52,9 @@ public sealed partial class SpriteAnimation
 
 
     // Methods.
-    public AnimationInstance CreateInstance(ITimeUpdater updater)
+    public AnimationInstance CreateInstance()
     {
-        return new(this, updater);
+        return new(this);
     }
 
 
