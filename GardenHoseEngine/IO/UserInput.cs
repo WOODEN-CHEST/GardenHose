@@ -9,94 +9,80 @@ using System.Collections.Generic;
 
 namespace GardenHoseEngine.IO;
 
-// All this code just works, somehow. Must not touch it, it may break then.
-public class UserInput
+// All this code just works, somehow.
+public static class UserInput
 {
     // Fields.
-    public DeltaValue<KeyboardState> KeyboardState { get; private set; } = new();
+    public static DeltaValue<KeyboardState> KeyboardState { get; private set; } = new();
 
-    public DeltaValue<int> KeysDownCount { get; private set; } = new();
-
-
-    public DeltaValue<MouseState> MouseState { get; private set; } = new ();
-
-    public DeltaValue<Vector2> VirtualMousePosition { get; private set; } = new();
-
-    public DeltaValue<int> MouseButtonsPressedCount { get; private set; } = new();
+    public static DeltaValue<int> KeysDownCount { get; private set; } = new();
 
 
-    public event EventHandler<TextInputEventArgs> TextInput;
+    public static DeltaValue<MouseState> MouseState { get; private set; } = new ();
 
-    public event EventHandler<FileDropEventArgs> FileDrop;
+    public static DeltaValue<Vector2> VirtualMousePosition { get; private set; } = new();
+
+    public static DeltaValue<int> MouseButtonsPressedCount { get; private set; } = new();
+
+
+    public static event EventHandler<TextInputEventArgs> TextInput;
+
+    public static event EventHandler<FileDropEventArgs> FileDrop;
 
 
     // Private fields.
-    private readonly DiscreteTimeList<IInputListener> _listeners = new();
-    private readonly IVirtualConverter _converter;
-
-
-    // Constructors.
-    public UserInput(IVirtualConverter converter, GameWindow window)
-    {
-        _converter = converter ?? throw new ArgumentNullException(nameof(converter));
-
-        if (window == null)
-        {
-            throw new ArgumentNullException(nameof(window));
-        }
-
-        window.TextInput += OnTextInputEvent;
-        window.FileDrop += OnFileDropEvent;
-    }
+    private static readonly DiscreteTimeList<IInputListener> s_listeners = new();
 
 
     // Methods.
-    public void AddListener(IInputListener listener) => _listeners.Add(listener);
+    public static void AddListener(IInputListener listener) => s_listeners.Add(listener);
 
-    public void RemoveListener(IInputListener listener) => _listeners.Add(listener);
+    public static void RemoveListener(IInputListener listener) => s_listeners.Remove(listener);
 
 
     // Internal methods.
-    internal void ListenForInput(bool isWindowFocused)
+    internal static void ListenForInput(bool isWindowFocused)
     {
         UpdateKeyboardInfo();
         UpdateMouseInfo();
 
-        _listeners.ApplyChanges();
-        foreach (var Listener in _listeners)
+        s_listeners.ApplyChanges();
+        foreach (var Listener in s_listeners)
         {
             Listener.Listen(isWindowFocused);
         }
-    } 
+    }
+
+
+    // Internal fields.
+    internal static void OnTextInputEvent(object? sender, TextInputEventArgs args)
+    {
+        TextInput?.Invoke(null, args);
+    }
+
+    internal static void OnFileDropEvent(object? sender, FileDropEventArgs args)
+    {
+        FileDrop?.Invoke(null, args);
+    }
 
 
     // Private methods.
-    private void UpdateKeyboardInfo()
+    private static void UpdateKeyboardInfo()
     {
         KeyboardState NewState = Keyboard.GetState();
         KeyboardState.Update(NewState);
         KeysDownCount.Update(KeyboardState.Current.GetPressedKeyCount());
     }
 
-    private void UpdateMouseInfo()
+    private static void UpdateMouseInfo()
     {
         MouseState.Update(Mouse.GetState());
-        VirtualMousePosition.Update(_converter.ToVirtualPosition(MouseState.Current.Position.ToVector2()));
+        VirtualMousePosition.Update(Display.ToVirtualPosition(MouseState.Current.Position.ToVector2()));
 
         int MouseButtonsPressed = 0;
         if (MouseState.Current.LeftButton == ButtonState.Pressed) MouseButtonsPressed++;
         if (MouseState.Current.MiddleButton == ButtonState.Pressed) MouseButtonsPressed++;
         if (MouseState.Current.RightButton == ButtonState.Pressed) MouseButtonsPressed++;
         MouseButtonsPressedCount.Update(MouseButtonsPressed);
-    }
-
-    private void OnTextInputEvent(object? sender, TextInputEventArgs args)
-    {
-        TextInput?.Invoke(this, args);
-    }
-
-    private void OnFileDropEvent(object? sender, FileDropEventArgs args)
-    {
-        FileDrop?.Invoke(this, args);
     }
 }

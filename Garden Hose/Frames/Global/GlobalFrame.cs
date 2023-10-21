@@ -18,11 +18,11 @@ internal class GlobalFrame : GameFrame
 
 
     // Inherited methods.
-    public override void Load(AssetManager assetManager)
+    public override void Load()
     {
-        base.Load(assetManager);
+        base.Load();
 
-        GeEichFont = assetManager.GetFont(this, "geeich");
-        GeEichFontLarge = assetManager.GetFont(this, "geeich_large");
+        GeEichFont = AssetManager.GetFont(this, "geeich");
+        GeEichFontLarge = AssetManager.GetFont(this, "geeich_large");
     }
 }

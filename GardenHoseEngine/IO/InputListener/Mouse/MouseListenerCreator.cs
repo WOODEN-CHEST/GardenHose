@@ -10,59 +10,49 @@ namespace GardenHoseEngine.IO;
 public static class MouseListenerCreator
 {
     // Internal static methods.
-    public static IInputListener AnyButton(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener AnyButton(object? creator,
         bool requiresFocus,
         MouseCondition condition,
         EventHandler<MouseEventArgs> handler)
     {
-        return new InputListener<MouseEventArgs>(userInput, creator, parentFrame, requiresFocus, 
+        return new InputListener<MouseEventArgs>(creator, requiresFocus, 
             GetPredicateAnyButton(condition), handler);
     }
 
-    public static IInputListener SingleButton(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener SingleButton(object? creator,
         bool requiresFocus,
         MouseCondition condition,
         EventHandler<MouseEventArgs> handler,
         MouseButton button)
     {
-        return new InputListener<MouseEventArgs>(userInput, creator, parentFrame, requiresFocus,
+        return new InputListener<MouseEventArgs>(creator, requiresFocus,
             GetPredicateSingleButton(condition, button), handler);
     }
 
-    public static IInputListener MultiButton(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener MultiButton(object? creator,
         bool requiresFocus,
         MouseCondition condition,
         EventHandler<MouseEventArgs> handler,
         params MouseButton[] buttons)
     {
-        return new InputListener<MouseEventArgs>(userInput, creator, parentFrame, requiresFocus,
+        return new InputListener<MouseEventArgs>(creator, requiresFocus,
             GetPredicateMultiButton(condition, buttons), handler);
     }
 
-    public static IInputListener Scroll(UserInput userInput,
-        object?  creator,
-        GameFrame? parentFrame,
+    public static IInputListener Scroll(object?  creator,
         bool requiresFocus,
         ScrollDirection scrollDirection,
         EventHandler<MouseEventArgs> handler)
     {
-        return new InputListener<MouseEventArgs>(userInput, creator, parentFrame, requiresFocus,
+        return new InputListener<MouseEventArgs>(creator, requiresFocus,
             GetPredicateScroll(scrollDirection), handler);
     }
 
-    public static IInputListener Move(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener Move(object? creator,
         bool requiresFocus,
         EventHandler<MouseEventArgs> handler)
     {
-        return new InputListener<MouseEventArgs>(userInput, creator, parentFrame, requiresFocus,
+        return new InputListener<MouseEventArgs>(creator, requiresFocus,
             GetPreicateMove(), handler);
     }
 
@@ -72,25 +62,25 @@ public static class MouseListenerCreator
     {
         return condition switch
         {
-            MouseCondition.WhileDown => (self) => self.Input.MouseButtonsPressedCount.Current > 0,
+            MouseCondition.WhileDown => (self) => UserInput.MouseButtonsPressedCount.Current > 0,
 
-            MouseCondition.WhileUp => (self) => self.Input.MouseButtonsPressedCount.Current == 0,
+            MouseCondition.WhileUp => (self) => UserInput.MouseButtonsPressedCount.Current == 0,
 
             MouseCondition.OnClick => (self) => 
-                self.Input.MouseButtonsPressedCount.Current > self.Input.MouseButtonsPressedCount.Previous,
+                UserInput.MouseButtonsPressedCount.Current > UserInput.MouseButtonsPressedCount.Previous,
 
             MouseCondition.OnRelease => (self) =>
             {
-                if (self.Input.MouseButtonsPressedCount.Current < self.Input.MouseButtonsPressedCount.Previous)
+                if (UserInput.MouseButtonsPressedCount.Current < UserInput.MouseButtonsPressedCount.Previous)
                 {
-                    self.Args ??= new(self.Input.VirtualMousePosition.Current);
+                    self.Args ??= new(UserInput.VirtualMousePosition.Current);
                     return true;
                 }
 
-                if ((self.Input.MouseButtonsPressedCount.Current > self.Input.MouseButtonsPressedCount.Previous)
+                if ((UserInput.MouseButtonsPressedCount.Current > UserInput.MouseButtonsPressedCount.Previous)
                     && (self.Args == null))
                 {
-                    self.Args = new(self.Input.VirtualMousePosition.Current);
+                    self.Args = new(UserInput.VirtualMousePosition.Current);
                 }
                 return false;
             },
@@ -105,15 +95,15 @@ public static class MouseListenerCreator
     {
         return condition switch
         {
-            MouseCondition.WhileDown => (self) => IsButtonPressed(self.Input.MouseState.Current, button),
+            MouseCondition.WhileDown => (self) => IsButtonPressed(UserInput.MouseState.Current, button),
 
-            MouseCondition.WhileUp => (self) => !IsButtonPressed(self.Input.MouseState.Current, button),
+            MouseCondition.WhileUp => (self) => !IsButtonPressed(UserInput.MouseState.Current, button),
 
             MouseCondition.OnClick => (self) =>
             {
                 // Flag = Button is down.
                 bool ButtonWasDown = self.Flag;
-                self.Flag = IsButtonPressed(self.Input.MouseState.Current, button);
+                self.Flag = IsButtonPressed(UserInput.MouseState.Current, button);
                 return !ButtonWasDown && self.Flag;
             },
 
@@ -121,17 +111,17 @@ public static class MouseListenerCreator
             {
                 // Flag = Button is released.
                 bool ButtonWasReleased = self.Flag;
-                self.Flag = !IsButtonPressed(self.Input.MouseState.Current, button);
+                self.Flag = !IsButtonPressed(UserInput.MouseState.Current, button);
 
                 if (!ButtonWasReleased && self.Flag)
                 {
-                    self.Args ??= new(self.Input.VirtualMousePosition.Current);
+                    self.Args ??= new(UserInput.VirtualMousePosition.Current);
                     return true;
                 }
 
                 if (ButtonWasReleased && !self.Flag)
                 {
-                    self.Args = new(self.Input.VirtualMousePosition.Current);
+                    self.Args = new(UserInput.VirtualMousePosition.Current);
                 }
                 return false;
             },
@@ -159,7 +149,7 @@ public static class MouseListenerCreator
             {
                 foreach (var Button in buttons)
                 {
-                    if (!IsButtonPressed(self.Input.MouseState.Current, Button))
+                    if (!IsButtonPressed(UserInput.MouseState.Current, Button))
                     {
                         return false;
                     }
@@ -171,7 +161,7 @@ public static class MouseListenerCreator
             {
                 foreach (var Button in buttons)
                 {
-                    if (IsButtonPressed(self.Input.MouseState.Current, Button))
+                    if (IsButtonPressed(UserInput.MouseState.Current, Button))
                     {
                         return false;
                     }
@@ -187,7 +177,7 @@ public static class MouseListenerCreator
                 self.Flag = true;
                 foreach (var Button in buttons)
                 {
-                    if (!IsButtonPressed(self.Input.MouseState.Current, Button))
+                    if (!IsButtonPressed(UserInput.MouseState.Current, Button))
                     {
                         self.Flag = false;
                         break;
@@ -205,7 +195,7 @@ public static class MouseListenerCreator
                 self.Flag = true;
                 foreach (var Button in buttons)
                 {
-                    if (IsButtonPressed(self.Input.MouseState.Current, Button))
+                    if (IsButtonPressed(UserInput.MouseState.Current, Button))
                     {
                         self.Flag = false;
                         break;
@@ -226,13 +216,13 @@ public static class MouseListenerCreator
         return scrollDirection switch
         {
             ScrollDirection.Any => (self) => 
-                self.Input.MouseState.Current.ScrollWheelValue != self.Input.MouseState.Previous.ScrollWheelValue,
+                UserInput.MouseState.Current.ScrollWheelValue != UserInput.MouseState.Previous.ScrollWheelValue,
 
             ScrollDirection.Up => (self) =>
-                self.Input.MouseState.Current.ScrollWheelValue > self.Input.MouseState.Previous.ScrollWheelValue,
+                UserInput.MouseState.Current.ScrollWheelValue > UserInput.MouseState.Previous.ScrollWheelValue,
 
             ScrollDirection.Down => (self) =>
-                self.Input.MouseState.Current.ScrollWheelValue < self.Input.MouseState.Previous.ScrollWheelValue,
+                UserInput.MouseState.Current.ScrollWheelValue < UserInput.MouseState.Previous.ScrollWheelValue,
 
             _ => throw new EnumValueException(nameof(scrollDirection), nameof(ScrollDirection),
                 scrollDirection.ToString(), (int)scrollDirection)
@@ -241,7 +231,7 @@ public static class MouseListenerCreator
 
     private static Predicate<InputListener<MouseEventArgs>> GetPreicateMove()
     {
-        return (self) => self.Input.MouseState.Current.Position != self.Input.MouseState.Previous.Position;
+        return (self) => UserInput.MouseState.Current.Position != UserInput.MouseState.Previous.Position;
     }
 
     private static bool IsButtonPressed(in MouseState mouseState, MouseButton button)

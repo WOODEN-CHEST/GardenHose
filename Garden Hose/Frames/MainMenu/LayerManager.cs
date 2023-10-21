@@ -1,4 +1,8 @@
-﻿using GardenHoseEngine.Frame;
+﻿using GardenHoseEngine;
+using GardenHoseEngine.Frame;
+using GardenHoseEngine.Screen;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +21,7 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
     internal ILayer OverlayLayer { get; private init; } = new Layer("overlay");
 
 
-    internal double FadeStep
+    internal float FadeStep
     {
         get => _fadeStep;
         set
@@ -29,7 +33,7 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
 
 
     // Private fields.
-    private double _fadeStep = 0.8d;
+    private float _fadeStep = 0.8f;
     private float _fadeBrightness = 0f;
     private bool _isFading = true;
 
@@ -45,9 +49,9 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
 
 
     // Private methods.
-    private void FadeLayerBrightness(float passedTimeSeconds)
+    private void FadeLayerBrightness()
     {
-        _fadeBrightness = Math.Clamp(_fadeBrightness + passedTimeSeconds, 0f, 1f);
+        _fadeBrightness = Math.Clamp(_fadeBrightness + GameFrameManager.PassedTimeSeconds * _fadeStep, 0f, 1f);
         if (_fadeBrightness is 0f or 1f)
         {
             _isFading = false;
@@ -60,8 +64,21 @@ internal class MainFrameLayerManager : FrameComponentManager<MainMenuFrame>
 
 
     // Inherited methods.
-    internal override void Update(float passedTimeSeconds)
+    internal override void Update()
     {
-        if (_isFading) FadeLayerBrightness(passedTimeSeconds);
+        if (_isFading)
+        {
+            FadeLayerBrightness();
+        }
+    }
+
+    internal override void Load()
+    {
+
+    }
+
+    internal override void OnStart()
+    {
+
     }
 }

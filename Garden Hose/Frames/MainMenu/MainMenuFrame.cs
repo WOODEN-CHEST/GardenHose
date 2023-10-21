@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine;
+using GardenHoseEngine.Engine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework.Graphics;
@@ -25,13 +26,13 @@ internal partial class MainMenuFrame : GameFrame
 
 
     // Inherited methods.
-    public override void Load(AssetManager assetManager)
+    public override void Load()
     {
-        base.Load(assetManager);
+        base.Load();
 
-        LayerManager.Load(assetManager);
-        ButtonManager.Load(assetManager);
-        BackgroundManager.Load(assetManager);
+        LayerManager.Load();
+        ButtonManager.Load();
+        BackgroundManager.Load();
     }
 
     public override void OnStart()
@@ -42,26 +43,14 @@ internal partial class MainMenuFrame : GameFrame
         ButtonManager.OnStart();
         BackgroundManager.OnStart();
 
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.SingleButton(GH.Engine.UserInput, this, this, true,
-            MouseCondition.OnClick, (sender, args) => ButtonManager.BringMainButtonsIn(), MouseButton.Right));
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.SingleButton(GH.Engine.UserInput, this, this, true,
-            MouseCondition.OnClick, (sender, args) => ButtonManager.BringMainButtonsOut(), MouseButton.Middle));
-
-        GH.Engine.IsMouseVisible = true;
+        GHEngine.Game.IsMouseVisible = true;
     }
 
-    public override void Update(float passedTimeSeconds)
+    public override void Update()
     {
-        base.Update(passedTimeSeconds);
-        LayerManager.Update(passedTimeSeconds);
-    }
-
-    public override void Draw(float passedTimeSeconds,
-        GraphicsDevice graphicsDevice, 
-        SpriteBatch spriteBatch,
-        RenderTarget2D layerPixelBuffer,
-        RenderTarget2D framePixelBuffer)
-    {
-        base.Draw(passedTimeSeconds, graphicsDevice, spriteBatch, layerPixelBuffer, framePixelBuffer);  
+        base.Update();
+        LayerManager.Update();
+        BackgroundManager.Update();
+        ButtonManager.Update();
     }
 }

@@ -25,7 +25,7 @@ public class TypeableSimpleTextBox : SimpleTextBox
 
             if (value == true)
             {
-                _input.AddListener(_clickListener);
+                UserInput.AddListener(_clickListener);
             }
             else
             {
@@ -43,19 +43,19 @@ public class TypeableSimpleTextBox : SimpleTextBox
 
             if (value)
             {
-                _input.TextInput += OnTextInputEvent;
+                UserInput.TextInput += OnTextInputEvent;
 
-                _input.AddListener(_endKeyListener);
-                _input.AddListener(_homeKeyListener);
-                _input.AddListener(_escapeKeyListener);
-                _input.AddListener(_leftKeyListener);
-                _input.AddListener(_rightKeyListener);
-                _input.AddListener(_upKeyListener);
-                _input.AddListener(_downKeyListener);
+                UserInput.AddListener(_endKeyListener);
+                UserInput.AddListener(_homeKeyListener);
+                UserInput.AddListener(_escapeKeyListener);
+                UserInput.AddListener(_leftKeyListener);
+                UserInput.AddListener(_rightKeyListener);
+                UserInput.AddListener(_upKeyListener);
+                UserInput.AddListener(_downKeyListener);
             }
             else
             {
-                _input.TextInput -= OnTextInputEvent;
+                UserInput.TextInput -= OnTextInputEvent;
 
                 _endKeyListener.StopListening();
                 _homeKeyListener.StopListening();
@@ -80,8 +80,6 @@ public class TypeableSimpleTextBox : SimpleTextBox
     // Private fields
     private string[] _formattedLines;
 
-    private UserInput _input;
-    private Texture2D _singlePixel;
     private bool _isTypeable = false;
 
     private bool _isFocused;
@@ -101,28 +99,25 @@ public class TypeableSimpleTextBox : SimpleTextBox
 
 
     // Constructors.
-    public TypeableSimpleTextBox(IVirtualConverter converter, Texture2D singlePixel, UserInput input, SpriteFont font, string text) 
-        : base(converter, font, text)
+    public TypeableSimpleTextBox(SpriteFont font, string text) 
+        : base(font, text)
     {
-        _input = input ?? throw new ArgumentNullException(nameof(input));
-        _singlePixel = singlePixel ?? throw new ArgumentNullException(nameof(singlePixel));
-
-        _clickListener = MouseListenerCreator.SingleButton(_input, this, null, true,
+        _clickListener = MouseListenerCreator.SingleButton(this, true,
                     MouseCondition.OnClick, OnUserRightClickEvent, MouseButton.Left);
 
-        _endKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _endKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
                     OnEndKeyPressEvent, Keys.End);
-        _homeKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _homeKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
                     OnHomeKeyPressEvent, Keys.Home);
-        _escapeKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _escapeKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             OnEscapeKeyPressEvent, Keys.Escape);
-        _leftKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _leftKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             OnLeftKeyPressEvent, Keys.Left);
-        _rightKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _rightKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             OnRightKeyPressEvent, Keys.Right);
-        _upKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _upKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             OnUpKeyPressEvent, Keys.Up);
-        _downKeyListener = KeyboardListenerCreator.SingleKey(_input, this, null, KeyCondition.OnPress,
+        _downKeyListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             OnDownKeyPressEvent, Keys.Down);
     }
 
@@ -223,14 +218,14 @@ public class TypeableSimpleTextBox : SimpleTextBox
     // Private methods.
     private void OnUserRightClickEvent(object? sender, EventArgs args)
     {
-        if (!IsLocationOverBox(_input.VirtualMousePosition.Current))
+        if (!IsLocationOverBox(UserInput.VirtualMousePosition.Current))
         {
             IsFocused = false;
             return;
         }
 
         IsFocused = true;
-        SetCursorPosition(_input.VirtualMousePosition.Current);
+        SetCursorPosition(UserInput.VirtualMousePosition.Current);
     }
 
     private bool IsLocationOverBox(Vector2 location)
@@ -421,28 +416,28 @@ public class TypeableSimpleTextBox : SimpleTextBox
         _formattedLines = FormattedText.Split('\n');
     }
 
-    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public override void Draw()
     {
         if (!IsVisible) return;
 
-        base.Draw(passedTimeSeconds, spriteBatch);
+        base.Draw();
 
         if (!IsFocused ) return;
 
-        _cursorTimeSeconds += passedTimeSeconds;
+        _cursorTimeSeconds += GameFrameManager.PassedTimeSeconds;
         if (_cursorTimeSeconds > CURSOR_BLINK_TIME_SECONDS)
         {
             _cursorTimeSeconds %= CURSOR_BLINK_TIME_SECONDS * 2f;
             return;
         }
 
-        spriteBatch.Draw(_singlePixel,
-            Converter.ToRealPosition(_cursorPositionVisual),
+        GameFrameManager.SpriteBatch.Draw(Display.SinglePixel,
+            Display.ToRealPosition(_cursorPositionVisual),
             null,
             CursorColor,
             0f,
             Vector2.Zero,
-            Converter.ToRealScale(new Vector2(2.5f, Font.LineSpacing)),
+            Display.ToRealScale(new Vector2(2.5f, Font.LineSpacing)),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

@@ -11,46 +11,38 @@ namespace GardenHoseEngine.IO;
 public static class KeyboardListenerCreator
 {
     // Static methods.
-    public static IInputListener AnyKey(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener AnyKey(object? creator,
         KeyCondition condition,
         EventHandler<EventArgs> handler)
     {
-        return new InputListener<EventArgs>(userInput, creator, parentFrame, false,
+        return new InputListener<EventArgs>(creator, false,
             GetPredicateAnyKey(condition), handler);
     }
 
-    public static IInputListener SingleKey(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener SingleKey(object? creator,
         KeyCondition condition,
         EventHandler<EventArgs> handler,
         Keys key)
     {
-        return new InputListener<EventArgs>(userInput, creator, parentFrame, false,
+        return new InputListener<EventArgs>(creator, false,
             GetPredicateSingleKey(condition, key), handler);
     }
 
-    public static IInputListener MultiKey(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener MultiKey(object? creator,
         KeyCondition condition,
         EventHandler<EventArgs> handler,
         params Keys[] keys)
     {
-        return new InputListener<EventArgs>(userInput, creator, parentFrame, false,
+        return new InputListener<EventArgs>(creator, false,
             GetPredicateMultiKey(condition, keys), handler);
     }
 
-    public static IInputListener Shortcut(UserInput userInput,
-        object? creator,
-        GameFrame? parentFrame,
+    public static IInputListener Shortcut(object? creator,
         KeyCondition condition,
         EventHandler<EventArgs> handler,
         params Keys[] keys)
     {
-        return new InputListener<EventArgs>(userInput, creator, parentFrame, false,
+        return new InputListener<EventArgs>(creator, false,
             GetPredicateShortcut(condition, keys), handler);
     }
 
@@ -60,10 +52,10 @@ public static class KeyboardListenerCreator
     {
         return condition switch
         {
-            KeyCondition.WhileDown => (self) => self.Input.KeysDownCount.Current > 0,
-            KeyCondition.WhileUp => (self) => self.Input.KeysDownCount.Current == 0,
-            KeyCondition.OnPress => (self) => self.Input.KeysDownCount.Current > self.Input.KeysDownCount.Previous,
-            KeyCondition.OnRelease => (self) => self.Input.KeysDownCount.Current < self.Input.KeysDownCount.Previous,
+            KeyCondition.WhileDown => (self) => UserInput.KeysDownCount.Current > 0,
+            KeyCondition.WhileUp => (self) => UserInput.KeysDownCount.Current == 0,
+            KeyCondition.OnPress => (self) => UserInput.KeysDownCount.Current > UserInput.KeysDownCount.Previous,
+            KeyCondition.OnRelease => (self) => UserInput.KeysDownCount.Current < UserInput.KeysDownCount.Previous,
 
             _ => throw new EnumValueException(nameof(condition), nameof(KeyCondition),
                 condition.ToString(), (int)condition)
@@ -74,14 +66,14 @@ public static class KeyboardListenerCreator
     {
         return condition switch
         {
-            KeyCondition.WhileDown => (self) => self.Input.KeyboardState.Current.IsKeyDown(key),
-            KeyCondition.WhileUp => (self) => self.Input.KeyboardState.Current.IsKeyUp(key),
+            KeyCondition.WhileDown => (self) => UserInput.KeyboardState.Current.IsKeyDown(key),
+            KeyCondition.WhileUp => (self) => UserInput.KeyboardState.Current.IsKeyUp(key),
 
             KeyCondition.OnPress => (self) =>
             {
                 // Flag = Key is down now.
                 bool KeyWasDown = self.Flag;
-                self.Flag = self.Input.KeyboardState.Current.IsKeyDown(key);
+                self.Flag = UserInput.KeyboardState.Current.IsKeyDown(key);
                 return !KeyWasDown && self.Flag;
             },
 
@@ -89,7 +81,7 @@ public static class KeyboardListenerCreator
             {
                 // Flag = Key is up.
                 bool KeyWasUp = self.Flag;
-                self.Flag = self.Input.KeyboardState.Current.IsKeyUp(key);
+                self.Flag = UserInput.KeyboardState.Current.IsKeyUp(key);
                 return !KeyWasUp && self.Flag;
             },
 
@@ -116,7 +108,7 @@ public static class KeyboardListenerCreator
             {
                 foreach (var Key in keys)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyUp(Key)) return false;
+                    if (UserInput.KeyboardState.Current.IsKeyUp(Key)) return false;
                 }
                 return true;
             },
@@ -125,7 +117,7 @@ public static class KeyboardListenerCreator
             {
                 foreach (var Key in keys)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyDown(Key)) return false;
+                    if (UserInput.KeyboardState.Current.IsKeyDown(Key)) return false;
                 }
                 return true;
             },
@@ -136,7 +128,7 @@ public static class KeyboardListenerCreator
                 bool KeysDownNow = true;
                 foreach (var Key in keys)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyUp(Key))
+                    if (UserInput.KeyboardState.Current.IsKeyUp(Key))
                     {
                         KeysDownNow = false;
                         break;
@@ -152,7 +144,7 @@ public static class KeyboardListenerCreator
                 bool KeysUpNow = true;
                 foreach (var Key in keys)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyDown(Key))
+                    if (UserInput.KeyboardState.Current.IsKeyDown(Key))
                     {
                         KeysUpNow = false;
                         break;
@@ -184,15 +176,15 @@ public static class KeyboardListenerCreator
         {
             KeyCondition.OnPress => (self) =>
             {
-                if (!(self.Input.KeyboardState.Current.IsKeyDown(keys[0]) 
-                    && self.Input.KeyboardState.Previous.IsKeyUp(keys[0])))
+                if (!(UserInput.KeyboardState.Current.IsKeyDown(keys[0]) 
+                    && UserInput.KeyboardState.Previous.IsKeyUp(keys[0])))
                 {
                     return false;
                 }
 
                 for (int i = 1; i < (keys.Length - 1); i++)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyUp(keys[i]))
+                    if (UserInput.KeyboardState.Current.IsKeyUp(keys[i]))
                     {
                         return false;
                     }
@@ -202,15 +194,15 @@ public static class KeyboardListenerCreator
 
             KeyCondition.OnRelease => (self) =>
             {
-                if (!(self.Input.KeyboardState.Current.IsKeyUp(keys[0]) 
-                    && self.Input.KeyboardState.Previous.IsKeyDown(keys[0])))
+                if (!(UserInput.KeyboardState.Current.IsKeyUp(keys[0]) 
+                    && UserInput.KeyboardState.Previous.IsKeyDown(keys[0])))
                 {
                     return false;
                 }
 
                 for (int i = 1; i < keys.Length - 1; i++)
                 {
-                    if (self.Input.KeyboardState.Current.IsKeyDown(keys[i]))
+                    if (UserInput.KeyboardState.Current.IsKeyDown(keys[i]))
                     {
                         return false;
                     }

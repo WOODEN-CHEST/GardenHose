@@ -36,10 +36,10 @@ public struct RectangleButtonComponent : IButtonComponent
     // Inherited methods.
     public bool IsLocationOverButton(Vector2 locationToTest, Vector2 origin, Vector2 scale)
     {
-        origin += _offset;
-        Vector2 endPosition = origin + Dimensions;
+        origin += _offset * scale;
+        Vector2 endPosition = origin + (Dimensions * scale);
 
-        return (origin.X <= locationToTest.X) && (locationToTest.X <= endPosition.X * scale.X)
-            && (origin.Y <= locationToTest.Y) && (locationToTest.Y <= endPosition.Y * scale.Y);
+        return (origin.X <= locationToTest.X) && (locationToTest.X <= endPosition.X)
+            && (origin.Y <= locationToTest.Y) && (locationToTest.Y <= endPosition.Y);
     }
 }

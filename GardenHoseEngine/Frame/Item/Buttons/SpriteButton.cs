@@ -56,16 +56,14 @@ public class SpriteButton : IDrawableItem, ITimeUpdatable
 
 
     // Constructors.
-    public SpriteButton(IVirtualConverter converter, AnimationInstance animationInstance, 
-        UserInput input, params IButtonComponent[] buttonComponents)
+    public SpriteButton(AnimationInstance animationInstance, params IButtonComponent[] buttonComponents)
     {
-        Button = new(input, buttonComponents);
-        Sprite = new(converter, animationInstance);
+        Button = new(buttonComponents);
+        Sprite = new(animationInstance);
     }
 
-    public SpriteButton(IVirtualConverter converter, SpriteAnimation animation,
-        UserInput input, params IButtonComponent[] buttonComponents)
-        : this(converter, animation.CreateInstance(), input, buttonComponents) { }
+    public SpriteButton(SpriteAnimation animation, params IButtonComponent[] buttonComponents)
+        : this(animation.CreateInstance(), buttonComponents) { }
 
     public SpriteButton(Button button, SpriteItem item)
     {
@@ -75,14 +73,14 @@ public class SpriteButton : IDrawableItem, ITimeUpdatable
 
 
     // Inherited methods.
-    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public void Draw()
     {
-        Sprite.Draw(passedTimeSeconds, spriteBatch);
+        Sprite.Draw();
     }
 
-    public void Update(float passedTimeSeconds)
+    public void Update()
     {
-        Button.Update(passedTimeSeconds);
-        Sprite.Update(passedTimeSeconds);
+        Button.Update();
+        Sprite.Update();
     }
 }

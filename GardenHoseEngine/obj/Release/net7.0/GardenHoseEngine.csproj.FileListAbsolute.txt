@@ -1,0 +1,12 @@
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\bin\Release\net7.0\GardenHoseEngine.deps.json
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\bin\Release\net7.0\GardenHoseEngine.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\bin\Release\net7.0\GardenHoseEngine.pdb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.csproj.AssemblyReference.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.GeneratedMSBuildEditorConfig.editorconfig
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.AssemblyInfoInputs.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.AssemblyInfo.cs
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.csproj.CoreCompileInputs.cache
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\refint\GardenHoseEngine.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\GardenHoseEngine.pdb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\GardenHoseEngine\obj\Release\net7.0\ref\GardenHoseEngine.dll

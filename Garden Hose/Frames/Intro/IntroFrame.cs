@@ -2,17 +2,15 @@
 using GardenHose.Settings;
 using GardenHoseEngine;
 using GardenHoseEngine.Animatable;
+using GardenHoseEngine.Engine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Frames.Intro;
 
@@ -43,9 +41,9 @@ internal class IntroFrame : GameFrame
     // Private methods.
     private void CreateLogos()
     {
-        _monogameLogoItem = new(GH.Engine.Display, _monogameLogoAnim);
+        _monogameLogoItem = new(_monogameLogoAnim);
         _monogameLogoItem.Opacity = 0f;
-        _monogameLogoItem.Position.Vector = GH.Engine.Display.VirtualSize / 2f;
+        _monogameLogoItem.Position.Vector = Display.VirtualSize / 2f;
         _monogameLogoItem.Scale.SetKeyFrames(new KeyFrameBuilder(_logoStartSize)
             .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
         _monogameLogoItem.Scale.Start();
@@ -53,9 +51,9 @@ internal class IntroFrame : GameFrame
         TopLayer!.AddDrawableItem(_monogameLogoItem);
 
 
-        _logoItem = new(GH.Engine.Display, _logoAnim);
+        _logoItem = new(_logoAnim);
         _logoItem.Opacity = 0f;
-        _logoItem.Position.Vector = GH.Engine.Display.VirtualSize / 2f;
+        _logoItem.Position.Vector = Display.VirtualSize / 2f;
         _logoItem.Scale.Vector = Vector2.One; ;
         _logoItem.Scale.SetKeyFrames(new KeyFrameBuilder(_logoStartSize)
             .AddKeyFrame(LOGO_TIME_SEC)
@@ -67,28 +65,26 @@ internal class IntroFrame : GameFrame
 
     private void CreateSkipListeners()
     {
-        _keyboardListener = KeyboardListenerCreator.AnyKey(GH.Engine.UserInput, this, this,
-            KeyCondition.WhileDown, OnKeyboardInputEvent);
-        _mouseListener = MouseListenerCreator.AnyButton(GH.Engine.UserInput, this, this, true,
-            MouseCondition.WhileDown, OnMouseInputEvent);
-        GH.Engine.UserInput.AddListener(_keyboardListener);
-        GH.Engine.UserInput.AddListener(_mouseListener);
+        _keyboardListener = KeyboardListenerCreator.AnyKey(this, KeyCondition.WhileDown, OnKeyboardInputEvent);
+        _mouseListener = MouseListenerCreator.AnyButton(this, true, MouseCondition.WhileDown, OnMouseInputEvent);
+        UserInput.AddListener(_keyboardListener);
+        UserInput.AddListener(_mouseListener);
     }
 
     private void LoadSettings()
     {
-        SettingsManager.DataRootPath = GH.Engine.DataRootPath;
+        SettingsManager.DataRootPath = GHEngine.DataRootPath;
         SettingsManager.ReadSettings();
     }
 
 
     // Inherited methods.
-    public override void Load(AssetManager assetManager)
+    public override void Load()
     {
-        base.Load(assetManager);
+        base.Load();
 
-        _monogameLogoAnim = new(0f, this, assetManager, Origin.Center, "ui/monogame_logo");
-        _logoAnim = new(0f, this, assetManager, Origin.Center, "ui/logo");
+        _monogameLogoAnim = new(0f, this, Origin.Center, "ui/monogame_logo");
+        _logoAnim = new(0f, this, Origin.Center, "ui/logo");
     }
 
     public override void OnStart()
@@ -100,18 +96,18 @@ internal class IntroFrame : GameFrame
         CreateLogos();
         CreateSkipListeners();
 
-        GH.Engine.IsFixedTimeStep = false;
-        GH.Engine.GraphicsManager.SynchronizeWithVerticalRetrace = false;
-        GH.Engine.GraphicsManager.ApplyChanges();
+        GHEngine.Game.IsFixedTimeStep = false;
+        Display.GraphicsManager.SynchronizeWithVerticalRetrace = true;
+        Display.GraphicsManager.ApplyChanges();
 
-        GH.Engine.FrameManager.LoadNextFrame(new MainMenuFrame("Main Menu"), () => _nextFrameLoaded = true);
+        GameFrameManager.LoadNextFrame(new MainMenuFrame("Main Menu"), () => _nextFrameLoaded = true);
     }
 
-    public override void Update(float passedTimeSeconds)
+    public override void Update()
     {
-        base.Update(passedTimeSeconds);
+        base.Update();
 
-        _passedTime += passedTimeSeconds;
+        _passedTime += GameFrameManager.PassedTimeSeconds;
 
         if (_passedTime <= LOGO_TIME_SEC)
         {
@@ -129,7 +125,7 @@ internal class IntroFrame : GameFrame
         _monogameLogoItem.Opacity = 0f;
         if (_nextFrameLoaded && (_passedTime >= LOGO_TIME_SEC * 2))
         {
-            GH.Engine.FrameManager.JumpToNextFrame();
+            GameFrameManager.JumpToNextFrame();
         }
     }
 
@@ -145,8 +141,8 @@ internal class IntroFrame : GameFrame
     // Private methods.
     private void OnKeyboardInputEvent(object? sender, EventArgs args)
     {
-        if (GH.Engine.UserInput.KeyboardState.Current.IsKeyDown(Keys.F11)
-            || GH.Engine.UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
+        if (UserInput.KeyboardState.Current.IsKeyDown(Keys.F11)
+            || UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
         {
             return;
         }

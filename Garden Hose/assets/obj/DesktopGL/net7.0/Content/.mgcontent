@@ -6,18 +6,50 @@
   <SourceFiles>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/fonts/geeich_large.spritefont</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/fonts/geeich.spritefont</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/distortion.fx</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/saturation.fx</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/ui/slider_glow.fx</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/test/ball.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/connector.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/narrow/glow.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/narrow/panel.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/normal/glow.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/normal/panel.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/receiver_lights.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/receiver.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/slider/glow.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/slider/panel.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/slider/pointer.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/square/glow.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/square/panel.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/toggle/light.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/wide/glow.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/wide/panel.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/logo_small.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/logo_tiny.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/logo.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/monogame_logo.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/title/planet.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/title/star.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/title/title_background.png</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />

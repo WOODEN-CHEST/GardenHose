@@ -3,6 +3,7 @@ using GardenHose.UI;
 using GardenHose.UI.Buttons.Connector;
 using GardenHoseEngine;
 using GardenHoseEngine.Animatable;
+using GardenHoseEngine.Engine;
 using GardenHoseEngine.Frame;
 using Microsoft.Xna.Framework;
 using System;
@@ -21,13 +22,13 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
     private const float X_LOCATION_BUTTON_IN = 275f;
     private const float X_LOCATION_BUTTON_OUT = -275f;
 
-    private ConnectorButton _play;
+    private ConnectorRectangleButton _play;
     private const float Y_LOCATION_BUTTON_PLAY = 500f;
-    private ConnectorButton _editor;
+    private ConnectorRectangleButton _editor;
     private const float Y_LOCATION_BUTTON_EDITOR = 650f;
-    private ConnectorButton _options;
+    private ConnectorRectangleButton _options;
     private const float Y_LOCATION_BUTTON_OPTIONS = 800f;
-    private ConnectorButton _exit;
+    private ConnectorRectangleButton _exit;
     private const float Y_LOCATION_BUTTON_EXIT = 950f;
 
     // Constructors.
@@ -76,27 +77,32 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
     // Private methods.
     private void CreateButtons()
     {
-        _play = ConnectorButton.CreateNormal(Direction.Right, Vector2.Zero,  new Vector2(0.5f, 0.5f));
+        _play = ConnectorElement.CreateNormalButton(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
         _play.Text = "Play";
         _uiLayer.AddDrawableItem(_play);
         ParentFrame.AddItem(_play);
         _play.ClickHandler += OnPlayClickEvent;
 
-        _editor = ConnectorButton.CreateNormal(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
+        _editor = ConnectorElement.CreateNormalButton(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
         _editor.Text = "Editor";
         _uiLayer.AddDrawableItem(_editor);
         ParentFrame.AddItem(_editor);
 
-        _options = ConnectorButton.CreateNormal(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
+        _options = ConnectorElement.CreateNormalButton(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
         _options.Text = "Options";
         _uiLayer.AddDrawableItem(_options);
         ParentFrame.AddItem(_options);
 
-        _exit = ConnectorButton.CreateNormal(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
+        _exit = ConnectorElement.CreateNormalButton(Direction.Right, Vector2.Zero, new Vector2(0.5f, 0.5f));
         _exit.ClickHandler += OnExitClickEvent;
         _exit.Text = "Exit";
         _uiLayer.AddDrawableItem(_exit);
         ParentFrame.AddItem(_exit);
+
+        ConnectorSlider MySlider = new(Direction.Left, 0f, 1f, 0f);
+        MySlider.Position.Vector = new(1000f, 500f); 
+        _uiLayer.AddDrawableItem(MySlider);
+        ParentFrame.AddItem(MySlider);
     }
 
     private void AnimateMainButtons(float xStart, float xEnd)
@@ -135,14 +141,14 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
     {
         SetMainButtonClickability(false);
         BringMainButtonsOut();
-        _exit.Position.AnimationFinished += (sender, args) => GH.Engine.Exit();
-        ParentFrame.LayerManager.FadeStep = -4d;
+        _exit.Position.AnimationFinished += (sender, args) => GHEngine.Exit();
+        ParentFrame.LayerManager.FadeStep = -4f;
     }
 
     private void OnPlayClickEvent(object? sender, EventArgs args)
     {
-        GH.Engine.FrameManager.LoadNextFrame(new InGameFrame("In-Game"), 
-            () => GH.Engine.FrameManager.JumpToNextFrame());
+        GameFrameManager.LoadNextFrame(new InGameFrame("In-Game"), 
+            () => GameFrameManager.JumpToNextFrame());
     }
 
 
@@ -155,9 +161,9 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
 
 
     // Inherited methods.
-    internal override void Load(AssetManager assetManager)
+    internal override void Load()
     {
-        ConnectorButton.LoadAllAssets(assetManager, ParentFrame);
+        ConnectorElement.LoadAllAssets(ParentFrame);
     }
 
     internal override void OnStart()

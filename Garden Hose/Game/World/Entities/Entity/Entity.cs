@@ -1,33 +1,69 @@
-﻿using System;
+﻿using GardenHose.Game;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GardenHoseServer.World.Entities;
+namespace GardenHose.Game.World.Entities;
 
 internal abstract class Entity
 {
     // Fields.
-    internal ulong ID { get; private init; }
+    internal ulong ID { get; set; }
 
     internal EntityType EntityType { get; private init; }
 
-    internal GameWorld World { get; private init; }
+    internal GameWorld? World { get; set; }
+
+    internal virtual bool IsPhysical { get; } = false;
 
 
     // Constructors.
-    internal Entity(EntityType type,  GameWorld world)
+    internal Entity(EntityType type, GameWorld? world)
     {
         EntityType = type;
-        World = world ?? throw new ArgumentNullException(nameof(world));
-        ID = world.GetID();
+        World = world;
+        ID = World?.GetID() ?? 0ul;
     }
+
+    internal Entity(EntityType entityType) : this(entityType, null) { }
 
 
     // Methods.
-    internal abstract void Tick(float timePassedSeconds);
+    internal abstract void Tick();
+
+    internal abstract void Load(GHGameAssetManager assetManager);
 
     internal abstract void Delete();
+
+
+    // Inherited methods.
+    public override bool Equals(object? obj)
+    {
+        if (obj is not Entity)
+        {
+            return false;
+        }
+
+        return ID == ((Entity)obj).ID;
+    }
+
+
+    // Operators.
+    public static bool operator ==(Entity entity1, Entity entity2)
+    {
+        return entity1.Equals(entity2);
+    }
+
+    public static bool operator !=(Entity entity1, Entity entity2)
+    {
+        return !entity1.Equals(entity2);
+    }
+
+    public override int GetHashCode()
+    {
+        return int.MinValue + (int)ID;
+    }
 }

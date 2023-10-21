@@ -39,16 +39,14 @@ public class Button : ITimeUpdatable
 
     // Private fields.
     private IButtonComponent[] _components;
-    private readonly UserInput _input;
     private readonly Dictionary<ButtonEvent, (EventHandler Handler, IInputListener? Listener)> _eventHandlers = new();
     private DeltaValue<bool> _isHovered = new(false);
     private bool _shouldUpdate = false;
 
 
     // Constructors.
-    public Button(UserInput input, params IButtonComponent[] components)
+    public Button(params IButtonComponent[] components)
     {
-        _input = input ?? throw new ArgumentNullException(nameof(input));
         Components = components;
     }
 
@@ -75,7 +73,7 @@ public class Button : ITimeUpdatable
         else
         {
             _eventHandlers[buttonEvent] = (handler, GetInputListener(buttonEvent, handler));
-            _input.AddListener(_eventHandlers[buttonEvent].Listener!);
+            UserInput.AddListener(_eventHandlers[buttonEvent].Listener!);
         }
     }
 
@@ -101,7 +99,7 @@ public class Button : ITimeUpdatable
         UpdateShouldUpdated();
     }
 
-    public bool IsMouseOverButton() => IsMouseOverButton(_input.VirtualMousePosition.Current);
+    public bool IsMouseOverButton() => IsMouseOverButton(UserInput.VirtualMousePosition.Current);
 
     public bool IsMouseOverButton(Vector2 locationToTest)
     {
@@ -157,7 +155,7 @@ public class Button : ITimeUpdatable
             2 => MouseCondition.WhileDown
         };
 
-        return MouseListenerCreator.SingleButton(_input, this, null, true, Condition,
+        return MouseListenerCreator.SingleButton(this, true, Condition,
             (sender, args) =>
             {
                 if (IsMouseOverButton())
@@ -177,7 +175,7 @@ public class Button : ITimeUpdatable
             2 => MouseButton.Right,
         };
 
-        return MouseListenerCreator.SingleButton(_input, this, null, true, MouseCondition.OnRelease,
+        return MouseListenerCreator.SingleButton(this, true, MouseCondition.OnRelease,
             (sender, args) =>
             {
                 if (IsMouseOverButton() && IsMouseOverButton(args.StartPosition))
@@ -197,7 +195,7 @@ public class Button : ITimeUpdatable
             ButtonEvent.ScrollDown => ScrollDirection.Down
         };
 
-        return MouseListenerCreator.Scroll(_input, this, null, true, Direction,
+        return MouseListenerCreator.Scroll(this, true, Direction,
             (sender, args) =>
             {
                 if (IsMouseOverButton())
@@ -217,7 +215,7 @@ public class Button : ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(float passedTimeSeconds)
+    public void Update()
     {
         if (!_shouldUpdate) return;
 

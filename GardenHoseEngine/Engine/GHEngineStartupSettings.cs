@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace GardenHoseEngine;
+namespace GardenHoseEngine.Engine;
 
 
 public record class GHEngineStartupSettings
@@ -26,7 +26,7 @@ public record class GHEngineStartupSettings
     public bool IsFullScreen { get; set; }
     public bool IsMouseVisible { get; set; }
     public bool AllowAltF4 { get; set; }
-    public bool  AllowUserResizing { get; set; }
+    public bool AllowUserResizing { get; set; }
 
     public IGameFrame StartupFrame { get; set; }
     public IGameFrame GlobalFrame { get; set; }
@@ -40,7 +40,7 @@ public record class GHEngineStartupSettings
 
         GameDataRootDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         AssetBasePath = Path.Combine(
-            Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,  "assets");
+            Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName, "assets");
         AssetExtraPath = null;
 
         VirtualSize = new(1920f, 1080f);

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using GardenHoseServer.World;
+using GardenHose.Game.World;
 using System.Diagnostics;
 using GardenHoseEngine.Frame;
 using GardenHose.Frames;
@@ -8,12 +8,31 @@ using GardenHose.Frames.InGame;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Animation;
+using GardenHose.Game.World.Planet;
+using GardenHose.Game.World;
 
 namespace GardenHose.Game;
 
-internal class GHGame : FrameComponentManager<InGameFrame>
+internal class GHGame
 {
-    // Fields
+    // Fields.
+    public ILayer BackgroundLayer { get; private init; } = new Layer("background");
+
+    public ILayer BottomItemLayer { get; private init; } = new Layer("items bottom");
+
+    public ILayer TopItemLayer { get; private init; } = new Layer("items top");
+
+    public ILayer UILayer { get; private init; } = new Layer("ui");
+
+    public GameWorld World { get; private set; }
+
+    public InGameFrame ParentFrame;
+
+    public GHGameAssetManager AssetManager { get; private init; }
+
+
+
+    // Internal fields
     internal const double SecondsPerTick = 0.05d;
 
     internal float SimulationSpeed
@@ -44,16 +63,6 @@ internal class GHGame : FrameComponentManager<InGameFrame>
 
     internal bool IsRunningSlowly { get; private set; } = false;
 
-    internal ILayer BackgroundLayer { get; private init; } = new Layer("background");
-
-    internal ILayer ItemLayer { get; private init; } = new Layer("items");
-
-    internal ILayer UILayer { get; private init; } = new Layer("ui");
-
-    internal GameWorld World;
-
-    internal SpriteItem PlanetItem;
-
 
     // Private fields.
     /* Ticking. */
@@ -62,54 +71,47 @@ internal class GHGame : FrameComponentManager<InGameFrame>
     private float _simulationSpeed = 1f;
     private float _passedTimeSeconds = 0f;
     private const float MAXIMUM_PASSED_TIME_SECONDS = 0.05f;
+    private const float MINIMUM_PASSED_TIME_SECONDS = 1f / 20f;
 
 
     // Constructors.
-    internal GHGame(InGameFrame frame) : base(frame)
+    internal GHGame(InGameFrame parentFrame, GameWorldSettings worldSettings)
     {
-        World = new(this);
-
+        ParentFrame = parentFrame ?? throw new ArgumentNullException(nameof(parentFrame));
         ParentFrame.AddLayer(BackgroundLayer);
-        ParentFrame.AddLayer(ItemLayer);
+        ParentFrame.AddLayer(BottomItemLayer);
+        ParentFrame.AddLayer(TopItemLayer);
         ParentFrame.AddLayer(UILayer);
+
+        AssetManager = new(ParentFrame);
+
+        World = new(this, worldSettings);
     }
 
 
     // Inherited methods.
-    internal override void Load(AssetManager assetManager)
+    internal void OnStart()
     {
-        SpriteAnimation BallAnim = new(0f, ParentFrame, assetManager, Origin.Center, "test/ball");
-        PlanetItem = new(GH.Engine.Display, BallAnim);
-        ItemLayer.AddDrawableItem(PlanetItem);
-    }
-
-    internal override void OnStart()
-    {
-
         if (IsRunning) return;
 
         IsRunning = true;
-        World.OnStart(ItemLayer);
+        World.Start();
     }
 
-    internal override void OnEnd()
+    internal void Update()
     {
         if (!IsRunning)
         {
             return;
         }
 
-        IsRunning = false;
-    }
+        _passedTimeSeconds += GameFrameManager.PassedTimeSeconds;
 
-    internal override void Update(float passedTimeSeconds)
-    {
-        if (!IsRunning)
+        if (_passedTimeSeconds < MINIMUM_PASSED_TIME_SECONDS)
         {
             return;
         }
 
-        _passedTimeSeconds = passedTimeSeconds;
         IsRunningSlowly = _passedTimeSeconds > MAXIMUM_PASSED_TIME_SECONDS;
         if (IsRunningSlowly)
         {
@@ -117,7 +119,19 @@ internal class GHGame : FrameComponentManager<InGameFrame>
         }
         _passedTimeSeconds *= SimulationSpeed;
 
+        World.PassedTimeSeconds = _passedTimeSeconds;
+        World.Tick();
+        _passedTimeSeconds = 0f;
+    }
 
-        World.Tick(_passedTimeSeconds);
+    internal void OnEnd()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        World.End();
+        IsRunning = false;
     }
 }

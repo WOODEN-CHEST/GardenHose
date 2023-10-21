@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine.Animatable;
+using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework;
 
@@ -209,11 +210,11 @@ public class AnimVector2 : ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(float passedTimeSeconds)
+    public void Update()
     {
         if (!IsAnimating) return;
 
-        _time += passedTimeSeconds * Speed;
+        _time += GameFrameManager.PassedTimeSeconds * Speed;
 
         if (!IsIndexSyncedWithTime())
         {
@@ -225,6 +226,11 @@ public class AnimVector2 : ITimeUpdatable
             _keyframes[_curIndex].Location,
             (float)((_time - _keyframes[_curIndex - 1].Time) / _keyframes[_curIndex - 1].TimeToNext)
         );
+    }
+
+    public override string ToString()
+    {
+        return Vector.ToString();
     }
 
 

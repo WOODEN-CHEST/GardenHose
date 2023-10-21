@@ -1,9 +1,11 @@
-﻿using NAudio.CoreAudioApi;
+﻿using GardenHoseEngine.Logging;
+using NAudio.CoreAudioApi;
 using NAudio.Dsp;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace GardenHoseEngine.Audio;
@@ -13,23 +15,28 @@ public class AudioEngine : IDisposable, ISampleProvider
     // Static fields.
     public const int MAX_SOUNDS = 128;
     public const int AUDIO_LATENCY_MS = 30;
+    public static AudioEngine Engine { get; internal set; }
+
+
+    // Fields.
+    public WaveFormat WaveFormat => _format;
     public TimeSpan ExecutionTime
     {
         get { lock (this) { return _executionTime; } }
     }
 
 
-    // Fields.
-    public WaveFormat WaveFormat => _format;
-
-    // Private fields.
-    private readonly WaveFormat _format = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
-    private readonly WasapiOut _outputDevice;
-    private readonly List<SoundInstance> _sounds = new(MAX_SOUNDS);
-    private readonly ConcurrentQueue<SoundInstance> _soundsToAdd = new();
-    private readonly ConcurrentQueue<SoundInstance> _soundsToRemove = new();
+    // Private static fields.
+    private WaveFormat _format = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+    private WasapiOut _outputDevice;
+    private List<SoundInstance> _sounds = new(MAX_SOUNDS);
+    private ConcurrentQueue<SoundInstance> _soundsToAdd = new();
+    private ConcurrentQueue<SoundInstance> _soundsToRemove = new();
     private float[] _soundBuffer;
+
     private TimeSpan _executionTime;
+    private static readonly Stopwatch _executionMeasurer = new();
+
 
 
     // Constructors.
@@ -48,6 +55,7 @@ public class AudioEngine : IDisposable, ISampleProvider
         }
     }
 
+    // Internal static methods.
 
     // Internal methods.
     internal void AddSound(SoundInstance sound) => _soundsToAdd.Enqueue(sound);
@@ -102,8 +110,8 @@ public class AudioEngine : IDisposable, ISampleProvider
     {
         try
         {
-            // Ensure buffer capacity, add queued sounds, start time measure.
-            DateTime StartTime = DateTime.UtcNow;
+            // Ensure buffer capacity, add queued sounds.
+            _executionMeasurer.Start();
             EnsureBuffer(count);
             AddQueuedSounds();
 
@@ -131,16 +139,17 @@ public class AudioEngine : IDisposable, ISampleProvider
                 }
             }
 
-            // Remove queued sounds, stop time measure.
+            // Remove queued sounds.
             RemoveQueuedSounds();
-            _executionTime = DateTime.UtcNow - StartTime;
+
+            _executionMeasurer.Stop();
+            _executionTime = _executionMeasurer.Elapsed;
             return count;
         }
         catch (Exception e)
         {
             _outputDevice.Dispose();
-            Console.WriteLine("aaa");
-            return 0;
+            throw new Exception($"Exception in audio engine! {e}");
         }
     }
 }

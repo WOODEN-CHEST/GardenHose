@@ -3,17 +3,23 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
+using GardenHoseEngine.Engine;
 
 namespace GardenHoseEngine.Screen;
 
-public class Display : IVirtualConverter
+public static class Display
 {
     // Fields.
-    public readonly Vector2 MinimumWindowSize = new(144f, 80f);
+    public static GraphicsDeviceManager GraphicsManager { get; set; }
 
-    public bool IsFullScreen
+    public static Texture2D SinglePixel { get; set; }
+
+
+    public static readonly Vector2 MinimumWindowSize = new(144f, 80f);
+
+    public static bool IsFullScreen
     {
-        get => _graphicsDeviceManager.IsFullScreen;
+        get => GraphicsManager.IsFullScreen;
         set
         {
             if (value != IsFullScreen)
@@ -23,7 +29,7 @@ public class Display : IVirtualConverter
         }
     }
 
-    public Vector2 FullScreenSize
+    public static Vector2 FullScreenSize
     {
         get => _fullScreenSize;
         set
@@ -39,7 +45,7 @@ public class Display : IVirtualConverter
         }
     }
 
-    public Vector2 WindowedSize
+    public static Vector2 WindowedSize
     {
         get => _windowedSize;
         set
@@ -55,64 +61,43 @@ public class Display : IVirtualConverter
         }
     }
 
-    public Vector2 WindowSize
+    public static Vector2 WindowSize
     {
-        get => new(_window.ClientBounds.Width, _window.ClientBounds.Height);
+        get => new(GHEngine.Game.Window.ClientBounds.Width, GHEngine.Game.Window.ClientBounds.Height);
         set => SetDisplay(value, IsFullScreen);
     }
 
-    public int? FrameRateLimit { get; set; } = 144;
+    public static int? FrameRateLimit { get; set; } = 144;
 
-    public Vector2 VirtualSize { get; init; }
+    public static Vector2 VirtualSize { get; internal set; }
 
-    
+    public static Vector2 ViewportSize { get; private set; }
 
-    public Vector2 ViewportSize { get; private set; }
+    public static Vector2 ScreenSize
+    {
+        get
+        {
+            return new Vector2(GraphicsManager.GraphicsDevice.Adapter.CurrentDisplayMode.Width,
+                GraphicsManager.GraphicsDevice.Adapter.CurrentDisplayMode.Height);
+        }
+    }
+    public static Vector2 ItemOffset { get; private set; }
 
-    public Vector2 ScreenSize { get; init; }
+    public static float ItemScale { get; private set; }
 
-    public Vector2 ItemOffset { get; private set; }
-
-    public float ItemScale { get; private set; }
-
-    public float InverseItemScale { get; private set; }
+    public static float InverseItemScale { get; private set; }
 
 
-    public event EventHandler? DisplayChanged;
+    public static event EventHandler? DisplayChanged;
 
 
     // Private fields.
-    private readonly GraphicsDeviceManager _graphicsDeviceManager;
-    private readonly GameWindow _window;
-    private Vector2 _windowedSize;
-    private Vector2 _fullScreenSize;
+    private static Vector2 _windowedSize;
+    private static Vector2 _fullScreenSize;
 
 
-    // Constructors.
-    internal Display(GraphicsDeviceManager graphicsManager, 
-        GameWindow gameWindow, 
-        Vector2 virtualSize,
-        Vector2? windowSize,
-        bool isFullScreen)
-    {
-        // Assign fields from args.
-        _graphicsDeviceManager = graphicsManager ?? throw new ArgumentNullException(nameof(graphicsManager));
-        _window = gameWindow ?? throw new ArgumentNullException(nameof(gameWindow));
-
-        VirtualSize = ValidateScreenSize(virtualSize);
-        gameWindow.ClientSizeChanged += OnWindowSizeChangeByUserEvent;
-
-        // Initialize fields to default values.
-        ScreenSize = new(_graphicsDeviceManager.GraphicsDevice.Adapter.CurrentDisplayMode.Width,
-            _graphicsDeviceManager.GraphicsDevice.Adapter.CurrentDisplayMode.Height);
-        _fullScreenSize = ScreenSize;
-
-        SetDisplay(windowSize ?? ScreenSize / 1.5f, isFullScreen);
-    }
-
-
-    // Methods.
-    public void CorrectWindowedSize()
+    // Static methods.
+    public static void CorrectWindowedSize()
     {
         if (!IsFullScreen)
         {
@@ -121,20 +106,44 @@ public class Display : IVirtualConverter
     }
 
 
+    // Internal static methods.
+    internal static void OnWindowSizeChangeByUserEvent(object? sender, EventArgs args)
+    {
+        if ((GHEngine.Game.Window.ClientBounds.Width < MinimumWindowSize.X)
+            || (GHEngine.Game.Window.ClientBounds.Height < MinimumWindowSize.Y))
+        {
+            SetDisplay(MinimumWindowSize, IsFullScreen);
+        }
+        else
+        {
+            UpdateDisplayInfo();
+        }
+    }
+
+    internal static void OnUserToggleFullscreenEvent(object? sender, EventArgs args)
+    {
+        if (UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
+        {
+            CorrectWindowedSize();
+        }
+        else IsFullScreen = !IsFullScreen;
+    }
+
+
     // Private static methods.
-    private void SetDisplay(Vector2 newSize, bool isFullScreen)
+    private static void SetDisplay(Vector2 newSize, bool isFullScreen)
     {
         newSize = ValidateScreenSize(newSize);
 
-        _graphicsDeviceManager.IsFullScreen = isFullScreen;
-        _graphicsDeviceManager.PreferredBackBufferWidth = (int)newSize.X;
-        _graphicsDeviceManager.PreferredBackBufferHeight = (int)newSize.Y;
-        _graphicsDeviceManager.ApplyChanges();
+        GraphicsManager.IsFullScreen = isFullScreen;
+        GraphicsManager.PreferredBackBufferWidth = (int)newSize.X;
+        GraphicsManager.PreferredBackBufferHeight = (int)newSize.Y;
+        GraphicsManager.ApplyChanges();
 
         UpdateDisplayInfo();
     }
 
-    private void UpdateDisplayInfo()
+    private static void UpdateDisplayInfo()
     {
         // Update size info.
         if (IsFullScreen)
@@ -152,10 +161,10 @@ public class Display : IVirtualConverter
         ViewportSize = VirtualSize * ItemScale;
         ItemOffset = new((WindowSize.X - ViewportSize.X) / 2f, (WindowSize.Y - ViewportSize.Y) / 2f);
 
-        DisplayChanged?.Invoke(this, EventArgs.Empty);
+        DisplayChanged?.Invoke(null, EventArgs.Empty);
     }
 
-    private Vector2 ValidateScreenSize(Vector2 size)
+    private static Vector2 ValidateScreenSize(Vector2 size)
     {
         if (!(float.IsFinite(size.X) && (size.X > 0)
             && float.IsFinite(size.Y) && (size.Y > 0)))
@@ -168,26 +177,11 @@ public class Display : IVirtualConverter
         return size;
     }
 
-    private void OnWindowSizeChangeByUserEvent(object? sender, EventArgs args)
-    {
-        if ((_window.ClientBounds.Width < MinimumWindowSize.X) 
-            || (_window.ClientBounds.Height < MinimumWindowSize.Y))
-        {
-            SetDisplay(MinimumWindowSize, IsFullScreen);
-        }
-        else
-        {
-            UpdateDisplayInfo();
-        }
-    }
+    public static Vector2 ToRealPosition(Vector2 virtualVector) => (virtualVector * ItemScale) + ItemOffset;
 
+    public static Vector2 ToVirtualPosition(Vector2 realVector) => (realVector - ItemOffset) * InverseItemScale;
 
-    // Inherited methods.
-    public Vector2 ToRealPosition(Vector2 virtualVector) => (virtualVector * ItemScale) + ItemOffset;
+    public static Vector2 ToRealScale(Vector2 virtualScale) => virtualScale * ItemScale;
 
-    public Vector2 ToVirtualPosition(Vector2 realVector) => (realVector - ItemOffset) * InverseItemScale;
-
-    public Vector2 ToRealScale(Vector2 virtualScale) => virtualScale * ItemScale;
-
-    public Vector2 ToVirtualScale(Vector2 virtualScale) => virtualScale * InverseItemScale;
+    public static Vector2 ToVirtualScale(Vector2 virtualScale) => virtualScale * InverseItemScale;
 }

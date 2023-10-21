@@ -1,16 +1,15 @@
 ﻿using GardenHose.Game;
-using GardenHoseEngine;
+using GardenHose.Game.World;
+using GardenHose.Game.World.Planet;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.IO;
+using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Input;
+
 
 namespace GardenHose.Frames.InGame;
+
 
 internal class InGameFrame : GameFrame
 {
@@ -28,12 +27,19 @@ internal class InGameFrame : GameFrame
 
 
     // Inherited methods.
-    public override void Load(AssetManager assetManager)
+    public override void Load()
     {
-        base.Load(assetManager);
+        base.Load();
 
-        Game = new(this);
-        Game.Load(assetManager);
+        GameWorldSettings StartupSettings = new()
+        {
+            Planet = new TestPlanet(),
+            StartingEntities = new Entity[]
+            {
+                new TestEntity() { Position = new Vector2(0f, -250f), Motion = new Vector2(0f, 0f), AngularMotion = 0f }
+            }
+        };
+        Game = new(this, StartupSettings);
     }
 
     public override void OnStart()
@@ -41,31 +47,47 @@ internal class InGameFrame : GameFrame
         base.OnStart();
         Game.OnStart();
 
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.SingleButton(GH.Engine.UserInput, this, this, true, MouseCondition.OnClick,
+        UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
             (sender, args) => {
-                _startPosition = GH.Engine.UserInput.VirtualMousePosition.Current;
+                _startPosition = UserInput.VirtualMousePosition.Current;
                 _currentCameraCenter = Game.World.CameraCenter;
             },
             MouseButton.Right));
 
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.SingleButton(GH.Engine.UserInput, this, this, true, MouseCondition.WhileDown,
+        UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.WhileDown,
             (sender, args) =>
             {
-                Game.World.CameraCenter = _currentCameraCenter 
-                - (GH.Engine.UserInput.VirtualMousePosition.Current -_startPosition);
+                Game.World.CameraCenter = _currentCameraCenter
+                - (UserInput.VirtualMousePosition.Current - _startPosition);
             }, MouseButton.Right));
 
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.Scroll(GH.Engine.UserInput, this, this, true, ScrollDirection.Up,
+        UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Up,
             (sender, args) => Game.World.Zoom *= 1.2f));
 
-        GH.Engine.UserInput.AddListener(MouseListenerCreator.Scroll(GH.Engine.UserInput, this, this, true, ScrollDirection.Down,
+        UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Down,
             (sender, args) => Game.World.Zoom /= 1.2f));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
+            (sender, args) =>
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1ul)!;
+                Entity.Position = new Vector2(200, 200f);
+                Entity.Motion = new Vector2(0f, 0f);
+                Entity.Rotation = 0f;
+            }, Keys.R));
+
+        UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
+            (sender, args) => {
+                Game.World.GetEntity<PhysicalEntity>(1)!.Position = 
+                     Game.World.ObjectVisualOffset - UserInput.VirtualMousePosition.Current;
+            },
+            MouseButton.Left));
     }
 
-    public override void Update(float passedTimeSeconds)
+    public override void Update()
     {
-        base.Update(passedTimeSeconds);
-        Game.Update(passedTimeSeconds);
+        base.Update();
+        Game.Update();
     }
 
     public override void OnEnd()
@@ -74,8 +96,8 @@ internal class InGameFrame : GameFrame
         Game.OnEnd(); 
     }
 
-    public override void Draw(float passedTimeSeconds, GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, RenderTarget2D layerPixelBuffer, RenderTarget2D framePixelBuffer)
+    public override void Draw()
     {
-        base.Draw(passedTimeSeconds, graphicsDevice, spriteBatch, layerPixelBuffer, framePixelBuffer);
+        base.Draw();
     }
 }

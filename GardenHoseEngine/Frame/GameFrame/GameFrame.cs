@@ -1,11 +1,9 @@
 ﻿using GardenHoseEngine.Collections;
-using GardenHoseEngine.IO;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection.Emit;
+
 
 namespace GardenHoseEngine.Frame;
 
@@ -100,50 +98,45 @@ public class GameFrame : IGameFrame
 
 
     /* Updating and drawing. */
-    public virtual void Update(float passedTimeSeconds)
+    public virtual void Update()
     {
         _updateableItems.ApplyChanges();
 
         foreach (var Item in _updateableItems)
         {
-            Item.Update(passedTimeSeconds);
+            Item.Update();
         }
     }
 
-    public virtual void Draw(float passedTimeSeconds, 
-        GraphicsDevice graphicsDevice, 
-        SpriteBatch spriteBatch, 
-        RenderTarget2D layerPixelBuffer,
-        RenderTarget2D framePixelBuffer)
+    public virtual void Draw()
     {
         if (_layers.Count == 0) return;
 
         foreach (ILayer FrameLayer in _layers)
         {
-            graphicsDevice.SetRenderTarget(layerPixelBuffer);
-            graphicsDevice.Clear(Color.Transparent);
-            FrameLayer.Draw(passedTimeSeconds, spriteBatch);
+            Display.GraphicsManager.GraphicsDevice.SetRenderTarget(GameFrameManager.LayerPixelBuffer);
+            Display.GraphicsManager.GraphicsDevice.Clear(Color.Transparent);
+            FrameLayer.Draw();
 
-
-            graphicsDevice.SetRenderTarget(framePixelBuffer);
-            spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: FrameLayer.Shader);
-            spriteBatch.Draw(layerPixelBuffer, Vector2.Zero, FrameLayer.CombinedMask);
-            spriteBatch.End();
+            Display.GraphicsManager.GraphicsDevice.SetRenderTarget(GameFrameManager.FramePixelBuffer);
+            GameFrameManager.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: FrameLayer.Shader);
+            GameFrameManager.SpriteBatch.Draw(GameFrameManager.LayerPixelBuffer, Vector2.Zero, FrameLayer.CombinedMask);
+            GameFrameManager.SpriteBatch.End();
         }
     }
 
     /* Status control. */
-    public void BeginLoad(AssetManager assetManager)
+    public void BeginLoad()
     {
-        assetManager.RegisterGameFrame(this);
+        AssetManager.RegisterGameFrame(this);
     }
 
-    public virtual void Load(AssetManager assetManager)
+    public virtual void Load()
     {
         
     }
 
-    public void FinalizeLoad(AssetManager assetManager)
+    public void FinalizeLoad()
     {
         IsLoaded = true;
     }
@@ -163,9 +156,9 @@ public class GameFrame : IGameFrame
         ClearItems();
     }
 
-    public virtual void Unload(AssetManager assetManager)
+    public virtual void Unload()
     {
-        assetManager.UnregisterGameFrame(this);
+        AssetManager.UnregisterGameFrame(this);
         IsLoaded = false;
     }
 }

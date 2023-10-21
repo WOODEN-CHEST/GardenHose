@@ -5,6 +5,26 @@ namespace GardenHoseEngine;
 
 public struct FloatColor
 {
+    // Static fields.
+    public static readonly FloatColor White = new(1f, 1f, 1f, 1f);
+
+    public static readonly FloatColor Black = new(0f, 0f, 0f, 1f);
+
+    public static readonly FloatColor Transparent = new(0f, 0f, 0f, 0f);
+
+    public static readonly FloatColor Red = new(1f, 0f, 0f, 1f);
+
+    public static readonly FloatColor Green = new(1f, 0f, 0f, 1f);
+
+    public static readonly FloatColor Blue = new(0f, 0f, 1f, 1f);
+
+    public static readonly FloatColor Yellow = new(1f, 1f, 0f, 1f);
+
+    public static readonly FloatColor Magenta = new(1f, 0f, 1f, 1f);
+
+    public static readonly FloatColor Aqua = new(0f, 1f, 1f, 1f);
+
+
     // Fields.
     public const float MIN_VALUE = 0f;
     public const float MAX_VALUE = 1f;
@@ -69,6 +89,14 @@ public struct FloatColor
         G = g;
         B = b;
         A = a;
+    }
+
+    public FloatColor(byte r, byte g, byte b, byte a)
+    {
+        R = r / (float)byte.MaxValue;
+        G = g / (float)byte.MaxValue;
+        B = b / (float)byte.MaxValue;
+        A = a / (float)byte.MaxValue;
     }
 
 

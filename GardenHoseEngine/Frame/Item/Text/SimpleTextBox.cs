@@ -157,8 +157,7 @@ public class SimpleTextBox : ColoredItem
 
 
     // Constructors.
-    public SimpleTextBox(IVirtualConverter converter, SpriteFont font, string text) 
-        : base(converter)
+    public SimpleTextBox(SpriteFont font, string text) : base()
     {
         _font = font ?? throw new ArgumentNullException(nameof(font));
         Text = text;
@@ -309,31 +308,31 @@ public class SimpleTextBox : ColoredItem
 
 
     // Inherited methods.
-    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public override void Draw()
     {
         if (!IsVisible) return;
 
         if (IsShadowEnabled)
         {
-            spriteBatch.DrawString(Font,
+            GameFrameManager.SpriteBatch.DrawString(Font,
             FormattedText,
-            Converter.ToRealPosition(Position.Vector +
-            new Vector2(Font.LineSpacing, Font.LineSpacing) * ShadowOffset),
+            Display.ToRealPosition(Position.Vector +
+            new Vector2(Font.LineSpacing, Font.LineSpacing) * ShadowOffset * Scale),
             _shadowColor,
             Rotation,
             VectorOrigin,
-            Converter.ToRealScale(Scale),
+            Display.ToRealScale(Scale),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
         }
 
-        spriteBatch.DrawString(Font,
+        GameFrameManager.SpriteBatch.DrawString(Font,
             FormattedText,
-            Converter.ToRealPosition(Position),
+            Display.ToRealPosition(Position),
             CombinedMask,
             Rotation,
             VectorOrigin,
-            Converter.ToRealScale(Scale),
+            Display.ToRealScale(Scale),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

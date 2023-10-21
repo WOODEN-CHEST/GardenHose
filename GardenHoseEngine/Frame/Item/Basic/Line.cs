@@ -44,18 +44,13 @@ public class Line : ColoredItem
 
 
     // Private fields.
-    private readonly Texture2D _singlePixel;
     private float _thickness;
     private float _length;
     private float _lineRotation;
 
 
     // Constructors.
-    public Line(IVirtualConverter converter, Texture2D singlePixel)
-        : base(converter)
-    {
-        _singlePixel = singlePixel ?? throw new ArgumentNullException(nameof(singlePixel));
-    }
+    public Line() : base() { }
 
 
     // Methods.
@@ -85,17 +80,17 @@ public class Line : ColoredItem
         _ShouldDraw = (_thickness != 0f) && (_length != 0f) && (IsVisible) && (Opacity != 0f);
     }
 
-    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public override void Draw()
     {
         if (!_ShouldDraw) return;
 
-        spriteBatch.Draw(_singlePixel,
-            Converter.ToRealPosition(Position),
+        GameFrameManager.SpriteBatch .Draw(Display.SinglePixel,
+            Display.ToRealPosition(Position),
             null,
             CombinedMask,
             _lineRotation + Rotation,
             s_origin,
-            Converter.ToRealScale(Scale) * new Vector2(_length, _thickness),
+            Display.ToRealScale(Scale) * new Vector2(_length, _thickness),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

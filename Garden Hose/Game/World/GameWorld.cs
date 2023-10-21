@@ -1,21 +1,22 @@
 ﻿using GardenHose;
 using GardenHose.Game;
-using GardenHoseEngine.Frame;
-using GardenHoseServer.World.Entities;
-using GardenHoseServer.World.Physics;
+using GardenHose.Game.World;
+using GardenHose.Game.World.Entities;
+using GardenHose.Game.World.Planet;
+using GardenHoseEngine.Screen;
+using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
-namespace GardenHoseServer.World;
+namespace GardenHose.Game.World;
+
 
 public class GameWorld : IIDProvider
 {
     // Internal fields.
-    internal PhysicsEngine PhysicsEngine { get; private init; } = new();
-
-    internal WorldPlanet Planet { get; private init; } = new(200, 0.1f);
+    internal WorldPlanet Planet { get; private set; }
 
     internal IEnumerable<Entity> Entitites => _entities.Values;
 
@@ -25,13 +26,13 @@ public class GameWorld : IIDProvider
 
     internal GHGame Game { get; private init; }
 
-    internal  Vector2 CameraCenter
+    internal Vector2 CameraCenter
     {
         get => _cameraCenter;
         set
         {
             _cameraCenter = value;
-            ObjectVisualOffset = (GH.Engine.Display.VirtualSize / 2f) - _cameraCenter;
+            ObjectVisualOffset = (Display.VirtualSize / 2f) - _cameraCenter;
         }
     }
 
@@ -39,28 +40,43 @@ public class GameWorld : IIDProvider
 
     internal float Zoom { get; set; } = 1f;
 
+    internal float PassedTimeSeconds { get; set; }
+
 
     // Private fields
     /* Entities. */
-    private Dictionary<ulong, Entity> _entities = new();
+    private readonly Dictionary<ulong, Entity> _entities = new();
     private readonly List<Entity> _entitiesCreated = new();
     private readonly List<Entity> _entitiesRemoved = new();
-    private ulong _availableID = 0;
+    private ulong _availableID = 1;
 
+    /* Camera. */
     private Vector2 _cameraCenter;
 
 
     // Constructors.
-    internal GameWorld(GHGame game)
+    internal GameWorld(GHGame game, GameWorldSettings settings)
     {
         Game = game ?? throw new ArgumentNullException(nameof(game));
         CameraCenter = new(0, 0);
+
+        ReadStartupSettings(settings);
     }
 
 
     // Methods.
     /* Flow control. */
-    internal void Tick(float passedTimeSeconds)
+    internal void Start()
+    {
+
+    }
+
+    internal void End()
+    {
+
+    }
+
+    internal void Tick()
     {
         // Create and remove entities.
         foreach (Entity WorldEntity in _entitiesCreated)
@@ -69,7 +85,7 @@ public class GameWorld : IIDProvider
         }
         _entitiesCreated.Clear();
 
-        foreach(Entity WorldEntity in _entitiesRemoved)
+        foreach (Entity WorldEntity in _entitiesRemoved)
         {
             _entities.Remove(WorldEntity.ID);
         }
@@ -78,31 +94,45 @@ public class GameWorld : IIDProvider
         // Tick entities.
         foreach (Entity WorldEntity in _entities.Values)
         {
-            WorldEntity.Tick(passedTimeSeconds);
+            WorldEntity.Tick();
         }
-    }
 
-    internal void OnStart(ILayer itemLayer)
-    {
-        AddEntity(new TestEntity(this, itemLayer)
+        foreach (Entity WorldEntity in _entities.Values)
         {
-            Position = new(400, 300),
-            Motion = new(-0.05f, 0.05f)
-        });
-    }
+            if (!WorldEntity.IsPhysical) continue;
 
-    internal void OnEnd()
-    {
-
+            ((PhysicalEntity)WorldEntity).TestCollision();
+        }
     }
 
     /* Entities. */
     internal void AddEntity(Entity entity)
     {
+        entity.World = this;
+        if (entity.ID == 0)
+        {
+            entity.ID = GetID();
+        }
+
         if (_entities.ContainsKey(entity.ID))
         {
             throw new InvalidOperationException($"Duplicate entity ID: {entity.ID}");
         }
+
+        var DrawableEntity = entity as DrawablePhysicalEntity;
+        if (DrawableEntity != null)
+        {
+            if (DrawableEntity.Layer == DrawLayer.Top)
+            {
+                Game.TopItemLayer.AddDrawableItem(DrawableEntity);
+            }
+            else
+            {
+                Game.BottomItemLayer.AddDrawableItem(DrawableEntity);
+            }
+        }
+
+        entity.Load(Game.AssetManager);
 
         _entitiesCreated.Add(entity);
     }
@@ -112,13 +142,43 @@ public class GameWorld : IIDProvider
         _entitiesRemoved.Add(entity);
     }
 
-    internal Entity? GetEntity(ulong ID)
+    internal EntityType? GetEntity<EntityType>(ulong ID) where EntityType : Entity
     {
-        if (_entities.ContainsKey(ID))
+        _entities.TryGetValue(ID, out var Entity);
+
+        if (Entity == null)
         {
-            return _entities[ID];
+            foreach (Entity RemovedEntity in _entitiesCreated)
+            {
+                if (RemovedEntity.ID == ID)
+                {
+                    Entity = RemovedEntity;
+                }
+            }
         }
-        return null;
+
+        return Entity as EntityType;
+    }
+
+
+    // Private methods.
+    [MemberNotNull(nameof(Planet))]
+    private void ReadStartupSettings(GameWorldSettings settings)
+    {
+        if (settings == null)
+        {
+            throw new ArgumentNullException(nameof(settings));
+        }
+
+        Planet = settings.Planet;
+        Planet.World = this;
+        Planet.Load(Game.AssetManager);
+        Game.BackgroundLayer.AddDrawableItem(Planet);
+
+        foreach (var Entity in settings.StartingEntities)
+        {
+            AddEntity(Entity);
+        }
     }
 
 

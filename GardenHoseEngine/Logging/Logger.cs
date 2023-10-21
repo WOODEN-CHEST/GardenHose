@@ -8,22 +8,26 @@ using System.Xml;
 namespace GardenHoseEngine.Logging;
 
 
-public sealed class Logger : IDisposable
+public static class Logger
 {
-    // Internal fields.
-    internal readonly string LogPath;
+    // Internal static fields.
+    internal static string LogPath { get; private set; }
 
 
-    // Private fields.
-    private readonly StreamWriter _fileWriter;
-    private BlockingCollection<string> _messages = new(new ConcurrentQueue<string>());
-    private CancellationTokenSource _cancellationTokenSource = new();
-    private Task _loggerTask;
+    // Private static fields.
+    private static StreamWriter s_fileWriter;
+    private static BlockingCollection<string> s_messages = new(new ConcurrentQueue<string>());
+    private static CancellationTokenSource s_cancellationTokenSource = new();
+    private static Task s_loggerTask;
 
-
-    // Constructors.
-    internal Logger(string logDirectory)
+    // Static methods.
+    public static void Initialize(string logDirectory)
     {
+        if  (s_loggerTask != null)
+        {
+            throw new InvalidOperationException("Logger already initialized!");
+        }
+
         if (logDirectory == null)
         {
             throw new ArgumentNullException(nameof(logDirectory));
@@ -42,25 +46,38 @@ public sealed class Logger : IDisposable
             ArchiveOldLog(Path.Combine(logDirectory, "old"), LogPath);
         }
 
-        _fileWriter = new(File.Create(LogPath), Encoding.UTF8);
-        _fileWriter.WriteLine($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
+        s_fileWriter = new(File.Create(LogPath), Encoding.UTF8);
+        s_fileWriter.WriteLine($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
             $"Log generated in \"{logDirectory}\"");
 
-        _loggerTask = Task.Factory.StartNew(WriteLog, new CancellationTokenSource().Token, 
+        s_loggerTask = Task.Factory.StartNew(LogWriterAction, new CancellationTokenSource().Token,
             TaskCreationOptions.LongRunning, TaskScheduler.Default);
     }
 
+    public static void Stop()
+    {
+        if (s_loggerTask == null)
+        {
+            throw new InvalidOperationException("Cannot stop logger since it is not initialized yet.");
+        }
 
-    // Methods.
-    public void Info(string message) => Log(LogLevel.Info, message);
+        s_cancellationTokenSource.Cancel();
+        Info("Logger stopped, goodbye world!");
+        s_loggerTask.Wait();
 
-    public void Warning(string message) => Log(LogLevel.Warning, message);
+        s_fileWriter.Flush();
+        s_fileWriter.Dispose();
+    }
 
-    public void Error(string message) => Log(LogLevel.Error, message);
+    public static void Info(string message) => Log(LogLevel.Info, message);
 
-    public  void Critical(string message) => Log(LogLevel.CRITICAL, message);
+    public static void Warning(string message) => Log(LogLevel.Warning, message);
 
-    public void Log(LogLevel level, string message)
+    public static void Error(string message) => Log(LogLevel.Error, message);
+
+    public static void Critical(string message) => Log(LogLevel.CRITICAL, message);
+
+    public static void Log(LogLevel level, string message)
     {
         if (message == null)
         {
@@ -73,7 +90,7 @@ public sealed class Logger : IDisposable
         FullMessage.Append(level == LogLevel.Info ? ' ' : $"[{level}] ");
         FullMessage.Append(message);
 
-        _messages.Add(FullMessage.ToString());
+        s_messages.Add(FullMessage.ToString());
     }
 
 
@@ -114,33 +131,21 @@ public sealed class Logger : IDisposable
             $"{(date.Day < 10 ? 0 : null)}{date.Day}d";
     }
 
-    private void WriteLog()
+    private static void LogWriterAction()
     {
         try
         {
-            while (!_cancellationTokenSource.IsCancellationRequested)
+            while (!s_cancellationTokenSource.IsCancellationRequested)
             {
-                _fileWriter.WriteLine(_messages.Take(_cancellationTokenSource.Token));
+                s_fileWriter.WriteLine(s_messages.Take(s_cancellationTokenSource.Token));
             }
         }
         catch (OperationCanceledException)
         {
-            while (_messages.TryTake(out string? message))
+            while (s_messages.TryTake(out string? message))
             {
-                _fileWriter.WriteLine(message);
+                s_fileWriter.WriteLine(message);
             }
         }
-    }
-
-
-    // Inherited methods.
-    public void Dispose()
-    {
-        _cancellationTokenSource.Cancel();
-        Info("Logger stopped, goodbye world!");
-        _loggerTask.Wait();
-
-        _fileWriter.Flush();
-        _fileWriter.Dispose();
     }
 }

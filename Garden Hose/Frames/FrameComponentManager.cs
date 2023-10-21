@@ -19,14 +19,14 @@ internal abstract class FrameComponentManager<FrameType> where FrameType : IGame
 
 
     // Methods.
-    internal virtual void Load(AssetManager assetManager) { }
+    internal virtual void Load() { }
 
     internal virtual void OnStart() { }
 
     internal virtual void OnEnd() { }
 
-    internal virtual void Unload(AssetManager assetManager) { }
+    internal virtual void Unload() { }
 
-    internal virtual void Update(float passedTimeSeconds) { }
+    internal virtual void Update() { }
 
 }

@@ -4,8 +4,9 @@ using GardenHose.Frames.Global;
 using GardenHose.Frames.Intro;
 using GardenHose.Frames.MainMenu;
 using GardenHoseEngine;
+using GardenHoseEngine.Engine;
 
-using GHEngine Engine = new(new GHEngineStartupSettings()
+GHEngine.Execute(new GHEngineStartupSettings()
 {
     GameName = "GH",
     InternalName = "gh",
@@ -14,6 +15,3 @@ using GHEngine Engine = new(new GHEngineStartupSettings()
     GlobalFrame = new GlobalFrame("Global"),
     IsMouseVisible = false
 });
-
-GH.Engine = Engine;
-Engine.Execute();

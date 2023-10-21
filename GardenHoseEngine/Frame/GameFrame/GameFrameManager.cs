@@ -11,86 +11,59 @@ using System.Threading.Tasks;
 
 namespace GardenHoseEngine.Frame;
 
-public class GameFrameManager : IGameFrameManager
+public static class GameFrameManager
 {
-    // Fields.
-    public IGameFrame GlobalFrame { get; init; }
-    public IGameFrame ActiveFrame { get; private set; }
-    public IGameFrame? NextFrame { get; private set; }
+    // Static fields.
+    public static IGameFrame ActiveFrame { get; private set; }
+
+    public static IGameFrame GlobalFrame { get; private set; }
+
+    public static IGameFrame? NextFrame { get; private set; }
+
+    public static SpriteBatch SpriteBatch { get; private set; }
+
+    public static float PassedTimeSeconds { get; private set; } = 0f;
+
+    public static float TotalTimeSeconds { get; private set; } = 0f;
+
+    public static RenderTarget2D LayerPixelBuffer { get; private set; }
+
+    public static RenderTarget2D FramePixelBuffer { get; private set; }
 
 
     // Private fields.
-    private GraphicsDeviceManager _graphicsDeviceManager;
-    private Display _display;
-    private AssetManager _assetManager;
-
-    private ConcurrentQueue<Action> _actions = new();
-    private SpriteBatch _spriteBatch;
-    private RenderTarget2D _layerPixelBuffer;
-    private RenderTarget2D _framePixelBuffer;
+    private static ConcurrentQueue<Action> _actions = new();
 
 
-    // Constructors.
-    internal GameFrameManager(GraphicsDeviceManager graphicsManager,
-        Display display,
-        AssetManager assetManager,
-        IGameFrame activeFrame,
-        IGameFrame globalFrame)
+    // Static methods.
+    public static void UpdateFrames(float passedTimeSeconds)
     {
-        _graphicsDeviceManager = graphicsManager ?? throw new ArgumentNullException(nameof(graphicsManager));
-        _display = display ?? throw new ArgumentNullException(nameof(display));
-        _assetManager = assetManager ?? throw new ArgumentNullException(nameof(assetManager));
+        PassedTimeSeconds = passedTimeSeconds;
+        TotalTimeSeconds += PassedTimeSeconds;
 
-        ActiveFrame = activeFrame ?? throw new ArgumentNullException(nameof(activeFrame));
-        GlobalFrame = globalFrame ?? throw new ArgumentNullException(nameof(globalFrame));
-
-        EnqueueAction( () =>
-        {
-            GlobalFrame.BeginLoad(_assetManager);
-            GlobalFrame.Load(_assetManager);
-            GlobalFrame.FinalizeLoad(_assetManager);
-            GlobalFrame.OnStart();
-
-            ActiveFrame.BeginLoad(_assetManager);
-            ActiveFrame.Load(_assetManager);
-            ActiveFrame.FinalizeLoad(_assetManager);
-            ActiveFrame.OnStart();
-        });
-        
-
-        _display.DisplayChanged += OnDisplayChangedEvent;
-        CreateLayerPixelBuffer();
-
-        _spriteBatch = new(_graphicsDeviceManager.GraphicsDevice);
-    }
-
-
-    // Methods.
-    public void UpdateFrames(float passedTimeSeconds)
-    {
         while (_actions.TryDequeue(out Action? ActionToExecute))
         {
             ActionToExecute!.Invoke();
         }
 
-        ActiveFrame.Update(passedTimeSeconds);
-        GlobalFrame.Update(passedTimeSeconds);
+
+        ActiveFrame.Update();
     }
 
-    public void DrawFrames(float passedTimeSeconds)
+    public static void DrawFrames()
     {
-        _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(_framePixelBuffer);
-        _graphicsDeviceManager.GraphicsDevice.Clear(Color.Black);
+        Display.GraphicsManager.GraphicsDevice.SetRenderTarget(FramePixelBuffer);
+        Display.GraphicsManager.GraphicsDevice.Clear(Color.Black);
 
-        ActiveFrame.Draw(passedTimeSeconds, _graphicsDeviceManager.GraphicsDevice, _spriteBatch, _layerPixelBuffer, _framePixelBuffer);
+        ActiveFrame.Draw();
 
-        _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(null);
-        _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
-        _spriteBatch.Draw(_framePixelBuffer, Vector2.Zero, Color.White);
-        _spriteBatch.End();
+        Display.GraphicsManager.GraphicsDevice.SetRenderTarget(null);
+        SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+        SpriteBatch.Draw(FramePixelBuffer, Vector2.Zero, Color.White);
+        SpriteBatch.End();
     }
 
-    public void EnqueueAction(Action action)
+    public static void EnqueueAction(Action action)
     {
         if (action == null)
         {
@@ -101,28 +74,55 @@ public class GameFrameManager : IGameFrameManager
     }
 
 
-    // Private methods.
-    private void OnDisplayChangedEvent(object? sender, EventArgs args) => CreateLayerPixelBuffer();
-
-    [MemberNotNull(nameof(_layerPixelBuffer))]
-    private void CreateLayerPixelBuffer()
+    // Internal static methods.
+    internal static void Initialize(IGameFrame activeFrame, IGameFrame globalFrame)
     {
-        _layerPixelBuffer?.Dispose();
-        _framePixelBuffer?.Dispose();
+        if (activeFrame== null)
+        {
+            throw new ArgumentNullException(nameof(activeFrame));
+        }
 
-        _layerPixelBuffer = new(_graphicsDeviceManager.GraphicsDevice,
-            (int)_display.WindowSize.X, (int)_display.WindowSize.Y, false, SurfaceFormat.Color, 
+        ActiveFrame = activeFrame ?? throw new ArgumentNullException(nameof(activeFrame));
+        GlobalFrame = globalFrame ?? throw new ArgumentNullException(nameof(activeFrame));
+
+        globalFrame.BeginLoad();
+        globalFrame.Load();
+        globalFrame.FinalizeLoad();
+
+        activeFrame.BeginLoad();
+        activeFrame.Load();
+        activeFrame.FinalizeLoad();
+
+        EnqueueAction(() => { globalFrame.OnStart(); activeFrame.OnStart(); });
+
+        Display.DisplayChanged += OnDisplayChangedEvent;
+        SpriteBatch = new(Display.GraphicsManager.GraphicsDevice);
+        CreateLayerPixelBuffer();
+    }
+
+
+    // Private methods.
+    private static void OnDisplayChangedEvent(object? sender, EventArgs args) => CreateLayerPixelBuffer();
+
+    [MemberNotNull(nameof(LayerPixelBuffer))]
+    private static void CreateLayerPixelBuffer()
+    {
+        LayerPixelBuffer?.Dispose();
+        FramePixelBuffer?.Dispose();
+
+        LayerPixelBuffer = new(Display.GraphicsManager.GraphicsDevice,
+            (int)Display.WindowSize.X, (int)Display.WindowSize.Y, false, SurfaceFormat.Color, 
             DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
-        _framePixelBuffer = new(_graphicsDeviceManager.GraphicsDevice,
-            (int)_display.WindowSize.X, (int)_display.WindowSize.Y, false, SurfaceFormat.Color,
+        FramePixelBuffer = new(Display.GraphicsManager.GraphicsDevice,
+            (int)Display.WindowSize.X, (int)Display.WindowSize.Y, false, SurfaceFormat.Color,
             DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
     }
 
 
     // Inherited methods.
-    public async void LoadNextFrame(IGameFrame nextFrame, Action onLoadComplete)
+    public static async void LoadNextFrame(IGameFrame nextFrame, Action onLoadComplete)
     {
-        if  (NextFrame  != null)
+        if  (NextFrame != null)
         {
             throw new InvalidOperationException("Next frame is already set.");
         }
@@ -141,9 +141,9 @@ public class GameFrameManager : IGameFrameManager
         {
             try
             {
-                nextFrame.BeginLoad(_assetManager);
-                nextFrame.Load(_assetManager);
-                nextFrame.FinalizeLoad(_assetManager);
+                nextFrame.BeginLoad();
+                nextFrame.Load();
+                nextFrame.FinalizeLoad();
             }
             catch (Exception e)
             {
@@ -155,7 +155,7 @@ public class GameFrameManager : IGameFrameManager
         _actions.Enqueue(onLoadComplete);
     }
 
-    public void JumpToNextFrame() => EnqueueAction(() =>
+    public static void JumpToNextFrame() => EnqueueAction(() =>
     {
         if (NextFrame == null)
         {
@@ -181,8 +181,8 @@ public class GameFrameManager : IGameFrameManager
         {
             try
             {
-                OldFrame.Unload(_assetManager);
-                _assetManager.FreeUnusedAssets();
+                OldFrame.Unload();
+                AssetManager.FreeUnusedAssets();
                 GC.Collect();
             }
             catch (Exception e)

@@ -41,11 +41,11 @@ public interface IGameFrame
 
 
     /* Status control. */
-    public void BeginLoad(AssetManager assetManager);
+    public void BeginLoad();
 
-    public void Load(AssetManager assetManager);
+    public void Load();
 
-    public void FinalizeLoad(AssetManager assetManager);
+    public void FinalizeLoad();
 
     public void OnStart();
 
@@ -53,15 +53,11 @@ public interface IGameFrame
 
     public void OnEnd();
 
-    public void Unload(AssetManager assetManager);
+    public void Unload();
 
 
     /* Updates and draws. */
-    public void Draw(float passedTimeSeconds, 
-        GraphicsDevice graphicsDevice, 
-        SpriteBatch spriteBatch, 
-        RenderTarget2D layerPixelBuffer,
-        RenderTarget2D framePixelBuffer);
+    public void Draw();
 
-    public void Update(float passedTimeSeconds);
+    public void Update();
 }

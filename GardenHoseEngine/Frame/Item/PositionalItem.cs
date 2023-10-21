@@ -13,8 +13,6 @@ public class PositionalItem : IDrawableItem, ITimeUpdatable
 
     public virtual Effect? Shader { get; set; }
 
-    public IVirtualConverter Converter { get; private init; }
-
     public virtual AnimVector2 Position { get; private init; }
 
     public virtual AnimVector2 Scale { get; private init; }
@@ -39,10 +37,8 @@ public class PositionalItem : IDrawableItem, ITimeUpdatable
 
 
     // Constructors.
-    public PositionalItem(IVirtualConverter converter)
+    public PositionalItem()
     {
-        Converter = converter ?? throw new ArgumentNullException(nameof(converter));
-
         Position = new();
         Scale = new();
         Scale.Vector = Vector2.One;
@@ -50,11 +46,11 @@ public class PositionalItem : IDrawableItem, ITimeUpdatable
 
 
     // Inherited methods.
-    public virtual void Draw(float passedTimeSeconds, SpriteBatch spriteBatch) { }
+    public virtual void Draw() { }
 
-    public virtual void Update(float passedTimeSeconds)
+    public virtual void Update()
     {
-        Scale.Update(passedTimeSeconds);
-        Position.Update(passedTimeSeconds);
+        Scale.Update();
+        Position.Update();
     }
 }

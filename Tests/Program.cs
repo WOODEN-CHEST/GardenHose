@@ -1,4 +1,5 @@
 ﻿
+using GardenHoseEngine.IO.DataFile;
 using NVorbis;
 using System.Collections;
 using System.Diagnostics;
@@ -9,20 +10,18 @@ namespace Tests
 {
     internal class Program
     {
-        static double PassedTime = 0d;
-        static AutoResetEvent Event = new(false);
-
-        static DateTime InvokeTime;
-
         static void Main(string[] args)
         {
-            float a = MathF.Atan2(4, 1) * (360f / (2*MathF.PI));
+            Write();
+            Read();
+            Thread.Sleep(100000000);
         }
 
-
-        static void Execute()
+        static void Write()
         {
-
+            DataFileCompound Compound = new();
+            DataFileCompound CompoundToAdd = new DataFileCompound()
+                    .Add(1, 1L);
         }
     }
 }

@@ -13,7 +13,6 @@ internal class InputListener<ArgsType> : IInputListener where ArgsType : EventAr
     internal readonly bool IsWindowFocusRequired;
     internal ArgsType Args { get; set; } = default!;
     internal bool Flag { get; set; } = true;
-    internal UserInput Input { get; init; }
     
 
     // Private fields.
@@ -22,20 +21,14 @@ internal class InputListener<ArgsType> : IInputListener where ArgsType : EventAr
 
 
     // Constructors.
-    internal InputListener(UserInput userInput,
-        object? creator,
-        IGameFrame? parentFrame,
+    internal InputListener(object? creator,
         bool requiresFocus,
         Predicate<InputListener<ArgsType>> predicate,
         EventHandler<ArgsType> handler)
     {
-        ParentFrame = parentFrame;
         IsWindowFocusRequired = requiresFocus;
 
-        Input = userInput ?? throw new ArgumentNullException(nameof(userInput));
-
         if (creator != null) Creator = creator;
-        else if (parentFrame != null) Creator = parentFrame;
         else Creator = this;
 
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -55,6 +48,6 @@ internal class InputListener<ArgsType> : IInputListener where ArgsType : EventAr
 
     public void StopListening()
     {
-        Input.RemoveListener(this);
+        UserInput.RemoveListener(this);
     }
 }

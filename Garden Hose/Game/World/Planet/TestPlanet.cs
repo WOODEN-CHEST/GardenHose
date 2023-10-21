@@ -3,7 +3,7 @@ using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine.Frame.Animation;
-using GardenHoseServer.World;
+using GardenHose.Game.World;
 using Microsoft.Xna.Framework;
 
 namespace GardenHose.Game.World.Planet;
@@ -13,21 +13,28 @@ internal class TestPlanet : WorldPlanet
 {
     // Private fields.
     private SpriteItem _ballSprite;
+    private Vector2 _ballSpriteScaling;
 
 
     // Constructors.
-    internal TestPlanet(GameWorld world, IGameFrame ownerFrame, AssetManager assetManager, float radius, float attraction) 
-        : base(world, ownerFrame, assetManager, radius, attraction)
-    {
-        _ballSprite = new SpriteItem(GH.Engine.Display,
-            new SpriteAnimation(0f, ownerFrame, assetManager, Origin.Center, "test/ball"));
-        _ballSprite.Scale.Vector = new Vector2(Radius, Radius) / _ballSprite.TextureSize;
-    }
+    internal TestPlanet(GameWorld? world) : base(world, 200f, 300f) { }
+
+    internal TestPlanet() : this(null) { }
 
 
     // Inherited methods.
-    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public override void Draw()
     {
-        _ballSprite.Position.Vector = World.ObjectVisualOffset;
+        _ballSprite.Position.Vector = Position + World!.ObjectVisualOffset;
+        _ballSprite.Scale.Vector = _ballSpriteScaling;
+        _ballSprite.Scale.Vector.X *= World.Zoom;
+        _ballSprite.Scale.Vector.Y *= World.Zoom;
+        _ballSprite.Draw();
+    }
+
+    public override void Load(GHGameAssetManager assetManager)
+    {
+        _ballSprite = new SpriteItem(assetManager.TestPlanet);
+        _ballSpriteScaling = new Vector2(Radius * 2, Radius * 2) / _ballSprite.TextureSize;
     }
 }

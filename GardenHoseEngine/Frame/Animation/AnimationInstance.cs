@@ -130,11 +130,11 @@ public sealed class AnimationInstance : ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(float passedTimeSeconds)
+    public void Update()
     {
         if (!_isAnimating) return;
 
-        _secondsSinceFrameSwitch += passedTimeSeconds;
+        _secondsSinceFrameSwitch += GameFrameManager.PassedTimeSeconds;
         if (_secondsSinceFrameSwitch > _secondsPerFrame)
         {
             _secondsSinceFrameSwitch -= _secondsPerFrame;

@@ -25,30 +25,30 @@ public class SpriteItem : ColoredItem
 
 
     // Constructors.
-    public SpriteItem(IVirtualConverter converter, AnimationInstance animationInstance) : base(converter)
+    public SpriteItem(AnimationInstance animationInstance) : base()
     {
         ActiveAnimation = animationInstance;
     }
 
-    public SpriteItem(IVirtualConverter converter, SpriteAnimation animation) : base(converter)
+    public SpriteItem(SpriteAnimation animation) : base()
     {
         ActiveAnimation = animation.CreateInstance();
     }
 
 
     // Inherited methods.
-    public override void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public override void Draw()
     {
         if (!_ShouldDraw) return;
 
-        spriteBatch.Draw(
+        GameFrameManager.SpriteBatch.Draw(
             ActiveAnimation.GetFrame().Texture,
-            Converter.ToRealPosition(Position),
+            Display.ToRealPosition(Position),
             ActiveAnimation.TextureRegion,
             CombinedMask,
             Rotation,
             ActiveAnimation.GetFrame().Origin,
-            Converter.ToRealScale(Scale),
+            Display.ToRealScale(Scale),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

@@ -15,5 +15,5 @@ public interface IDrawableItem
 
 
     // Methods.
-    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch);
+    public void Draw();
 }

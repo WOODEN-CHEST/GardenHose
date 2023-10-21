@@ -53,7 +53,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
 
 
     // Constructors.
-    public ColoredItem(IVirtualConverter converter) : base(converter) { }
+    public ColoredItem() : base() { }
 
 
     // Protected methods.

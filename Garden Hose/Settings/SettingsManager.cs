@@ -1,12 +1,8 @@
 ﻿using GardenHoseEngine.IO.DataFile;
+using GardenHoseEngine.Logging;
+using GardenHoseEngine.Screen;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace GardenHose.Settings;
 
@@ -42,9 +38,9 @@ internal static class SettingsManager
     internal static string SettingsFilePath => s_settingsFilePath;
 
     /* IDs. */
-    internal const int SETTING_COMPOUND = 1;
+    internal const int ID_SETTING_COMPOUND = 1;
 
-    internal const int IS_FULL_SCREEN = 1;
+    internal const int ID_IS_FULL_SCREEN = 1;
 
 
     // Private static fields.
@@ -63,41 +59,42 @@ internal static class SettingsManager
 
         try
         {
-            DataCompound BaseCompound = DataFileReaderCreator.GetReader().Read(SettingsFilePath, (version) => false)!;
-            DataCompound SettingCompound = BaseCompound.GetItemOrDefault(SETTING_COMPOUND, new DataCompound());
+            using DataFileReader Reader = DataFileReader.GetReader(SettingsFilePath);
+            DataFileCompound BaseCompound = Reader.Read();
+            DataFileCompound SettingCompound = BaseCompound.GetOrDefault(ID_SETTING_COMPOUND, new DataFileCompound());
             return ReadSettingsFromCompound(SettingCompound);
         }
         catch (InvalidCastException e)
         {
-            GH.Engine.Logger.Critical($"Corrupted settings file? Creating new one. {e}");
+            Logger.Critical($"Corrupted settings file? Cast of setting failed. Creating new settings file. {e}");
             return CreateSettingsFile();
         }
     }
 
     internal static void WriteSettings()
     {
-        IWriteableDataCompound BaseCompound = DataFileWriterCreator.GetCompound(null);
-        IWriteableDataCompound SettingsCompound = DataFileWriterCreator.GetCompound(1);
+        DataFileCompound BaseCompound = new();
+        DataFileCompound SettingsCompound = new();
 
         WriteSettingsToCompound(SettingsCompound);
-        BaseCompound.WriteCompound(SettingsCompound);
+        BaseCompound.Add(ID_SETTING_COMPOUND, SettingsCompound);
 
-        DataFileWriter Writer = DataFileWriterCreator.GetWriter();
-        Writer.Write(SettingsFilePath, GH.GameVersion, BaseCompound);
+        DataFileWriter Writer = DataFileWriter.GetWriter();
+        Writer.Write(SettingsFilePath, BaseCompound);
     }
 
     internal static void ApplySettings()
     {
-        GH.Engine.Display.IsFullScreen = Settings.IsFullScreen;
+        Display.IsFullScreen = Settings.IsFullScreen;
     }
 
 
     // Private static methods.
-    private static GameSettings ReadSettingsFromCompound(DataCompound settingCompound)
+    private static GameSettings ReadSettingsFromCompound(DataFileCompound settingCompound)
     {
-        return new()
+        return new GameSettings()
         {
-            IsFullScreen = settingCompound.GetItemOrDefault(IS_FULL_SCREEN, DefaultSettings.IsFullScreen)
+            IsFullScreen = settingCompound.GetOrDefault(ID_IS_FULL_SCREEN, DefaultSettings.IsFullScreen)
         };
     }
 
@@ -108,8 +105,8 @@ internal static class SettingsManager
         return Settings;
     }
 
-    private static void WriteSettingsToCompound(IWriteableDataCompound compound)
+    private static void WriteSettingsToCompound(DataFileCompound compound)
     {
-        compound.WriteBool(IS_FULL_SCREEN, Settings.IsFullScreen);
+        compound.Add(ID_IS_FULL_SCREEN, Settings.IsFullScreen);
     }
 }

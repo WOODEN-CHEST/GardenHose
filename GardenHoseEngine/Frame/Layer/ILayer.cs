@@ -25,6 +25,4 @@ public interface ILayer : IColorMaskable, IDrawableItem
     public void RemoveDrawableItem(IDrawableItem item);
 
     public void ClearDrawableItems();
-
-    
 }

@@ -8,5 +8,5 @@ namespace GardenHoseEngine;
 
 public interface ITimeUpdatable
 {
-    public void Update(float passedTimeSeconds);
+    public void Update();
 }

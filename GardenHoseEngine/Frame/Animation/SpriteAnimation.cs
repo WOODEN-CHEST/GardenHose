@@ -30,10 +30,8 @@ public sealed partial class SpriteAnimation
 
 
     // Constructors.
-    public SpriteAnimation(float fps, IGameFrame owner, AssetManager assetManager,
-        Origin? textureOrigin, params string[] relativePaths)
+    public SpriteAnimation(float fps, IGameFrame owner, Origin? textureOrigin, params string[] relativePaths)
     {
-        ArgumentNullException.ThrowIfNull(assetManager, nameof(assetManager));
         DefaultFPS = fps;
 
         ArgumentNullException.ThrowIfNull(relativePaths, nameof(relativePaths));
@@ -45,7 +43,7 @@ public sealed partial class SpriteAnimation
         _frames = new AnimationFrame[relativePaths.Length];
         for (int i = 0; i < _frames.Length; i++)
         {
-            _frames[i] = new AnimationFrame(textureOrigin ?? Origin.TopLeft, assetManager.GetTexture(owner, relativePaths[i]));
+            _frames[i] = new AnimationFrame(textureOrigin ?? Origin.TopLeft, AssetManager.GetTexture(owner, relativePaths[i]));
         }
         MaxFrameIndex = _frames.Length - 1;
     }

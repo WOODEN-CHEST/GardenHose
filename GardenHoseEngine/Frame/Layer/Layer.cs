@@ -87,11 +87,11 @@ public class Layer : ILayer
         _drawableItems.Clear();
     }
 
-    public void Draw(float passedTimeSeconds, SpriteBatch spriteBatch)
+    public void Draw()
     {
         List<IDrawableItem> ShaderedDrawables = new();
 
-        spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+        GameFrameManager.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
         foreach (IDrawableItem Item in _drawableItems)
         {
             if (Item.Shader!= null)
@@ -100,9 +100,9 @@ public class Layer : ILayer
                 continue;
             }
 
-            Item.Draw(passedTimeSeconds, spriteBatch);
+            Item.Draw();
         }
-        spriteBatch.End();
+        GameFrameManager.SpriteBatch.End();
 
         if (ShaderedDrawables.Count == 0)
         {
@@ -111,21 +111,21 @@ public class Layer : ILayer
 
 
         Effect AppliedShader = ShaderedDrawables[0].Shader!;
-        spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
+        GameFrameManager.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
 
         foreach (IDrawableItem Item in ShaderedDrawables)
         {
             if (AppliedShader != Item.Shader)
             {
-                spriteBatch.End();
+                GameFrameManager.SpriteBatch.End();
 
                 AppliedShader = Item.Shader!;
-                spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
+                GameFrameManager.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: AppliedShader);
             }
 
-            Item.Draw(passedTimeSeconds, spriteBatch);
+            Item.Draw();
         }
 
-        spriteBatch.End();
+        GameFrameManager.SpriteBatch.End();
     }
 }
