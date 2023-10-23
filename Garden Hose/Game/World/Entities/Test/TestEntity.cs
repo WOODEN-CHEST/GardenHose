@@ -32,11 +32,9 @@ internal class TestEntity : DrawablePhysicalEntity
 
     // Private fields
 
-    private Vector2? _collisionPoint;
-
     // Constructors
     public TestEntity(GameWorld? world) : base(EntityType.Test, world,
-        new CollisionBound[] { new RectangleCollisionBound(new Vector2(20f, 20f)) } )
+        new CollisionBound[] { new RectangleCollisionBound(new Vector2(20f, 30f)) } )
     {
         DrawCollisionBox = true;
     }
@@ -54,12 +52,11 @@ internal class TestEntity : DrawablePhysicalEntity
             (Position + Motion / 2f) * World.Zoom + World.ObjectVisualOffset);
         VisualLine.Draw();
 
-        if (_collisionPoint == null) return;
+        VisualLine.Mask = Color.Aqua;
+        Vector2 Vertex = ((RectangleCollisionBound)CollisionBounds[0]).GetVertices()[0];
 
-        VisualLine.Mask = Color.Blue;
-        VisualLine.Length = 5f * World!.Zoom;
-
-        VisualLine.Position.Vector = (_collisionPoint.Value * World!.Zoom) + World.ObjectVisualOffset;
+        VisualLine.Set(Vertex * World.Zoom + World.ObjectVisualOffset,
+            (Vertex + GetAngularMotionAtPoint(Vertex)) * World.Zoom + World.ObjectVisualOffset);
         VisualLine.Draw();
     }
 

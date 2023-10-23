@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
-using System.Text;
-using System.Threading.Tasks;
-using GardenHose.Game;
-using GardenHose.Game.World.Entities;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 
 namespace GardenHose.Game.World.Entities;
@@ -87,31 +81,90 @@ internal abstract class PhysicalEntity : Entity
         {
             if (Bound.Type == CollisionBoundType.Rectangle)
             {
-                TestCollisionRectToBall((RectangleCollisionBound)Bound, World!.Planet.CollisionBound);
+                TestColRectToBall((RectangleCollisionBound)Bound, World!.Planet.CollisionBound);
             }
         }
     }
 
+    private void TestColRectToBall(RectangleCollisionBound rect, BallCollisionBound ball)
+    {
+        Vector2[] Vertices = rect.GetVertices();
+        List<Vector2> CollisionPoints = null!;
+        
+        // Find closest point so that a testable ray can be created.
+        float ClosestDistance = float.PositiveInfinity;
+        Vector2 ClosestVertex = Vector2.Zero;
+        foreach (Vector2 Vertex in Vertices)
+        {
+            float Distance = Vector2.Distance(ball.Position, Vertex);
+            if (Distance < ClosestDistance)
+            {
+                ClosestDistance = Distance;
+                ClosestVertex = Vertex;
+            }
+        }
+        Ray BallToRectRay = new(ball.Position, ClosestVertex);
+
+        /* Find collision points. This is done by getting rays from the edge vertices,
+         * then finding intersection points in said rays, then testing if the intersection 
+         * point is inside of the edge's limits. If so, a collision has occurred.*/
+        for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
+        {
+            Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
+            Ray EdgeRay = new(Edge);
+
+            Vector2 CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
+
+            float MinX = Math.Min(Edge.StartVertex.X, Edge.EndVertex.X);
+            float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
+            float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
+            float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
+            
+            if (Vector2.Distance(ball.Position, CollisionPoint) <= ball.Radius
+                && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
+                && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
+            {
+                CollisionPoints ??= new();
+                CollisionPoints.Add(CollisionPoint);
+            }
+        }
+
+        if (CollisionPoints != null)
+        {
+            Vector2 SurfaceNormal = Vector2.Normalize(rect.Position - ball.Position);
+
+            PushOutOfBall(CollisionPoints[0], ball);
+            OnCollision(CollisionPoints[0], Vector2.Zero, SurfaceNormal);
+            //foreach (Vector2 Point in CollisionPoints)
+            //{
+                
+            //}
+        }
+    }
+
+
     protected void TestCollisionRectToBall(RectangleCollisionBound rect, BallCollisionBound ball)
     {
-        // Get closest point to find axis to align.
-        //Vector2 ClosestPoint = Vector2.Zero;
-        //float LowestDistance = float.PositiveInfinity;
+        // Get vertices.
         var Vertices = rect.GetVertices();
 
-        //foreach (Vector2 Vertex in Vertices)
-        //{
-        //    float Distance = Vector2.DistanceSquared(Vertex, World!.Planet.Position);
-        //    if (Distance < LowestDistance)
-        //    {
-        //        ClosestPoint = Vertex;
-        //        LowestDistance = Distance;
-        //    }
-        //}
+        // Get closest point to find axis to align.
+        Vector2 ClosestPoint = Vector2.Zero;
+        float LowestDistance = float.PositiveInfinity;
 
-        Vector2 Axis = Vector2.Normalize(World!.Planet.Position - Position);
+        foreach (Vector2 Vertex in Vertices)
+        {
+            float Distance = Vector2.DistanceSquared(Vertex, World!.Planet.Position);
+            if (Distance < LowestDistance)
+            {
+                ClosestPoint = Vertex;
+                LowestDistance = Distance;
+            }
+        }
+        
+        Vector2 Axis = Vector2.Normalize(World!.Planet.Position - ClosestPoint);
 
-        // Project into axis.
+        // Project vertices onto axis.
         Span<float> Projections = stackalloc float[]
         {
             Vector2.Dot(Vertices[0], Axis),
@@ -119,6 +172,10 @@ internal abstract class PhysicalEntity : Entity
             Vector2.Dot(Vertices[2], Axis),
             Vector2.Dot(Vertices[3], Axis),
         };
+
+
+        // Since all vertices are now projected onto an axis, only 1 dimension is needed.
+        // Find the minimum and maximum values on this axis.
         float Min = Projections[0];
         float Max = Projections[0];
 
@@ -134,7 +191,7 @@ internal abstract class PhysicalEntity : Entity
             }
         }
 
-        // Test collision.
+        // Test collision by seeing if the minimum value is inside the ball's location.
         bool IsColliding = !((Max < -(World.Planet.Radius)) || (Min > World.Planet.Radius));
 
         if (!IsColliding) return;
@@ -178,9 +235,9 @@ internal abstract class PhysicalEntity : Entity
     {
         CollisionEvent?.Invoke(this, collisionPoint);
 
-        //Vector2 CombinedMotionAtPoint = GetAngularMotionAtPoint(collisionPoint) + Motion;
+        Vector2 CombinedMotionAtPoint = GetAngularMotionAtPoint(collisionPoint) + Motion;
 
-        Motion = Vector2.Reflect(Motion, surfaceNormal) * 0.9f;
+        Motion = Vector2.Reflect(Motion, surfaceNormal) * 0.85f;
     }
 
     /* Other */
@@ -190,7 +247,7 @@ internal abstract class PhysicalEntity : Entity
         float AngleOfPointToPosition = MathF.Atan2(point.Y - Position.Y, point.X - Position.X);
 
         Vector2 CalculatedAngularMotion = Vector2.Transform(Vector2.UnitY, Matrix.CreateRotationZ(AngleOfPointToPosition));
-        CalculatedAngularMotion *= SpeedAtPoint;
+        CalculatedAngularMotion *= SpeedAtPoint; 
         return CalculatedAngularMotion;
     }
 

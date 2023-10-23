@@ -18,6 +18,11 @@ internal struct Ray
     internal float OriginX { get; private set; } // Cheap band-aid fix for vertical line cases.
 
 
+    // Private static fields.
+    private static readonly Vector2 s_noCollisionVector = new(float.PositiveInfinity, float.PositiveInfinity);
+
+
+
     // Constructors.
     internal Ray(float xOffset, float xStep)
     {
@@ -49,7 +54,7 @@ internal struct Ray
         }
         if (ray1.YStep == ray2.YStep)
         {
-            return new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            return s_noCollisionVector;
         }
 
         if (float.IsInfinity(ray1.YStep))
@@ -72,7 +77,6 @@ internal struct Ray
 
         return new Vector2(XValue, YValue);
     }
-
 
 
     // Inherited methods.

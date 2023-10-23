@@ -12,16 +12,17 @@ namespace Tests
     {
         static void Main(string[] args)
         {
-            Write();
-            Read();
+            Test();
             Thread.Sleep(100000000);
         }
 
-        static void Write()
+        static void Test()
         {
-            DataFileCompound Compound = new();
-            DataFileCompound CompoundToAdd = new DataFileCompound()
-                    .Add(1, 1L);
+            DataFileCompound[] Compounds = new DataFileCompound[1_000_000];
+            for (int i = 0; i < Compounds.Length; i++)
+            {
+                Compounds[i] = new DataFileCompound().Add(1, 57L);
+            }
         }
     }
 }
