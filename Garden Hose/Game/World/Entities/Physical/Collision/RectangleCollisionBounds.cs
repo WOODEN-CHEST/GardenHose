@@ -1,79 +1,93 @@
 ﻿using GardenHoseEngine.Frame.Item.Basic;
 using Microsoft.Xna.Framework;
 using System;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace GardenHose.Game.World.Entities;
 
 
-internal class RectangleCollisionBound : CollisionBound
+internal struct RectangleCollisionBound : ICollisionBound
 {
+    // Fields.
+    public CollisionBoundType Type => CollisionBoundType.Rectangle;
+
+    public Vector2 Offset { get; set; }
+
+    public float Rotation { get; set; }
+
+
+
     // Internal fields.
-    internal Vector2 Size
-    {
-        get => _size;
-        set
-        {
-            _size = value;
-            _halfSize = _size / 2f;
-        }
-    }
+    internal Vector2 Size { get; set; }
 
-    internal Vector2 HalfSize => _halfSize;
-
-
-    // Private fields.
-    private Vector2 _size;
-    private Vector2 _halfSize;
+    internal Vector2 HalfSize => Size * 0.5f;
 
 
     // Constructors.
     public RectangleCollisionBound() : this(Vector2.Zero) { }
 
-    public RectangleCollisionBound(Vector2 size) : base(CollisionBoundType.Rectangle)
+    public RectangleCollisionBound(Vector2 size) : this(size, Vector2.Zero) { }
+
+    public RectangleCollisionBound(Vector2 size, Vector2 offset) : this(size, offset, 0f) { }
+
+    public RectangleCollisionBound(Vector2 size, Vector2 offset, float rotation)
     {
         Size = size;
+        Offset = offset;
+        Rotation = rotation;
     }
 
 
     // Methods.
-    internal Vector2[] GetVertices()
+    internal Vector2[] GetVertices(Vector2 position, float rotation)
     {
-        Vector2 TopLeft = -HalfSize;
-        Vector2 BottomRight = HalfSize;
+        Vector2 TopLeft = -HalfSize + Offset;
+        Vector2 BottomRight = HalfSize + Offset;
         Vector2 TopRight = new(BottomRight.X, TopLeft.Y);
         Vector2 BottomLeft = new(TopLeft.X, BottomRight.Y);
 
-        Matrix RotationMatrix = Matrix.CreateRotationZ(Rotation);
-        TopLeft = Vector2.Transform(TopLeft, RotationMatrix) + Position;
-        BottomRight = Vector2.Transform(BottomRight, RotationMatrix) + Position;
-        TopRight = Vector2.Transform(TopRight, RotationMatrix) + Position;
-        BottomLeft = Vector2.Transform(BottomLeft, RotationMatrix) + Position;
+        if (rotation != 0f)
+        {
+            Matrix RotationMatrix = Matrix.CreateRotationZ(Rotation + rotation);
+            TopLeft = Vector2.Transform(TopLeft, RotationMatrix) + position;
+            BottomRight = Vector2.Transform(BottomRight, RotationMatrix) + position;
+            TopRight = Vector2.Transform(TopRight, RotationMatrix) + position;
+            BottomLeft = Vector2.Transform(BottomLeft, RotationMatrix) + position;
+        }
+        
 
         return new Vector2[] { TopLeft, TopRight, BottomRight, BottomLeft };
     }
 
 
     // Inherited methods.
-    internal override void Draw(Line line, GameWorld world)
+    public void Draw(Vector2 position, float rotation, Line line, GameWorld world)
     {
         line.Mask = Color.Red;
         line.Thickness = 3f * world.Zoom;
 
-        Vector2[] Vertices = GetVertices();
-        Vector2 ZoomAdjustedSize = Size * world.Zoom;
-        Vector2 TopLeft = Vertices[0] * world.Zoom + world.ObjectVisualOffset;
-        Vector2 BottomRight = Vertices[2] * world.Zoom + world.ObjectVisualOffset;
+        Vector2[] Vertices = GetVertices(position, rotation);
 
-        line.Set(TopLeft, ZoomAdjustedSize.X, Rotation);
+        Vertices[0] = Vertices[0] * world.Zoom + world.ObjectVisualOffset;
+        Vertices[1] = Vertices[1] * world.Zoom + world.ObjectVisualOffset;
+        Vertices[2] = Vertices[2] * world.Zoom + world.ObjectVisualOffset;
+        Vertices[3] = Vertices[3] * world.Zoom + world.ObjectVisualOffset;
+
+        line.Set(Vertices[0], Vertices[1]);
         line.Draw();
 
-        line.Set(TopLeft, ZoomAdjustedSize.Y, Rotation + (MathF.PI / 2f));
+        line.Set(Vertices[1], Vertices[2]);
         line.Draw();
 
-        line.Set(BottomRight, ZoomAdjustedSize.X, Rotation + MathF.PI);
+        line.Set(Vertices[2], Vertices[3]);
         line.Draw();
 
-        line.Set(BottomRight, ZoomAdjustedSize.Y, Rotation - (MathF.PI / 2f));
+        line.Set(Vertices[3], Vertices[0]);
         line.Draw();
+    }
+
+    public float GetArea()
+    {
+        return Size.X * Size.Y;
     }
 }

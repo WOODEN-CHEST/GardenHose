@@ -5,23 +5,18 @@ using Microsoft.Xna.Framework;
 namespace GardenHose.Game.World.Entities;
 
 
-internal abstract class CollisionBound
+internal interface ICollisionBound
 {
     // Internal fields.
-    internal CollisionBoundType Type { get; private init; }
+    public CollisionBoundType Type { get; }
 
-    internal Vector2 Position { get; set; }
+    public Vector2 Offset { get; set; }
 
-    internal float Rotation { get; set; }
-
-
-    // Constructors.
-    internal CollisionBound(CollisionBoundType type)
-    {
-        Type = type;
-    }
+    public float Rotation { get; set; }
 
 
     // Methods.
-    internal abstract void Draw(Line line, GameWorld world);
+    public void Draw(Vector2 position, float rotation, Line line, GameWorld world);
+
+    public float GetArea();
 }

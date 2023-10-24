@@ -6,7 +6,7 @@ using GardenHoseEngine.IO;
 using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-
+using System;
 
 namespace GardenHose.Frames.InGame;
 
@@ -36,7 +36,7 @@ internal class InGameFrame : GameFrame
             Planet = new TestPlanet(),
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(250f, 0f), Motion = new Vector2(0f, 100f), AngularMotion = 1f }
+                new TestEntity() { Position = new Vector2(250f, 0f), Motion = new Vector2(0f, 100f), AngularMotion = 0f }
             }
         };
         Game = new(this, StartupSettings);
