@@ -7,6 +7,10 @@ namespace GardenHose.Game.World.Entities;
 
 internal interface ICollisionBound
 {
+    // Internal static fields.
+    internal static Line VisualLine { get; set; } = new Line();
+
+
     // Internal fields.
     public CollisionBoundType Type { get; }
 
@@ -16,7 +20,7 @@ internal interface ICollisionBound
 
 
     // Methods.
-    public void Draw(Vector2 position, float rotation, Line line, GameWorld world);
+    public void Draw(Vector2 position, float rotation, GameWorld world);
 
     public float GetArea();
 }

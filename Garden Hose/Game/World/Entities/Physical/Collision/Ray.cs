@@ -15,7 +15,7 @@ internal struct Ray
 
     internal float YStep { get; private set; }
 
-    internal float OriginX { get; private set; } // Cheap band-aid fix for vertical line cases.
+    internal float OriginX { get; private set; } // Cheap band-aid fix for vertical ray cases where y=∞x+.
 
 
     // Private static fields.

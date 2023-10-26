@@ -41,30 +41,48 @@ internal struct RectangleCollisionBound : ICollisionBound
     // Methods.
     internal Vector2[] GetVertices(Vector2 position, float rotation)
     {
-        Vector2 TopLeft = -HalfSize + Offset;
-        Vector2 BottomRight = HalfSize + Offset;
+        Vector2 TopLeft = -HalfSize;
+        Vector2 BottomRight = HalfSize;
         Vector2 TopRight = new(BottomRight.X, TopLeft.Y);
         Vector2 BottomLeft = new(TopLeft.X, BottomRight.Y);
 
+        if (Rotation != 0f)
+        {
+            Matrix RotationMatrix = Matrix.CreateRotationZ(Rotation);
+            TopLeft = Vector2.Transform(TopLeft, RotationMatrix);
+            BottomRight = Vector2.Transform(BottomRight, RotationMatrix);
+            TopRight = Vector2.Transform(TopRight, RotationMatrix);
+            BottomLeft = Vector2.Transform(BottomLeft, RotationMatrix);
+        }
+
+        TopLeft += Offset;
+        BottomRight += Offset;
+        TopRight += Offset;
+        BottomLeft += Offset;
+
         if (rotation != 0f)
         {
-            Matrix RotationMatrix = Matrix.CreateRotationZ(Rotation + rotation);
-            TopLeft = Vector2.Transform(TopLeft, RotationMatrix) + position;
-            BottomRight = Vector2.Transform(BottomRight, RotationMatrix) + position;
-            TopRight = Vector2.Transform(TopRight, RotationMatrix) + position;
-            BottomLeft = Vector2.Transform(BottomLeft, RotationMatrix) + position;
+            Matrix RotationMatrix = Matrix.CreateRotationZ(rotation);
+            TopLeft = Vector2.Transform(TopLeft, RotationMatrix);
+            BottomRight = Vector2.Transform(BottomRight, RotationMatrix);
+            TopRight = Vector2.Transform(TopRight, RotationMatrix);
+            BottomLeft = Vector2.Transform(BottomLeft, RotationMatrix);
         }
-        
+
+        TopLeft += position;
+        BottomRight += position;
+        TopRight += position;
+        BottomLeft += position;
 
         return new Vector2[] { TopLeft, TopRight, BottomRight, BottomLeft };
     }
 
 
     // Inherited methods.
-    public void Draw(Vector2 position, float rotation, Line line, GameWorld world)
+    public void Draw(Vector2 position, float rotation, GameWorld world)
     {
-        line.Mask = Color.Red;
-        line.Thickness = 3f * world.Zoom;
+        ICollisionBound.VisualLine.Mask = Color.Red;
+        ICollisionBound.VisualLine.Thickness = 3f * world.Zoom;
 
         Vector2[] Vertices = GetVertices(position, rotation);
 
@@ -73,17 +91,17 @@ internal struct RectangleCollisionBound : ICollisionBound
         Vertices[2] = Vertices[2] * world.Zoom + world.ObjectVisualOffset;
         Vertices[3] = Vertices[3] * world.Zoom + world.ObjectVisualOffset;
 
-        line.Set(Vertices[0], Vertices[1]);
-        line.Draw();
+        ICollisionBound.VisualLine.Set(Vertices[0], Vertices[1]);
+        ICollisionBound.VisualLine.Draw();
 
-        line.Set(Vertices[1], Vertices[2]);
-        line.Draw();
+        ICollisionBound.VisualLine.Set(Vertices[1], Vertices[2]);
+        ICollisionBound.VisualLine.Draw();
 
-        line.Set(Vertices[2], Vertices[3]);
-        line.Draw();
+        ICollisionBound.VisualLine.Set(Vertices[2], Vertices[3]);
+        ICollisionBound.VisualLine.Draw();
 
-        line.Set(Vertices[3], Vertices[0]);
-        line.Draw();
+        ICollisionBound.VisualLine.Set(Vertices[3], Vertices[0]);
+        ICollisionBound.VisualLine.Draw();
     }
 
     public float GetArea()

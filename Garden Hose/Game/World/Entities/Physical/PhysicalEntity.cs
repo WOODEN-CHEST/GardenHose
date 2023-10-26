@@ -2,32 +2,75 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using System.Diagnostics.CodeAnalysis;
-
+using GardenHoseEngine.Frame.Item;
+using Microsoft.Xna.Framework.Graphics;
+using GardenHoseEngine.Frame.Item.Basic;
 
 namespace GardenHose.Game.World.Entities;
 
-internal abstract class PhysicalEntity : Entity
+internal abstract class PhysicalEntity : Entity, IDrawableItem
 {
     // Fields.
+    public virtual bool IsVisible { get; set; } = true;
+
+    public virtual Effect? Shader { get; set; }
+
+
+    // Internal fields.
     internal sealed override bool IsPhysical => true;
 
-    internal virtual Vector2 Position
-    {
-        get => MainPart.Position;
-        set => MainPart.Position = value;
-    }
+    internal virtual Vector2 Position { get; set; }
 
     internal virtual Vector2 Motion { get; set; }
 
-    internal virtual float Rotation
-    {
-        get => MainPart.SelfRotation;
-        set => MainPart.SelfRotation = value;
-    }
+    internal virtual float Rotation { get; set; }
 
     internal virtual float AngularMotion { get; set; }
 
+    internal virtual float Mass
+    {
+        get
+        {
+            float TotalMass = 0f;
+            PhysicalEntityPart[] AllParts = Parts;
+
+            foreach (PhysicalEntityPart Part in Parts)
+            {
+                TotalMass += Part.Mass;
+            }
+
+            return TotalMass;
+        }
+    }
+
     internal virtual PhysicalEntityPart MainPart { get; set; }
+
+    internal virtual PhysicalEntityPart[] Parts
+    {
+        get
+        {
+            List<PhysicalEntityPart> EntityParts = new();
+            
+            void GetSubParts(PhysicalEntityPart part)
+            {
+                EntityParts.Add(part);
+
+                if (part.SubPartLinks != null)
+                {
+                    foreach (PartLink Link in part.SubPartLinks)
+                    {
+                        GetSubParts(Link.LinkedPart);
+                    }
+                }
+            }
+
+            return EntityParts.ToArray();
+        }
+    }
+
+    internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
+
+    internal bool DrawCollisionBox { get; set; } = false;
 
     internal event EventHandler<Vector2> CollisionEvent;
 
@@ -95,7 +138,7 @@ internal abstract class PhysicalEntity : Entity
     //{
     //    Vector2[] Vertices = rect.GetVertices();
     //    List<Vector2> CollisionPoints = null!;
-        
+
     //    // Find closest point so that a testable ray can be created.
     //    float ClosestDistance = float.PositiveInfinity;
     //    Vector2 ClosestVertex = Vector2.Zero;
@@ -124,7 +167,7 @@ internal abstract class PhysicalEntity : Entity
     //        float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
     //        float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
     //        float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
-            
+
     //        if (Vector2.Distance(ball.Position, CollisionPoint) <= ball.Radius
     //            && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
     //            && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
@@ -147,7 +190,7 @@ internal abstract class PhysicalEntity : Entity
     //{
     //    List<Vector2> CollisionPoints = new(4);
     //    Ray BallRay = new(rect.Position, ball.Position);
-        
+
     //    for (int vertexIndex = 0; vertexIndex < rectVertices.Length; vertexIndex++)
     //    {
     //        Edge RectEdge = new(rectVertices[vertexIndex], rectVertices[(vertexIndex + 1) % rectVertices.Length]);
@@ -200,10 +243,36 @@ internal abstract class PhysicalEntity : Entity
     //}
 
 
+    // Private methods.
+    protected virtual void DrawCollisionBounds()
+    {
+        if (MainPart == null) return;
+
+        PhysicalEntityPart[] EntityParts = Parts;
+
+        foreach (PhysicalEntityPart Part in EntityParts)
+        {
+            Part.DrawCollisionBounds();
+        }
+    }
+
+    protected void DrawVelocity()
+    {
+
+    }
+
     // Inherited methods.
     internal override void Tick()
     {
         SimulatePhysicsPlanet();
         FinalizeTickSimulation();
+    }
+
+    public virtual void Draw()
+    {
+        if (DrawCollisionBox)
+        {
+            DrawCollisionBounds();
+        }
     }
 }

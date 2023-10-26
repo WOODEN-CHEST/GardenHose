@@ -15,11 +15,11 @@ internal struct Edge
 
     internal Vector2 EndVertex { get; set; }
 
-    internal Vector2 Length => EndVertex - StartVertex;
+    internal Vector2 Step => EndVertex - StartVertex;
 
-    internal Vector2 MiddleVertex => StartVertex + (Length * 0.5f);
+    internal Vector2 MiddleVertex => StartVertex + (Step * 0.5f);
 
-    internal float Magnitude => Vector2.Distance(StartVertex, EndVertex);
+    internal float Length => Vector2.Distance(StartVertex, EndVertex);
 
 
     // Constructors.
@@ -40,5 +40,24 @@ internal struct Edge
 
         Edge ObjEdge = (Edge)obj;
         return (ObjEdge.StartVertex == StartVertex && ObjEdge.EndVertex == EndVertex);
+    }
+
+    public override int GetHashCode()
+    {
+        return StartVertex.GetHashCode() + EndVertex.GetHashCode();
+    }
+
+
+    // Operators.
+    public static bool operator ==(Edge edge1, Edge edge2)
+    {
+        return (edge1.StartVertex == edge2.StartVertex)
+            && (edge1.EndVertex == edge2.EndVertex);
+    }
+
+    public static bool operator !=(Edge edge1, Edge edge2)
+    {
+        return (edge1.StartVertex != edge2.StartVertex)
+            || (edge1.EndVertex != edge2.EndVertex);
     }
 }
