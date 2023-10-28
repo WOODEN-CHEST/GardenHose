@@ -119,8 +119,8 @@ public static class GHMath
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float AngleBetweenVectors(Vector2 vector1, Vector2 vector2)
+    public static float CosineBetweenVectors(Vector2 vector1, Vector2 vector2)
     {
-        return (Vector2.Dot(vector1, vector2)) / (vector1.Length() * vector2.Length());
+        return MathF.Cos(Vector2.Dot(vector1, vector2)) / (vector1.Length() * vector2.Length());
     }
 }

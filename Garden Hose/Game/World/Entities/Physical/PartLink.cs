@@ -18,7 +18,7 @@ internal class PartLink
 
 
     // Constructors.
-    public PartLink(PhysicalEntityPart mainPart, PhysicalEntityPart linkedPart, Vector2 linkDistance, bool isRotationLinked)
+    public PartLink(PhysicalEntityPart mainPart, PhysicalEntityPart linkedPart, Vector2 linkDistance)
     {
         ParentPart = mainPart;
         LinkedPart = linkedPart;

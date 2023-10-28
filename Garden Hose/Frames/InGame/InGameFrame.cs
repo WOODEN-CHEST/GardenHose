@@ -36,7 +36,7 @@ internal class InGameFrame : GameFrame
             Planet = new TestPlanet(),
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(250f, 0f), Motion = new Vector2(0f, 100f), AngularMotion = 0f }
+                new TestEntity() { Position = new Vector2(250f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0.25f }
             }
         };
         Game = new(this, StartupSettings);
@@ -58,7 +58,7 @@ internal class InGameFrame : GameFrame
             (sender, args) =>
             {
                 Game.World.CameraCenter = _currentCameraCenter
-                - (UserInput.VirtualMousePosition.Current - _startPosition);
+                - (UserInput.VirtualMousePosition.Current - _startPosition) * (1f / Game.World.Zoom);
             }, MouseButton.Right));
 
         UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Up,
@@ -67,21 +67,83 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Down,
             (sender, args) => Game.World.Zoom /= 1.2f));
 
-        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
-            (sender, args) =>
-            {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1ul)!;
-                Entity.Position = new Vector2(200, 200f);
-                Entity.Motion = new Vector2(0f, 0f);
-                Entity.Rotation = 0f;
-            }, Keys.R));
-
         UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
             (sender, args) => {
                 Game.World.GetEntity<PhysicalEntity>(1)!.Position = 
-                     Game.World.ObjectVisualOffset - UserInput.VirtualMousePosition.Current;
+                     (Game.World.ObjectVisualOffset - UserInput.VirtualMousePosition.Current);
             },
             MouseButton.Left));
+
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
+            (sender, args) =>
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+                Entity.Position = new(250f, 0f);
+                Entity.Motion = Vector2.Zero;
+                Entity.Rotation = 0f;
+                Entity.AngularMotion = 0f;
+                Game.World.CameraCenter = Vector2.Zero;
+                Game.World.Zoom = 1f;
+            },
+            Keys.R));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
+            (sender, args) =>
+            {
+                Game.World.CameraCenter = Game.World.GetEntity<PhysicalEntity>(1uL)!.Position;
+            },
+            Keys.Decimal));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
+            (sender, args) => 
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+
+                Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
+                Vector2 ForceLocation = Vector2.Transform(new Vector2(0f, -20f), RotationMatrix) + Entity.Position;
+
+                Entity.ApplyForce(Vector2.Transform(new(0f, -50_000f), RotationMatrix) * GameFrameManager.PassedTimeSeconds,
+                    ForceLocation);
+            }, Keys.Up));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
+            (sender, args) =>
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+
+                Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
+                Vector2 ForceLocation = Vector2.Transform(new Vector2(0f, 20f), RotationMatrix) + Entity.Position;
+
+                Entity.ApplyForce(Vector2.Transform(new(0f, 50_000f), RotationMatrix) * GameFrameManager.PassedTimeSeconds,
+                    ForceLocation);
+            }, Keys.Down));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
+            (sender, args) =>
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+
+                Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
+                Vector2 ForceLocation = Vector2.Transform(new Vector2(-30f, 20f), RotationMatrix) + Entity.Position;
+
+                Entity.ApplyForce(Vector2.Transform(new(0f, -50_000f), RotationMatrix) * GameFrameManager.PassedTimeSeconds,
+                    ForceLocation);
+            }, Keys.Left));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
+            (sender, args) =>
+            {
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+
+                Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
+                Vector2 ForceLocation = Vector2.Transform(new Vector2(30f, 20f), RotationMatrix) + Entity.Position;
+
+                Entity.ApplyForce(Vector2.Transform(new(0f, -50_000f), RotationMatrix) * GameFrameManager.PassedTimeSeconds,
+                    ForceLocation);
+            }, Keys.Right));
+
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown, DoTheThing, Keys.B));
     }
 
     public override void Update()
@@ -99,5 +161,10 @@ internal class InGameFrame : GameFrame
     public override void Draw()
     {
         base.Draw();
+    }
+
+    private void DoTheThing(object? sender, EventArgs args)
+    {
+
     }
 }

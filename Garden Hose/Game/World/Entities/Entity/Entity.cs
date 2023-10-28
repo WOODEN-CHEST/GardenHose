@@ -42,7 +42,7 @@ internal abstract class Entity
     // Inherited methods.
     public override bool Equals(object? obj)
     {
-        if (obj is not Entity)
+        if ((obj == null) || obj is not Entity)
         {
             return false;
         }
@@ -52,16 +52,6 @@ internal abstract class Entity
 
 
     // Operators.
-    public static bool operator ==(Entity entity1, Entity entity2)
-    {
-        return entity1.Equals(entity2);
-    }
-
-    public static bool operator !=(Entity entity1, Entity entity2)
-    {
-        return !entity1.Equals(entity2);
-    }
-
     public override int GetHashCode()
     {
         return int.MinValue + (int)ID;

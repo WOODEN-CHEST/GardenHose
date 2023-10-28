@@ -17,7 +17,7 @@ internal class TestPlanet : WorldPlanet
 
 
     // Constructors.
-    internal TestPlanet(GameWorld? world) : base(world, 200f, 300f) { }
+    internal TestPlanet(GameWorld? world) : base(world, 200f, 0f) { }
 
     internal TestPlanet() : this(null) { }
 
@@ -25,7 +25,7 @@ internal class TestPlanet : WorldPlanet
     // Inherited methods.
     public override void Draw()
     {
-        _ballSprite.Position.Vector = Position + World!.ObjectVisualOffset;
+        _ballSprite.Position.Vector = World.ToViewportPosition(Position);
         _ballSprite.Scale.Vector = _ballSpriteScaling;
         _ballSprite.Scale.Vector.X *= World.Zoom;
         _ballSprite.Scale.Vector.Y *= World.Zoom;

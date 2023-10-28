@@ -9,7 +9,7 @@ namespace GardenHose.Game.World.Material;
 internal class WorldMaterial
 {
     // Static fields.
-    internal static WorldMaterial Test { get; } = new(5f, 5f, 20f, 20f, 500f, 700f, 0.5f, 0.45f);
+    internal static WorldMaterial Test { get; } = new(0.1f, 5f, 20f, 20f, 500f, 700f, 0.5f, 0.45f);
 
 
     // Fields.

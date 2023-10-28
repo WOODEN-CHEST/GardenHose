@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace GardenHose.Game.World;
 
@@ -32,13 +33,21 @@ public class GameWorld : IIDProvider
         set
         {
             _cameraCenter = value;
-            ObjectVisualOffset = (Display.VirtualSize / 2f) - _cameraCenter;
+            ObjectVisualOffset = (Display.VirtualSize / 2f) - (_cameraCenter * Zoom);
         }
     }
 
     internal Vector2 ObjectVisualOffset { get; private set; }
 
-    internal float Zoom { get; set; } = 1f;
+    internal float Zoom
+    {
+        get => _zoom;
+        set
+        {
+            _zoom = value;
+            CameraCenter = _cameraCenter; // Forces object visual position update.
+        }
+    }
 
     internal float PassedTimeSeconds { get; set; }
 
@@ -52,6 +61,7 @@ public class GameWorld : IIDProvider
 
     /* Camera. */
     private Vector2 _cameraCenter;
+    private float _zoom = 1f;
 
 
     // Constructors.
@@ -119,10 +129,10 @@ public class GameWorld : IIDProvider
             throw new InvalidOperationException($"Duplicate entity ID: {entity.ID}");
         }
 
-        var DrawableEntity = entity as DrawablePhysicalEntity;
+        PhysicalEntity? DrawableEntity = entity as PhysicalEntity;
         if (DrawableEntity != null)
         {
-            if (DrawableEntity.Layer == DrawLayer.Top)
+            if (DrawableEntity.DrawLayer == DrawLayer.Top)
             {
                 Game.TopItemLayer.AddDrawableItem(DrawableEntity);
             }
@@ -158,6 +168,13 @@ public class GameWorld : IIDProvider
         }
 
         return Entity as EntityType;
+    }
+
+    /* Camera. */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal Vector2 ToViewportPosition(Vector2 worldPosition)
+    {
+        return (worldPosition * Zoom) + ObjectVisualOffset;
     }
 
 

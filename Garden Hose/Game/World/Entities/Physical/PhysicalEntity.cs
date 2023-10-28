@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using System.Diagnostics.CodeAnalysis;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
-using GardenHoseEngine.Frame.Item.Basic;
+using GardenHoseEngine;
+
 
 namespace GardenHose.Game.World.Entities;
+
 
 internal abstract class PhysicalEntity : Entity, IDrawableItem
 {
@@ -31,15 +32,36 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         get
         {
+            if (_cachedMass != null)
+            {
+                return _cachedMass.Value;
+            }
+
             float TotalMass = 0f;
-            PhysicalEntityPart[] AllParts = Parts;
 
             foreach (PhysicalEntityPart Part in Parts)
             {
                 TotalMass += Part.Mass;
             }
 
+            _cachedMass = TotalMass;
             return TotalMass;
+        }
+    }
+
+    internal virtual Vector2 CenterOfMass
+    {
+        get
+        {
+            float TotalMass = Mass;
+            Vector2 CenterPosition = Vector2.Zero;
+
+            foreach (PhysicalEntityPart Part in Parts)
+            {
+                CenterPosition += Part.Position * (Part.Mass / TotalMass);
+            }
+
+            return CenterPosition;
         }
     }
 
@@ -49,6 +71,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         get
         {
+            if (_cachedParts != null)
+            {
+                return _cachedParts;
+            }
+
             List<PhysicalEntityPart> EntityParts = new();
             
             void GetSubParts(PhysicalEntityPart part)
@@ -63,25 +90,39 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
                     }
                 }
             }
+            GetSubParts(MainPart);
 
-            return EntityParts.ToArray();
+            _cachedParts = EntityParts.ToArray();
+            return _cachedParts;
         }
     }
 
     internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
 
-    internal bool DrawCollisionBox { get; set; } = false;
+    internal bool AreCollisionBoundsDrawn { get; set; } = false;
 
-    internal event EventHandler<Vector2> CollisionEvent;
+    internal bool IsMotionDrawn { get; set; } = false;
+
+    internal bool IsCenterOfMassDrawnm { get; set; } = false;
+
+    internal event EventHandler<Vector2> Collision;
+
+    internal event EventHandler CollisionBoundChange;
+
+    internal event EventHandler ParentChange;
+
+    internal event EventHandler SubPartChange;
+
+
+    // Private fields.
+    private PhysicalEntityPart[]? _cachedParts = null;
+    private float? _cachedMass = null;
 
 
 
     // Constructors.
-    internal PhysicalEntity(EntityType type, GameWorld? world, PhysicalEntityPart mainPart) 
-        : base(type, world)
-    {
-        MainPart = mainPart;
-    }
+    internal PhysicalEntity(EntityType type, GameWorld? world)
+        : base(type, world) { }
 
 
     // Internal Methods.
@@ -90,20 +131,51 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         //TestPlanetCollision();
     }
 
-    internal void ApplyForce(Vector2 force)
+    internal virtual void ApplyForce(Vector2 force, Vector2 location)
+    {
+        // Scuffed code that weirdly calculates force and straight up discards some of it.
+        float CurrentMass = Mass;
+        const float ROTATION_SANITY_MULTIPLIER = 0.02f; // Keep rotation from becoming ridiculous.
+
+        // Linear motion.
+        Motion += force / CurrentMass;
+
+        // Rotation.
+        Vector2 LeverArm = location - Position;
+        Vector2 LeverArmNorm = Vector2.Normalize(GHMath.PerpVectorClockwise(LeverArm));
+        float AppliedForce = Vector2.Dot(force, LeverArmNorm) * ROTATION_SANITY_MULTIPLIER;
+
+        AngularMotion += AppliedForce / CurrentMass;
+    }
+
+
+    /* Events from parts. */
+    internal void OnPartCollision(PhysicalEntityPart part, Vector2 position)
     {
 
     }
 
-    internal void ApplyAcceleration(Vector2 acceleration)
+    internal void OnPartCollisionBoundChange(PhysicalEntityPart part, ICollisionBound[]? bounds)
     {
+        _cachedMass = null;
+    }
 
+    internal void OnPartParentChange(PhysicalEntityPart part, PartLink? parentLink)
+    {
+        _cachedParts = null;
+        _cachedMass = null;
+    }
+
+    internal void OnPartSubPartChange(PhysicalEntityPart part, PartLink[]? subPartLinks)
+    {
+        _cachedParts = null;
+        _cachedMass = null;
     }
 
 
     // Protected methods.
     /* Physics. */
-    protected void SimulatePhysicsPlanet()
+    protected virtual void SimulatePhysicsPlanet()
     {
         float AttractionStrength = (World!.Planet.Radius / Vector2.Distance(Position, World.Planet.Position))
             * World.Planet.Attraction * World!.PassedTimeSeconds;
@@ -115,7 +187,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Motion += AddedMotion;
     }
 
-    protected void FinalizeTickSimulation()
+    protected virtual void FinalizeTickSimulation()
     {
         Rotation += AngularMotion * World!.PassedTimeSeconds;
         Position += Motion * World!.PassedTimeSeconds;
@@ -123,6 +195,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Collision. */
+    protected virtual void TestPlanetCollision()
+    {
+        
+    }
+
     //protected void TestPlanetCollision()
     //{
     //    foreach (ICollisionBound Bound in CollisionBounds)
@@ -256,9 +333,22 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    protected void DrawVelocity()
+    protected void DrawMotion()
     {
+        ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
+        ICollisionBound.VisualLine.Mask = Color.Green;
+        ICollisionBound.VisualLine.Set(Position * World!.Zoom + World.ObjectVisualOffset,
+            (Position + Motion / 2f) * World.Zoom + World.ObjectVisualOffset);
+        ICollisionBound.VisualLine.Draw();
+    }
 
+    protected void DrawCenterOfMass()
+    {
+        ICollisionBound.VisualLine.Thickness = 10f * World!.Zoom;
+        ICollisionBound.VisualLine.Mask = Color.Yellow;
+        ICollisionBound.VisualLine.Set((CenterOfMass - new Vector2(5f, 0f)) * World.Zoom + World.ObjectVisualOffset, 
+            ICollisionBound.VisualLine.Thickness, 0f);
+        ICollisionBound.VisualLine.Draw();
     }
 
     // Inherited methods.
@@ -266,13 +356,22 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         SimulatePhysicsPlanet();
         FinalizeTickSimulation();
+
+        MainPart.SetPositionAndRotation(Position, Rotation);
+        MainPart.Tick();
     }
 
     public virtual void Draw()
     {
-        if (DrawCollisionBox)
+        MainPart.Draw(AreCollisionBoundsDrawn);
+
+        if (IsMotionDrawn)
         {
-            DrawCollisionBounds();
+            DrawMotion();
+        }
+        if (IsCenterOfMassDrawnm)
+        {
+            DrawCenterOfMass();
         }
     }
 }
