@@ -1,6 +1,5 @@
 ﻿using GardenHose.Game;
 using GardenHose.Game.World;
-using GardenHose.Game.World.Planet;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.IO;
 using GardenHose.Game.World.Entities;
@@ -33,10 +32,10 @@ internal class InGameFrame : GameFrame
 
         GameWorldSettings StartupSettings = new()
         {
-            Planet = new TestPlanet(),
+            Planet = WorldPlanet.TestPlanet,
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(250f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0.25f }
+                new TestEntity() { Position = new Vector2(700f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0.25f }
             }
         };
         Game = new(this, StartupSettings);
@@ -69,8 +68,8 @@ internal class InGameFrame : GameFrame
 
         UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
             (sender, args) => {
-                Game.World.GetEntity<PhysicalEntity>(1)!.Position = 
-                     (Game.World.ObjectVisualOffset - UserInput.VirtualMousePosition.Current);
+                Game.World.GetEntity<PhysicalEntity>(2uL)!.Position = 
+                     (UserInput.VirtualMousePosition.Current - Game.World.ObjectVisualOffset) * (1f / Game.World.Zoom);
             },
             MouseButton.Left));
 
@@ -78,8 +77,8 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             (sender, args) =>
             {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
-                Entity.Position = new(250f, 0f);
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(2uL)!;
+                Entity.Position = new(700f, 0f);
                 Entity.Motion = Vector2.Zero;
                 Entity.Rotation = 0f;
                 Entity.AngularMotion = 0f;
@@ -91,14 +90,14 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
             (sender, args) =>
             {
-                Game.World.CameraCenter = Game.World.GetEntity<PhysicalEntity>(1uL)!.Position;
+                Game.World.CameraCenter = Game.World.GetEntity<PhysicalEntity>(2uL)!.Position;
             },
             Keys.Decimal));
 
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
             (sender, args) => 
             {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(2uL)!;
 
                 Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
                 Vector2 ForceLocation = Vector2.Transform(new Vector2(0f, -20f), RotationMatrix) + Entity.Position;
@@ -110,7 +109,7 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
             (sender, args) =>
             {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(2uL)!;
 
                 Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
                 Vector2 ForceLocation = Vector2.Transform(new Vector2(0f, 20f), RotationMatrix) + Entity.Position;
@@ -122,7 +121,7 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
             (sender, args) =>
             {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(2uL)!;
 
                 Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
                 Vector2 ForceLocation = Vector2.Transform(new Vector2(-30f, 20f), RotationMatrix) + Entity.Position;
@@ -134,7 +133,7 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
             (sender, args) =>
             {
-                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(1uL)!;
+                PhysicalEntity Entity = Game.World.GetEntity<PhysicalEntity>(2uL)!;
 
                 Matrix RotationMatrix = Matrix.CreateRotationZ(Entity.Rotation);
                 Vector2 ForceLocation = Vector2.Transform(new Vector2(30f, 20f), RotationMatrix) + Entity.Position;

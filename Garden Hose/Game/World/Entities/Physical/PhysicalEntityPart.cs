@@ -40,7 +40,7 @@ internal class PhysicalEntityPart
             {
                 foreach (ICollisionBound CBound in CollisionBounds)
                 {
-                    TotalMass += CBound.GetArea() * Material.Density;
+                    TotalMass += CBound.GetArea() * MaterialInstance.Material.Density;
                 }
             }  
 
@@ -48,7 +48,7 @@ internal class PhysicalEntityPart
         }
     }
 
-    public virtual float Temperature => Material.Temperature;
+    public virtual float Temperature => MaterialInstance.Temperature;
 
     internal virtual ICollisionBound[]? CollisionBounds
     {
@@ -88,7 +88,7 @@ internal class PhysicalEntityPart
 
     internal virtual PhysicalEntity Entity { get; init; }
 
-    internal virtual WorldMaterialInstance Material { get; set; }
+    internal virtual WorldMaterialInstance MaterialInstance { get; set; }
 
     internal event EventHandler<Vector2>? Collision;
 
@@ -114,11 +114,12 @@ internal class PhysicalEntityPart
     {
         Entity = entity;
         CollisionBounds = collisionBounds;
-        Material = material;
+        MaterialInstance = material;
     }
 
 
     // Internal methods.
+    /* Parts. */
     internal void LinkPart(PhysicalEntityPart part, Vector2 distance)
     {
         if (part == null)
@@ -135,7 +136,7 @@ internal class PhysicalEntityPart
         var NewPartLinks = SubPartLinks == null ? new PartLink[1] : new PartLink[SubPartLinks.Length + 1];
         SubPartLinks?.CopyTo(NewPartLinks, 0);
 
-        PartLink Link = new PartLink(this, part, distance);
+        PartLink Link = new PartLink(this, part, Entity, distance);
         NewPartLinks[^1] = Link;
         SubPartLinks = NewPartLinks;
 
@@ -174,20 +175,54 @@ internal class PhysicalEntityPart
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 
-    internal List<PhysicalEntityPart> GetPathFromMainPart()
+    internal List<PartLink> GetPathFromMainPart()
     {
-        List<PhysicalEntityPart> Parts = new();
+        List<PartLink> Links = new();
         PartLink? Link = ParentLink;
 
         while (Link != null)
         {
-            Parts.Insert(0, Link.ParentPart);
+            Links.Insert(0, Link);
             Link = Link.ParentPart.ParentLink;
         }
 
-        return Parts;
+        return Links;
     }
 
+    /* Collision. */
+    internal void TestCollisionPlanet()
+    {
+        if (CollisionBounds == null)
+        {
+            return;
+        }
+
+        //GameWorld World = Entity.World!;
+
+        //foreach (ICollisionBound Bound in CollisionBounds)
+        //{
+        //    switch (Bound.Type)
+        //    {
+        //        case CollisionBoundType.Rectangle:
+        //            TestColRectToBall((RectangleCollisionBound)Bound, 
+        //                Position + Bound.Offset,
+        //                World.Planet.CollisionBound, 
+        //                World.Planet.Position + World.Planet.CollisionBound.Offset);
+        //            break;
+
+        //        case CollisionBoundType.Ball:
+        //            TestColBallToBall();
+        //            break;
+
+        //        default:
+        //            throw new NotImplementedException("Testing collision not implemented for " +
+        //                $"collision bound type \"{Bound.Type}\" (int value of {(int)Bound.Type})");
+        //    }
+        //}
+    }
+
+
+    /* Properties. */
     internal void SetPositionAndRotation(Vector2 position, float rotation)
     {
         Position = position;
@@ -206,34 +241,7 @@ internal class PhysicalEntityPart
         }
     }
 
-    internal Vector2 GetCombinedMotionAtPoint(Vector2 point)
-    {
-        Vector2 Motion = Entity.Motion;
-        PhysicalEntityPart? Part = this;
-
-        do
-        {
-            if (Part.AngularMotion != 0f)
-            {
-                /* Get vector from point to part, rotate it 90 or -90 degrees depending on the angular motion,
-                 * normalize it, then multiply it by speed at location, finally add it to the motion. */
-                Vector2 AngularMotionVector = point - Part.Position;
-                AngularMotionVector = Part.SelfRotation > 0f ? GHMath.PerpVectorClockwise(AngularMotionVector)
-                    : GHMath.PerpVectorCounterClockwise(AngularMotionVector);
-                AngularMotionVector = Vector2.Normalize(AngularMotionVector);
-                AngularMotionVector *= (MathF.PI * 2f * (point - Part.Position).Length())
-                    * (Part.AngularMotion / (2f * MathF.PI));
-
-                Motion += AngularMotionVector;
-            }
-
-            Part = Part.ParentLink?.ParentPart;
-        }
-        while (Part != null);
-
-        return Motion;
-    }
-
+    /* Game flow. */
     internal virtual void Tick()
     {
         SelfRotation += AngularMotion * GameFrameManager.PassedTimeSeconds;
@@ -273,5 +281,74 @@ internal class PhysicalEntityPart
         {
             Bound.Draw(Position, CombinedRotation, Entity.World!);
         }
+    }
+
+
+    // Private methods.
+    private void TestColRectToBall(RectangleCollisionBound rect, 
+        Vector2 rectPosition,
+        BallCollisionBound ball, 
+        Vector2 ballPosition)
+    {
+        Vector2[] Vertices = rect.GetVertices(Position, CombinedRotation);
+        List<Vector2> CollisionPoints = null!;
+
+        // Find closest point so that a testable ray can be created.
+        float ClosestDistance = float.PositiveInfinity;
+        Vector2 ClosestVertex = Vector2.Zero;
+
+        foreach (Vector2 Vertex in Vertices)
+        {
+            float Distance = Vector2.Distance(ballPosition, Vertex);
+            if (Distance < ClosestDistance)
+            {
+                ClosestDistance = Distance;
+                ClosestVertex = Vertex;
+            }
+        }
+
+        Ray BallToRectRay = new(ballPosition, ClosestVertex);
+
+        /* Find collision points. This is done by getting rays from the edge vertices,
+         * then finding intersection points in said rays, then testing if the intersection 
+         * point is inside of the edge's limits. If so, a collision has occurred.*/
+        for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
+        {
+            Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
+            Ray EdgeRay = new(Edge);
+
+            Vector2 CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
+
+            float MinX = Math.Min(Edge.StartVertex.X, Edge.EndVertex.X);
+            float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
+            float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
+            float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
+
+            if (Vector2.Distance(ballPosition, CollisionPoint) <= ball.Radius
+                && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
+                && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
+            {
+                CollisionPoints ??= new();
+                CollisionPoints.Add(CollisionPoint);
+            }
+        }
+
+        if (CollisionPoints != null)
+        {
+            Vector2 SurfaceNormal = Vector2.Normalize(rectPosition - ballPosition);
+
+            //PushOutOfBall(CollisionPoints[0], ball);
+            //OnCollision(CollisionPoints[0], Vector2.Zero, SurfaceNormal);
+        }
+    }
+
+    private void TestColBallToBall()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void TestColRectToRect()
+    {
+        throw new NotImplementedException();
     }
 }

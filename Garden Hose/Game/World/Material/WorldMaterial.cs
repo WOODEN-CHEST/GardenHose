@@ -1,55 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GardenHoseEngine.Audio;
+
 
 namespace GardenHose.Game.World.Material;
+
 
 internal class WorldMaterial
 {
     // Static fields.
-    internal static WorldMaterial Test { get; } = new(0.1f, 5f, 20f, 20f, 500f, 700f, 0.5f, 0.45f);
+    internal static WorldMaterial Test { get; } = new()
+    {
+        Density = 0.1f,
+        Strength = 500f,
+        Resistance = 100f,
+        HeatCapacity = 10f,
+        HeatTransferRate = 10f,
+        MeltingPoint = 400f,
+        BoilingPoint = 500f,
+        Bounciness = 0.5f,
+        FrictionCoefficient = 0.35f,
+        Magnetism = 0f,
+        Conductivity = 0f,
+        Attraction = 0f
+    };
 
 
     // Fields.
-    internal float Density { get; set; }
+    /* Properties. */
+    internal required float Density { get; set; }
 
-    internal float Strength { get; set; }
+    internal required float Strength { get; set; }
 
-    internal float HeatCapacity { get; set; }
+    internal required float Resistance { get; set; }
 
-    internal float HeatTransferRate { get; set; }
+    internal required float HeatCapacity { get; set; }
 
-    internal float MeltingPoint { get; set; }
+    internal required float HeatTransferRate { get; set; }
 
-    internal float BoilingPoint { get; set; }
+    internal required float MeltingPoint { get; set; }
 
-    internal float Bounciness { get; set; }
+    internal required float BoilingPoint { get; set; }
 
-    internal float FrictionCoefficient { get; set; }
+    internal required float Bounciness { get; set; }
+
+    internal required float FrictionCoefficient { get; set; }
+
+    internal required float Magnetism { get; set; }
+
+    internal required float Conductivity { get; set; }
+
+    internal required float Attraction { get; set; }
+
+
+    /* Sound. */
+    internal Sound? TapSound { get; set; }
+
+    internal Sound? LightHitSound { get; set; }
+
+    internal Sound? HitSound { get; set; }
+
+    internal Sound? HeavyHitSound { get; set; }
+
+    internal Sound? SlightlyDamagedSound { get; set; }
+
+    internal Sound? DamagedSound { get; set; }
+
+    internal Sound? HeavilyDamagedSound { get; set; }
+
+    internal Sound? DestroyedSound { get; set; }
 
 
 
     // Constructors.
-    protected WorldMaterial(float density, 
-        float strength, 
-        float heatCapacity,
-        float heatTransferRate,
-        float meltingPoint,
-        float boilingPoint,
-        float bounciness,
-        float frictionCoefficient)
-    {
-        Density = density;
-        Strength = strength;
-        HeatCapacity = heatCapacity;
-        HeatTransferRate = heatTransferRate;
-        MeltingPoint = meltingPoint;
-        BoilingPoint = boilingPoint;
-        Bounciness = bounciness;
-        FrictionCoefficient = frictionCoefficient;
-    }
+    protected WorldMaterial() { }
 
 
     // Methods.

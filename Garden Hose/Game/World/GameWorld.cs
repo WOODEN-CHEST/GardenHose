@@ -1,10 +1,5 @@
-﻿using GardenHose;
-using GardenHose.Game;
-using GardenHose.Game.World;
-using GardenHose.Game.World.Entities;
-using GardenHose.Game.World.Planet;
+﻿using GardenHose.Game.World.Entities;
 using GardenHoseEngine.Screen;
-using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -190,7 +185,7 @@ public class GameWorld : IIDProvider
         Planet = settings.Planet;
         Planet.World = this;
         Planet.Load(Game.AssetManager);
-        Game.BackgroundLayer.AddDrawableItem(Planet);
+        AddEntity(Planet);
 
         foreach (var Entity in settings.StartingEntities)
         {

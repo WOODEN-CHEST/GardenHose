@@ -9,8 +9,6 @@ namespace GardenHose.Game;
 internal class GHGame
 {
     // Fields.
-    public ILayer BackgroundLayer { get; private init; } = new Layer("background");
-
     public ILayer BottomItemLayer { get; private init; } = new Layer("items bottom");
 
     public ILayer TopItemLayer { get; private init; } = new Layer("items top");
@@ -71,14 +69,21 @@ internal class GHGame
     internal GHGame(InGameFrame parentFrame, GameWorldSettings worldSettings)
     {
         ParentFrame = parentFrame ?? throw new ArgumentNullException(nameof(parentFrame));
-        ParentFrame.AddLayer(BackgroundLayer);
         ParentFrame.AddLayer(BottomItemLayer);
         ParentFrame.AddLayer(TopItemLayer);
         ParentFrame.AddLayer(UILayer);
 
         AssetManager = new(ParentFrame);
 
+
         World = new(this, worldSettings);
+    }
+
+
+    // Private methods.
+    private void CreateBackground()
+    {
+
     }
 
 

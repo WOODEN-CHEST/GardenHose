@@ -21,7 +21,7 @@ internal abstract class Entity
 
 
     // Constructors.
-    internal Entity(EntityType type, GameWorld? world)
+    internal Entity(EntityType type, GameWorld? world = null)
     {
         EntityType = type;
         World = world;

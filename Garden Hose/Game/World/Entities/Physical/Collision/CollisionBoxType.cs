@@ -9,6 +9,5 @@ namespace GardenHose.Game.World.Entities;
 internal enum CollisionBoundType
 {
     Rectangle,
-    Triangle,
     Ball
 }

@@ -9,6 +9,11 @@
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/distortion.fx</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/saturation.fx</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/shaders/ui/slider_glow.fx</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/atmosphere/default.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/surface/gas_1.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/large.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/medium.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/small.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/test/ball.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/connector.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/narrow/glow.png</File>
@@ -34,6 +39,11 @@
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/title/title_background.png</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />

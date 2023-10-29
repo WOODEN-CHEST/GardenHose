@@ -28,8 +28,9 @@ internal class TestEntity : PhysicalEntity
     public TestEntity(GameWorld? world) : base(EntityType.Test, world)
     {
         AreCollisionBoundsDrawn = true;
-        IsCenterOfMassDrawnm = true;
+        IsCenterOfMassDrawn = false;
         IsMotionDrawn = true;
+        IsBoundingBoxDrawn = true;
 
         MainPart =
             new(new ICollisionBound[]
@@ -53,9 +54,9 @@ internal class TestEntity : PhysicalEntity
 
 
 
-        MainPart.LinkPart(SidePart1, new Vector2(0f, 30f));
+        MainPart.LinkPart(SidePart1, new Vector2(30f, 0f));
         MainPart.LinkPart(SidePart2, new Vector2(0f, -30f));
-        MainPart.LinkPart(SidePart3, new Vector2(30f, 0f));
+        MainPart.LinkPart(SidePart3, new Vector2(0f, -60f));
         MainPart.LinkPart(SidePart4, new Vector2(-30f, 0f));
     }
 

@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Material;
 
-internal sealed class WorldMaterialInstance : WorldMaterial
+internal sealed class WorldMaterialInstance
 {
     // Fields.
     internal const float MIN_TEMPERATURE = float.Epsilon;
+
     internal const float DEFAULT_TEMPERATURE = 273.15f;
+
+    internal WorldMaterial Material { get; init; }
 
     internal float Temperature
     {
@@ -18,20 +17,30 @@ internal sealed class WorldMaterialInstance : WorldMaterial
         set => _temperature = Math.Max(MIN_TEMPERATURE, value);
     }
 
-    internal float StrengthLeft { get; set; }
+    internal float CurrentStrength
+    {
+        get => _currentStrength;
+        set
+        {
+            _currentStrength = Math.Clamp(value, 0f, Material.Strength);
 
+            const float STAGE_COUNT = 4f;
+            Stage = (WorldMaterialStage)MathF.Ceiling(_currentStrength / (Material.Strength / STAGE_COUNT));
+        }
+    }
 
+    internal WorldMaterialStage Stage { get; private set; } = WorldMaterialStage.Undamaged;
 
     // Private float.
     private float _temperature;
+    private float _currentStrength;
 
 
     // Constructors.
     internal WorldMaterialInstance(WorldMaterial material)
-        : base(material.Density, material.Strength, material.HeatCapacity, material.HeatTransferRate, 
-            material.MeltingPoint, material.BoilingPoint, material.Bounciness, material.FrictionCoefficient)
     {
+        Material = material ?? throw new ArgumentNullException(nameof(material));
         _temperature = DEFAULT_TEMPERATURE;
-        StrengthLeft = Strength;
+        CurrentStrength = Material.Strength;
     }
 }

@@ -12,9 +12,15 @@ namespace GardenHose.Game;
 internal class GHGameAssetManager
 {
     // Internal fields.
-    internal SpriteAnimation TestPlanet
+    /* Planets. */
+    internal SpriteAnimation PlanetAtmosphereDefaultTexture
     {
-        get => _testPlanet ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "test/ball");
+        get => _planetAtmosphere1Texture ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/atmosphere/default");
+    }
+
+    internal SpriteAnimation PlanetGas1Texture
+    {
+        get => _planetGas1Texture ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/surface/gas_1");
     }
 
 
@@ -22,8 +28,9 @@ internal class GHGameAssetManager
     // Private fields.
     private IGameFrame _parentFrame;
 
-    private SpriteAnimation? _testPlanet;
-
+    /* Planets. */
+    private SpriteAnimation? _planetAtmosphere1Texture;
+    private SpriteAnimation? _planetGas1Texture;
 
 
     // Constructors.

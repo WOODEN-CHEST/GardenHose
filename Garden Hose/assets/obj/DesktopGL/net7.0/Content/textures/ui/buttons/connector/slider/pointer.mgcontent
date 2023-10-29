@@ -3,7 +3,7 @@
   <SourceFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/slider/pointer.png</SourceFile>
   <SourceTime>2023-10-13T16:55:08.1839832+03:00</SourceTime>
   <DestFile>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/bin/DesktopGL/Content/textures/ui/buttons/connector/slider/pointer.xnb</DestFile>
-  <DestTime>2023-10-14T15:57:37.6870552+03:00</DestTime>
+  <DestTime>2023-10-29T21:46:25.8515222+02:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2022-07-26T14:44:56+03:00</ImporterTime>
   <Processor>TextureProcessor</Processor>
@@ -22,7 +22,7 @@
   </Parameters>
   <Parameters>
     <Key>PremultiplyAlpha</Key>
-    <Value>False</Value>
+    <Value>True</Value>
   </Parameters>
   <Parameters>
     <Key>ResizeToPowerOfTwo</Key>
