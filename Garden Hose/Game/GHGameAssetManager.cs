@@ -24,6 +24,26 @@ internal class GHGameAssetManager
     }
 
 
+    /* Background. */
+    internal SpriteAnimation BackgroundDefault
+    {
+        get => _backgroundDefault ??= new SpriteAnimation(0f, _parentFrame, Origin.TopLeft, "game/backgrounds/default");
+    }
+    internal SpriteAnimation BGStarSmall
+    {
+        get => _bgStarSmall ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/small");
+    }
+
+    internal SpriteAnimation BGStarMedium
+    {
+        get => _bgStarMedium ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/medium");
+    }
+
+    internal SpriteAnimation BGStarBig
+    {
+        get => _bgStarBig ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/big");
+    }
+
 
     // Private fields.
     private IGameFrame _parentFrame;
@@ -31,6 +51,12 @@ internal class GHGameAssetManager
     /* Planets. */
     private SpriteAnimation? _planetAtmosphere1Texture;
     private SpriteAnimation? _planetGas1Texture;
+
+    /* Background. */
+    private SpriteAnimation? _backgroundDefault;
+    private SpriteAnimation? _bgStarSmall;
+    private SpriteAnimation? _bgStarMedium;
+    private SpriteAnimation? _bgStarBig;
 
 
     // Constructors.

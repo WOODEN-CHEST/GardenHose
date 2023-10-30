@@ -6,6 +6,7 @@ using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using GardenHose.Game.Background;
 
 namespace GardenHose.Frames.InGame;
 
@@ -36,6 +37,12 @@ internal class InGameFrame : GameFrame
             StartingEntities = new Entity[]
             {
                 new TestEntity() { Position = new Vector2(700f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0.25f }
+            },
+            Background = new(BackgroundImage.Default)
+            {
+                SmallStarCount = 80,
+                MediumStarCount = 30,
+                BigStarCount = 5
             }
         };
         Game = new(this, StartupSettings);

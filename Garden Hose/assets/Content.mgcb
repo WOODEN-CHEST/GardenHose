@@ -45,6 +45,18 @@
 /processorParam:DebugMode=Auto
 /build:shaders/ui/slider_glow.fx
 
+#begin textures/game/backgrounds/default.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/backgrounds/default.png
+
 #begin textures/game/planets/atmosphere/default.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -69,7 +81,7 @@
 /processorParam:TextureFormat=Color
 /build:textures/game/planets/surface/gas_1.png
 
-#begin textures/game/stars/large.png
+#begin textures/game/stars/big.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -79,7 +91,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/stars/large.png
+/build:textures/game/stars/big.png
 
 #begin textures/game/stars/medium.png
 /importer:TextureImporter

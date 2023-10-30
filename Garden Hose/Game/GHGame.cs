@@ -54,6 +54,8 @@ internal class GHGame
 
     internal bool IsRunningSlowly { get; private set; } = false;
 
+    internal GameBackground Background { get; private init; }
+
 
     // Private fields.
     /* Ticking. */
@@ -75,6 +77,10 @@ internal class GHGame
 
         AssetManager = new(ParentFrame);
 
+        Background = worldSettings.Background ?? throw new ArgumentNullException(nameof(worldSettings.Background));
+        Background.Load(AssetManager);
+        Background.CreateBackground();
+        BottomItemLayer.AddDrawableItem(Background);
 
         World = new(this, worldSettings);
     }
@@ -103,6 +109,10 @@ internal class GHGame
             return;
         }
 
+        /* Non-tick dependent things. */
+        Background.Update();
+
+        /* Tick dependent things. */
         _passedTimeSeconds += GameFrameManager.PassedTimeSeconds;
 
         if (_passedTimeSeconds < MINIMUM_PASSED_TIME_SECONDS)

@@ -12,6 +12,8 @@ internal class GameWorldSettings
 
     internal required Entity[] StartingEntities { get; init; }
 
+    internal required GameBackground Background { get; init; }
+
 
     // Constructors.
     internal GameWorldSettings() { }
