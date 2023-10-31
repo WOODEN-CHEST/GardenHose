@@ -1,4 +1,4 @@
-﻿using GardenHose.Game;
+﻿using GardenHose.Game.AssetManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;

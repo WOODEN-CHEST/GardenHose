@@ -69,6 +69,30 @@
 /processorParam:TextureFormat=Color
 /build:textures/game/planets/atmosphere/default.png
 
+#begin textures/game/planets/overlays/gas_1_overlay_1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/planets/overlays/gas_1_overlay_1.png
+
+#begin textures/game/planets/overlays/gas_1_overlay_2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/planets/overlays/gas_1_overlay_2.png
+
 #begin textures/game/planets/surface/gas_1.png
 /importer:TextureImporter
 /processor:TextureProcessor

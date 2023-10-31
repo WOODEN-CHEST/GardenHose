@@ -1,9 +1,12 @@
 ﻿using GardenHose.Game.World.Entities;
+using GardenHoseEngine;
+using GardenHoseEngine.Frame;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace GardenHose.Game.World;
@@ -14,7 +17,7 @@ public class GameWorld : IIDProvider
     // Internal fields.
     internal WorldPlanet Planet { get; private set; }
 
-    internal IEnumerable<Entity> Entitites => _entities.Values;
+    internal IEnumerable<Entity> Entitites => _entities;
 
     internal IEnumerable<Entity> EntitiesCreated => _entitiesCreated;
 
@@ -48,10 +51,15 @@ public class GameWorld : IIDProvider
 
 
     // Private fields
+    private readonly ILayer _bottomLayer;
+    private readonly ILayer _topLayer;
+
     /* Entities. */
-    private readonly Dictionary<ulong, Entity> _entities = new();
+    private readonly List<Entity> _entities = new(); // For reasons decided to store entities in list instead of dictionary.
     private readonly List<Entity> _entitiesCreated = new();
     private readonly List<Entity> _entitiesRemoved = new();
+
+    private readonly List<PhysicalEntity> _physicalEntities = new();
     private ulong _availableID = 1;
 
     /* Camera. */
@@ -60,10 +68,13 @@ public class GameWorld : IIDProvider
 
 
     // Constructors.
-    internal GameWorld(GHGame game, GameWorldSettings settings)
+    internal GameWorld(GHGame game, ILayer bottomLayer, ILayer topLayer, GameWorldSettings settings)
     {
         Game = game ?? throw new ArgumentNullException(nameof(game));
         CameraCenter = new(0, 0);
+
+        _bottomLayer = bottomLayer ?? throw new ArgumentNullException(nameof(bottomLayer));
+        _topLayer = topLayer ?? throw new ArgumentNullException(nameof(topLayer));
 
         ReadStartupSettings(settings);
     }
@@ -84,61 +95,83 @@ public class GameWorld : IIDProvider
     internal void Tick()
     {
         // Create and remove entities.
-        foreach (Entity WorldEntity in _entitiesCreated)
+        if (_entitiesCreated.Count > 0)
         {
-            _entities.Add(WorldEntity.ID, WorldEntity);
-        }
-        _entitiesCreated.Clear();
+            foreach (Entity WorldEntity in _entitiesCreated)
+            {
+                _entities.Add(WorldEntity);
 
-        foreach (Entity WorldEntity in _entitiesRemoved)
-        {
-            _entities.Remove(WorldEntity.ID);
+                if (WorldEntity.IsPhysical)
+                {
+                    _physicalEntities.Add((PhysicalEntity)WorldEntity);
+                }
+            }
+            _entitiesCreated.Clear();
         }
-        _entitiesRemoved.Clear();
+        
+        if (_entitiesRemoved.Count > 0)
+        {
+            foreach (Entity WorldEntity in _entitiesRemoved)
+            {
+                _entities.Remove(WorldEntity);
+
+                if (WorldEntity.IsPhysical)
+                {
+                    _physicalEntities.Remove((PhysicalEntity)WorldEntity);
+                }
+            }
+            _entitiesRemoved.Clear();
+        }
 
         // Tick entities.
-        foreach (Entity WorldEntity in _entities.Values)
+        foreach (Entity WorldEntity in _entities)
         {
             WorldEntity.Tick();
         }
 
-        foreach (Entity WorldEntity in _entities.Values)
+        // Test collision for physical entities.
+        for (int FirstIndex = 0; FirstIndex < _physicalEntities.Count; FirstIndex++)
         {
-            if (!WorldEntity.IsPhysical) continue;
-
-            ((PhysicalEntity)WorldEntity).TestCollision();
+            for (int SecondIndex = FirstIndex + 1; SecondIndex < _physicalEntities.Count; SecondIndex++)
+            {
+                _physicalEntities[FirstIndex].TestCollisionAgainstEntity(_physicalEntities[SecondIndex]);
+            }
         }
     }
 
     /* Entities. */
     internal void AddEntity(Entity entity)
     {
+        // Set entity properties.
         entity.World = this;
         if (entity.ID == 0)
         {
             entity.ID = GetID();
         }
 
-        if (_entities.ContainsKey(entity.ID))
-        {
-            throw new InvalidOperationException($"Duplicate entity ID: {entity.ID}");
-        }
-
+        // Add entity to drawing layer.
         PhysicalEntity? DrawableEntity = entity as PhysicalEntity;
         if (DrawableEntity != null)
         {
             if (DrawableEntity.DrawLayer == DrawLayer.Top)
             {
-                Game.TopItemLayer.AddDrawableItem(DrawableEntity);
+                _topLayer.AddDrawableItem(DrawableEntity);
+            }
+            else if (DrawableEntity.DrawLayer == DrawLayer.Bottom)
+            {
+                _bottomLayer.AddDrawableItem(DrawableEntity);
             }
             else
             {
-                Game.BottomItemLayer.AddDrawableItem(DrawableEntity);
+                throw new EnumValueException(nameof(DrawableEntity.DrawLayer), nameof(DrawLayer),
+                    DrawableEntity.DrawLayer.ToString(), (int)DrawableEntity.DrawLayer);
             }
         }
 
+        // Load entity's assets.
         entity.Load(Game.AssetManager);
 
+        // Finally add entity to the world.
         _entitiesCreated.Add(entity);
     }
 
@@ -147,22 +180,32 @@ public class GameWorld : IIDProvider
         _entitiesRemoved.Add(entity);
     }
 
-    internal EntityType? GetEntity<EntityType>(ulong ID) where EntityType : Entity
+    internal EntityType? GetEntity<EntityType>(ulong id) where EntityType : Entity
     {
-        _entities.TryGetValue(ID, out var Entity);
+        Entity? WorldEntity = null;
 
-        if (Entity == null)
+        foreach (Entity AddedEntity in _entities)
         {
-            foreach (Entity RemovedEntity in _entitiesCreated)
+            if (AddedEntity.ID == id)
             {
-                if (RemovedEntity.ID == ID)
+                WorldEntity = AddedEntity;
+                break;
+            }
+        }
+
+        if (WorldEntity == null)
+        {
+            foreach (Entity AddedEntity in _entitiesCreated)
+            {
+                if (AddedEntity.ID == id)
                 {
-                    Entity = RemovedEntity;
+                    WorldEntity = AddedEntity;
+                    break;
                 }
             }
         }
 
-        return Entity as EntityType;
+        return WorldEntity as EntityType;
     }
 
     /* Camera. */
@@ -182,10 +225,14 @@ public class GameWorld : IIDProvider
             throw new ArgumentNullException(nameof(settings));
         }
 
-        Planet = settings.Planet;
-        Planet.World = this;
-        Planet.Load(Game.AssetManager);
-        AddEntity(Planet);
+        /* Entities. */
+        if (settings.Planet != null)
+        {
+            Planet = settings.Planet;
+            Planet.World = this;
+            Planet.Load(Game.AssetManager);
+            AddEntity(Planet);
+        }
 
         foreach (var Entity in settings.StartingEntities)
         {

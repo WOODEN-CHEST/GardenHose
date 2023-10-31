@@ -65,7 +65,17 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    internal virtual PhysicalEntityPart MainPart { get; set; }
+    internal virtual PhysicalEntityPart MainPart
+    {
+        get => _mainpart;
+        set
+        {
+            _mainpart = value;
+            _cachedParts = null;
+            _cachedMass = null;
+            CreateBoundingBox();
+        }
+    }
 
     internal virtual PhysicalEntityPart[] Parts
     {
@@ -101,7 +111,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    internal virtual float BoundingBoxHalfEdgeLength { get; private set; }
+    internal virtual float BoundingLength { get; private set; }
 
     internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
 
@@ -123,9 +133,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Private fields.
+    private PhysicalEntityPart _mainpart;
     private PhysicalEntityPart[]? _cachedParts = null;
     private float? _cachedMass = null;
-    private float _collisionBoundRadiusSquared = 0f;
 
 
 
@@ -135,11 +145,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Internal Methods.
-    internal virtual void TestCollision()
-    {
-        TestPlanetCollision();
-    }
-
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
         // Scuffed code that weirdly calculates force and straight up discards some of it.
@@ -224,37 +229,18 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Collision. */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected Vector2[] GetBoundingBoxPoints()
+    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
     {
-        return new Vector2[]
-        {
-            Position + new Vector2(BoundingBoxHalfEdgeLength, BoundingBoxHalfEdgeLength),
-            Position + new Vector2(-BoundingBoxHalfEdgeLength, -BoundingBoxHalfEdgeLength),
-            Position + new Vector2(BoundingBoxHalfEdgeLength, -BoundingBoxHalfEdgeLength),
-            Position + new Vector2(-BoundingBoxHalfEdgeLength, BoundingBoxHalfEdgeLength),
-        };
-    }
-
-    protected virtual void TestPlanetCollision()
-    {
-        // Test if in bounding box.
-        Vector2[] BoundingBoxPoints = GetBoundingBoxPoints();
-
-        if (Vector2.DistanceSquared(World!.Planet.Position, BoundingBoxPoints[0]) > World.Planet.RadiusSquared
-            && Vector2.DistanceSquared(World.Planet.Position, BoundingBoxPoints[1]) > World.Planet.RadiusSquared
-            && Vector2.DistanceSquared(World.Planet.Position, BoundingBoxPoints[2]) > World.Planet.RadiusSquared
-            && Vector2.DistanceSquared(World.Planet.Position, BoundingBoxPoints[3]) > World.Planet.RadiusSquared)
+        // Test bounding circles.
+        if (Vector2.Distance(Position, entity.Position) > BoundingLength + entity.BoundingLength)
         {
             return;
         }
 
-        // Test collision
-        foreach (PhysicalEntityPart Part in Parts)
+        foreach (PhysicalEntityPart SelfPart in Parts)
         {
-            Part.TestCollisionPlanet();
+            SelfPart.TestCollisionAgainstEntity(entity);
         }
-
     }
 
     //protected void TestPlanetCollision()
@@ -411,21 +397,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         ICollisionBound.VisualLine.Thickness = 5f * World.Zoom;
         ICollisionBound.VisualLine.Mask = Color.Khaki;
 
-        Vector2[] Vertices = new Vector2[]
-        {
-            World!.ToViewportPosition(Position + new Vector2(-BoundingBoxHalfEdgeLength, BoundingBoxHalfEdgeLength)),
-            World!.ToViewportPosition(Position + new Vector2(BoundingBoxHalfEdgeLength, BoundingBoxHalfEdgeLength)),
-            World!.ToViewportPosition(Position + new Vector2(BoundingBoxHalfEdgeLength, -BoundingBoxHalfEdgeLength)),
-            World!.ToViewportPosition(Position + new Vector2(-BoundingBoxHalfEdgeLength, -BoundingBoxHalfEdgeLength)),
-        };
+        ICollisionBound.VisualLine.Set(
+            World.ToViewportPosition(Position + new Vector2(-BoundingLength, 0f)),
+            World.ToViewportPosition(Position + new Vector2(BoundingLength, 0f)));
+        ICollisionBound.VisualLine.Draw();
 
-        ICollisionBound.VisualLine.Set(Vertices[0], Vertices[1]);
-        ICollisionBound.VisualLine.Draw();
-        ICollisionBound.VisualLine.Set(Vertices[1], Vertices[2]);
-        ICollisionBound.VisualLine.Draw();
-        ICollisionBound.VisualLine.Set(Vertices[2], Vertices[3]);
-        ICollisionBound.VisualLine.Draw();
-        ICollisionBound.VisualLine.Set(Vertices[3], Vertices[0]);
+        ICollisionBound.VisualLine.Set(
+            World.ToViewportPosition(Position + new Vector2(0f, -BoundingLength)),
+            World.ToViewportPosition(Position + new Vector2(0f, BoundingLength)));
         ICollisionBound.VisualLine.Draw();
     }
 
@@ -447,7 +426,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             }
         }
 
-        BoundingBoxHalfEdgeLength = FurthestPoint!.Value.Length();
+        BoundingLength = FurthestPoint!.Value.Length();
     }
 
 
@@ -500,12 +479,19 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             case CollisionBoundType.Ball:
                 BallCollisionBound BallBound = (BallCollisionBound)bound;
 
+                Vector2 NormalToBallPoint = BoundPosition -partPosition;
+                if (NormalToBallPoint.LengthSquared() == 0)
+                {
+                    NormalToBallPoint = Vector2.UnitX;
+                }
+                else
+                {
+                    NormalToBallPoint = Vector2.Normalize(NormalToBallPoint);
+                }
+
                 return new Vector2[]
                 {
-                BoundPosition + new Vector2(BallBound.Radius, BallBound.Radius),
-                BoundPosition + new Vector2(-BallBound.Radius, -BallBound.Radius),
-                BoundPosition + new Vector2(-BallBound.Radius, BallBound.Radius),
-                BoundPosition + new Vector2(BallBound.Radius, -BallBound.Radius),
+                    BoundPosition + NormalToBallPoint * BallBound.Radius
                 };
 
 
@@ -528,8 +514,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     public virtual void Draw()
     {
-        MainPart.Draw(AreCollisionBoundsDrawn);
-
+        if (IsVisible)
+        {
+            MainPart.Draw(AreCollisionBoundsDrawn);
+        }
         if (IsMotionDrawn)
         {
             DrawMotion();
@@ -542,8 +530,5 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         {
             DrawBoundingBox();
         }
-
-        PhysicalEntityPart Part = MainPart.SubPartLinks![2].LinkedPart;
-        Vector2 Velocity = GetAngularMotionAtPoint(Part.Position);
     }
 }

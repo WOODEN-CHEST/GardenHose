@@ -1,4 +1,5 @@
 ﻿using GardenHose;
+using GardenHose.Game.AssetManager;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Item.Basic;

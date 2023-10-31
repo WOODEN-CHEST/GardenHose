@@ -190,6 +190,19 @@ internal class PhysicalEntityPart
     }
 
     /* Collision. */
+    internal void TestCollisionAgainstEntity(PhysicalEntity entity)
+    {
+        if (CollisionBounds == null)
+        {
+            return;
+        }
+
+        foreach (ICollisionBound CollisionBound in CollisionBounds)
+        {
+            TestBoundAgainstEntity(this, CollisionBound, entity);
+        }
+    }
+
     internal void TestCollisionPlanet()
     {
         if (CollisionBounds == null)
@@ -284,14 +297,55 @@ internal class PhysicalEntityPart
     }
 
 
-    // Private methods.
-    private void TestColRectToBall(RectangleCollisionBound rect, 
-        Vector2 rectPosition,
-        BallCollisionBound ball, 
-        Vector2 ballPosition)
+    // Protected methods.
+    protected void TestBoundAgainstEntity(PhysicalEntityPart part, ICollisionBound selfBound, PhysicalEntity entity)
     {
-        Vector2[] Vertices = rect.GetVertices(Position, CombinedRotation);
+        foreach (PhysicalEntityPart TargetPart in entity.Parts) 
+        {
+            if (TargetPart.CollisionBounds == null)
+            {
+                return;
+            }
+
+            foreach (ICollisionBound TargetBound in TargetPart.CollisionBounds) // At this point it is a 4 layer deep foreach loop...
+            {
+                if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Rectangle)
+                {
+                    GetCollisionPointsRectToRect();
+                }
+                else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Rectangle)
+                {
+                    GetCollisionPointsRectToBall((RectangleCollisionBound)TargetBound, 
+                        TargetPart.Position, (BallCollisionBound)selfBound, Position);
+                }
+                else if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Ball)
+                {
+                    GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
+                        Position, (BallCollisionBound)TargetBound, TargetPart.Position);
+                }
+                else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Ball)
+                {
+                    GetCollisionPointsBallToBall();
+                }
+            }
+        }
+    }
+
+    protected virtual Vector2[]? GetCollisionPointsRectToRect()
+    {
+        // Get collision points.
+
+        throw new NotImplementedException();
+    }
+
+    protected virtual Vector2[]? GetCollisionPointsRectToBall(RectangleCollisionBound rect,
+        Vector2 rectPartPosition,
+        BallCollisionBound ball,
+        Vector2 ballPartPosition)
+    {
+        Vector2[] Vertices = rect.GetVertices(rectPartPosition, CombinedRotation);
         List<Vector2> CollisionPoints = null!;
+        Vector2 BallPosition = ballPartPosition + ball.Offset;
 
         // Find closest point so that a testable ray can be created.
         float ClosestDistance = float.PositiveInfinity;
@@ -299,7 +353,7 @@ internal class PhysicalEntityPart
 
         foreach (Vector2 Vertex in Vertices)
         {
-            float Distance = Vector2.Distance(ballPosition, Vertex);
+            float Distance = Vector2.Distance(BallPosition, Vertex);
             if (Distance < ClosestDistance)
             {
                 ClosestDistance = Distance;
@@ -307,7 +361,7 @@ internal class PhysicalEntityPart
             }
         }
 
-        Ray BallToRectRay = new(ballPosition, ClosestVertex);
+        Ray BallToRectRay = new(BallPosition, ClosestVertex);
 
         /* Find collision points. This is done by getting rays from the edge vertices,
          * then finding intersection points in said rays, then testing if the intersection 
@@ -324,7 +378,7 @@ internal class PhysicalEntityPart
             float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
             float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
 
-            if (Vector2.Distance(ballPosition, CollisionPoint) <= ball.Radius
+            if (Vector2.Distance(BallPosition, CollisionPoint) <= ball.Radius
                 && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
                 && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
             {
@@ -335,19 +389,16 @@ internal class PhysicalEntityPart
 
         if (CollisionPoints != null)
         {
-            Vector2 SurfaceNormal = Vector2.Normalize(rectPosition - ballPosition);
+            Vector2 SurfaceNormal = Vector2.Normalize(rectPartPosition - BallPosition);
 
             //PushOutOfBall(CollisionPoints[0], ball);
-            //OnCollision(CollisionPoints[0], Vector2.Zero, SurfaceNormal);
+            return CollisionPoints.ToArray();
         }
+
+        return null;
     }
 
-    private void TestColBallToBall()
-    {
-        throw new NotImplementedException();
-    }
-
-    private void TestColRectToRect()
+    protected virtual Vector2[]? GetCollisionPointsBallToBall()
     {
         throw new NotImplementedException();
     }

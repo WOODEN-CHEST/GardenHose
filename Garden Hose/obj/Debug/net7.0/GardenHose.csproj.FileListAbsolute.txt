@@ -101,3 +101,5 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\atmosphere\default.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\backgrounds\default.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\stars\big.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\overlays\gas_1_overlay_1.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\overlays\gas_1_overlay_2.xnb

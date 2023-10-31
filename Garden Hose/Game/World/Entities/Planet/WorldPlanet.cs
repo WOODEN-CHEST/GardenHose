@@ -1,4 +1,5 @@
-﻿using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Material;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
@@ -8,16 +9,18 @@ using System;
 namespace GardenHose.Game.World.Entities;
 
 
-internal class WorldPlanet : PhysicalEntity
+internal partial class WorldPlanet : PhysicalEntity
 {
     // Static fields.
-    public static WorldPlanet TestPlanet => new WorldPlanet(1024f, 120f,
-        WorldMaterial.Test, PlanetSurfaceType.Gas1, PlanetAtmosphereType.Default)
+    public static WorldPlanet TestPlanet => new WorldPlanet(512f, 120f,
+        WorldMaterial.Test, PlanetSurfaceType.Gas1, PlanetAtmosphereType.None)
     {
-        Color1 = new(186, 139, 102),
-        AtmosphereColor = new Color(209, 173, 65),
-        AtmosphereOpacity = 0.6f,
-        AtmosphereThickness = 50f
+        SurfaceColor = new(161, 155, 130),
+        Overlays = new PlanetOverlay[]
+        {
+            new PlanetOverlay(PlanetOverlayType.Gas1Overlay1, new Color(199, 110, 102)),
+            new PlanetOverlay(PlanetOverlayType.Gas1Overlay2, new Color(158, 145, 58))
+        }
     };
 
 
@@ -32,15 +35,10 @@ internal class WorldPlanet : PhysicalEntity
 
     internal PlanetAtmosphereType AtmosphereType { get; private init; }
 
-    internal Color Color1 { get; set; } = Color.White;
+    internal PlanetOverlay[]? Overlays { get; init; }
 
-    internal Color Color2 { get; set; } = Color.White;
+    internal Color SurfaceColor { get; set; } = Color.White;
 
-    internal Color Color3 { get; set; } = Color.White;
-
-    internal Color Color4 { get; set; } = Color.White;
-
-    internal Color Color5 { get; set; } = Color.White;
 
     internal float AtmosphereThickness
     {
@@ -58,10 +56,16 @@ internal class WorldPlanet : PhysicalEntity
 
 
     // Private fields.
+    private bool _isLoaded = false;
     private float _atmosphereThickness = 50f;
 
     private SpriteItem? _atmosphere;
     private SpriteItem _surface;
+    private SpriteItem _overlay1;
+    private SpriteItem _overlay2;
+    private SpriteItem _overlay3;
+    private SpriteItem _overlay4;
+    private SpriteItem _overlay5;
 
     private Vector2 _surfaceScaling;
     private Vector2 _atmosphereScaling;
@@ -76,6 +80,7 @@ internal class WorldPlanet : PhysicalEntity
         GameWorld? world = null) 
         : base(EntityType.Planet, world)
     {
+        IsBoundingBoxDrawn = true;
         Radius = Math.Max(0, radius);
         RadiusSquared = Radius * Radius;
         Attraction = attraction;
@@ -97,21 +102,30 @@ internal class WorldPlanet : PhysicalEntity
     {
         _surface = SurfaceType switch
         {
-            PlanetSurfaceType.Gas1 => new(assetManager.PlanetGas1Texture),
+            PlanetSurfaceType.Gas1 => new(assetManager.PlanetGas1Surface),
 
             _ => throw new EnumValueException(nameof(SurfaceType), nameof(PlanetSurfaceType),
                 SurfaceType.ToString(), (int)SurfaceType)
         };
 
+        if (Overlays != null)
+        {
+            foreach (PlanetOverlay Overlay in Overlays)
+            {
+                Overlay.Load(assetManager, Radius * 2f);
+            }
+        }
+
         _atmosphere = AtmosphereType switch
         {
             PlanetAtmosphereType.None => null,
-            PlanetAtmosphereType.Default => new(assetManager.PlanetAtmosphereDefaultTexture),
+            PlanetAtmosphereType.Default => new(assetManager.PlanetAtmosphereDefault),
 
             _ => throw new EnumValueException(nameof(AtmosphereType), nameof(PlanetAtmosphereType),
                 AtmosphereType.ToString(), (int)AtmosphereType)
         };
 
+        _isLoaded = true;
         UpdateTextureScalings();
     }
 
@@ -119,37 +133,62 @@ internal class WorldPlanet : PhysicalEntity
     // Private methods.
     private void UpdateTextureScalings()
     {
-        if (_surface != null)
+        if (!_isLoaded)
         {
-            _surfaceScaling = new Vector2(Radius / _surface.TextureSize.X, Radius / _surface.TextureSize.Y);
+            return;
         }
 
-        if (_atmosphere != null && AtmosphereType != PlanetAtmosphereType.None)
+        float Diameter = Radius * 2f;
+
+        _surfaceScaling = new Vector2(Diameter / _surface.TextureSize.X, Diameter / _surface.TextureSize.Y);
+
+        if (AtmosphereType != PlanetAtmosphereType.None)
         {
-            _atmosphereScaling = new Vector2((Radius + AtmosphereThickness) / _atmosphere!.TextureSize.X,
-                (Radius + AtmosphereThickness) / _atmosphere.TextureSize.Y);
+            _atmosphereScaling = new Vector2((Diameter + AtmosphereThickness) / _atmosphere!.TextureSize.X,
+                (Diameter + AtmosphereThickness) / _atmosphere.TextureSize.Y);
         }
     }
 
-
-    // Inherited methods.
-    public override void Draw()
+    private void DrawPlanet()
     {
-        if (!IsVisible) return;
-        
         _surface.Position.Vector = World!.ToViewportPosition(Position);
         _surface.Scale.Vector = _surfaceScaling * World.Zoom;
-        _surface.Mask = Color1;
+        _surface.Mask = SurfaceColor;
         _surface.Draw();
 
+        if (Overlays != null)
+        {
+            foreach (PlanetOverlay Overlay in Overlays)
+            {
+                Overlay.Draw(Position, World);
+            }
+        }
 
-        if (AtmosphereType == PlanetAtmosphereType.None) return;
+        if (AtmosphereType == PlanetAtmosphereType.None)
+        {
+            return;
+        }
 
         _atmosphere!.Position.Vector = World!.ToViewportPosition(Position);
         _atmosphere.Scale.Vector = _atmosphereScaling * World.Zoom;
         _atmosphere.Mask = AtmosphereColor;
         _atmosphere.Opacity = AtmosphereOpacity;
         _atmosphere.Draw();
+    }
+
+
+    // Inherited methods.
+    public override void Draw()
+    {
+        if (IsVisible)
+        {
+            DrawPlanet();
+        }
+
+        if (IsBoundingBoxDrawn)
+        {
+            DrawBoundingBox();
+        }
     }
 
     internal override void ApplyForce(Vector2 force, Vector2 location) { }

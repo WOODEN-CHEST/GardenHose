@@ -1,4 +1,5 @@
-﻿using GardenHose.Game.Background;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.Background;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
@@ -7,10 +8,8 @@ using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static System.Formats.Asn1.AsnWriter;
+
 
 namespace GardenHose.Game;
 
@@ -23,6 +22,8 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
 
 
     // Internal fields.
+    internal Color SpaceColor { get; set; } = Color.Black;
+
     internal int SmallStarCount { get; init; } = 0;
 
     internal int MediumStarCount { get; init; } = 0;
@@ -56,9 +57,9 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
     // Internal methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _smallStarAnim = assetManager.BGStarSmall.CreateInstance();
-        _mediumStarAnim = assetManager.BGStarMedium.CreateInstance();
-        _bigStarAnim = assetManager.BGStarBig.CreateInstance();
+        _smallStarAnim = assetManager.BackgroundStarSmall.CreateInstance();
+        _mediumStarAnim = assetManager.BackgroundStarMedium.CreateInstance();
+        _bigStarAnim = assetManager.BackgroundStarBig.CreateInstance();
 
         _background = Image switch
         {
@@ -157,6 +158,17 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
     public void Draw()
     {
         if (!IsVisible) return;
+
+        GameFrameManager.SpriteBatch.Draw(
+            Display.SinglePixel,
+            Vector2.Zero,
+            null,
+            SpaceColor,
+            0f,
+            Vector2.Zero,
+            Display.WindowSize,
+            SpriteEffects.None,
+            IDrawableItem.DEFAULT_LAYER_DEPTH);
 
         _background.Draw();
 

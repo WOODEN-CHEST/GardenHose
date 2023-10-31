@@ -2,7 +2,7 @@
 using GardenHose.Game.World;
 using GardenHoseEngine.Frame;
 using GardenHose.Frames.InGame;
-
+using GardenHose.Game.AssetManager;
 
 namespace GardenHose.Game;
 
@@ -82,7 +82,7 @@ internal class GHGame
         Background.CreateBackground();
         BottomItemLayer.AddDrawableItem(Background);
 
-        World = new(this, worldSettings);
+        World = new(this, BottomItemLayer, TopItemLayer, worldSettings);
     }
 
 

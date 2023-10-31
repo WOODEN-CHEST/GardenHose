@@ -41,8 +41,8 @@ internal class InGameFrame : GameFrame
             Background = new(BackgroundImage.Default)
             {
                 SmallStarCount = 80,
-                MediumStarCount = 30,
-                BigStarCount = 5
+                MediumStarCount = 15,
+                BigStarCount = 2
             }
         };
         Game = new(this, StartupSettings);
