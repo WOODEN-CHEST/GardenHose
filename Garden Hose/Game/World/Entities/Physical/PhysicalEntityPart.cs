@@ -1,7 +1,9 @@
-﻿using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Material;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using Microsoft.Xna.Framework;
+using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -62,7 +64,7 @@ internal class PhysicalEntityPart
 
             _collisionBounds = value;
 
-            Entity.OnPartCollisionBoundChange(this, _collisionBounds);
+            Entity.PartCollisionBoundChange();
             CollisionBoundChange?.Invoke(this, _collisionBounds);
         }
     }
@@ -81,7 +83,7 @@ internal class PhysicalEntityPart
 
             _parentLink = value;
 
-            Entity.OnPartParentChange(this, _parentLink);
+            Entity.PartChange();
             ParentChange?.Invoke(this, _parentLink);
         }
     }
@@ -110,7 +112,9 @@ internal class PhysicalEntityPart
     internal PhysicalEntityPart(ICollisionBound[] collisionBounds, WorldMaterial material, PhysicalEntity entity)
         : this(collisionBounds, material.CreateInstance(), entity) { }
 
-    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, WorldMaterialInstance material, PhysicalEntity entity)
+    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, 
+        WorldMaterialInstance material,
+        PhysicalEntity entity)
     {
         Entity = entity;
         CollisionBounds = collisionBounds;
@@ -120,7 +124,7 @@ internal class PhysicalEntityPart
 
     // Internal methods.
     /* Parts. */
-    internal void LinkPart(PhysicalEntityPart part, Vector2 distance)
+    internal virtual void LinkPart(PhysicalEntityPart part, Vector2 distance)
     {
         if (part == null)
         {
@@ -142,16 +146,16 @@ internal class PhysicalEntityPart
 
         part.ParentLink = Link;
 
-        Entity.OnPartSubPartChange(this, SubPartLinks);
+        Entity.PartChange();
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 
-    internal void LinkEntityAsPart(PhysicalEntity entity, Vector2 distance)
+    internal virtual void LinkEntityAsPart(PhysicalEntity entity, Vector2 distance)
     {
         LinkPart(entity.MainPart, distance);
     }
 
-    internal void UnlinkPart(PhysicalEntityPart part)
+    internal virtual void UnlinkPart(PhysicalEntityPart part)
     {
         if (SubPartLinks == null)
         {
@@ -171,11 +175,11 @@ internal class PhysicalEntityPart
 
         SubPartLinks = Links.Count == 0 ? null : Links.ToArray();
 
-        Entity.OnPartSubPartChange(this, SubPartLinks);
+        Entity.PartChange();
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 
-    internal List<PartLink> GetPathFromMainPart()
+    internal virtual List<PartLink> GetPathFromMainPart()
     {
         List<PartLink> Links = new();
         PartLink? Link = ParentLink;
@@ -190,7 +194,7 @@ internal class PhysicalEntityPart
     }
 
     /* Collision. */
-    internal void TestCollisionAgainstEntity(PhysicalEntity entity)
+    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
     {
         if (CollisionBounds == null)
         {
@@ -203,40 +207,8 @@ internal class PhysicalEntityPart
         }
     }
 
-    internal void TestCollisionPlanet()
-    {
-        if (CollisionBounds == null)
-        {
-            return;
-        }
-
-        //GameWorld World = Entity.World!;
-
-        //foreach (ICollisionBound Bound in CollisionBounds)
-        //{
-        //    switch (Bound.Type)
-        //    {
-        //        case CollisionBoundType.Rectangle:
-        //            TestColRectToBall((RectangleCollisionBound)Bound, 
-        //                Position + Bound.Offset,
-        //                World.Planet.CollisionBound, 
-        //                World.Planet.Position + World.Planet.CollisionBound.Offset);
-        //            break;
-
-        //        case CollisionBoundType.Ball:
-        //            TestColBallToBall();
-        //            break;
-
-        //        default:
-        //            throw new NotImplementedException("Testing collision not implemented for " +
-        //                $"collision bound type \"{Bound.Type}\" (int value of {(int)Bound.Type})");
-        //    }
-        //}
-    }
-
-
     /* Properties. */
-    internal void SetPositionAndRotation(Vector2 position, float rotation)
+    internal virtual void SetPositionAndRotation(Vector2 position, float rotation)
     {
         Position = position;
         CombinedRotation = SelfRotation + rotation;
@@ -288,7 +260,7 @@ internal class PhysicalEntityPart
         }
     }
 
-    internal void DrawCollisionBounds()
+    internal virtual void DrawCollisionBounds()
     {
         foreach (ICollisionBound Bound in CollisionBounds!)
         {
@@ -298,54 +270,84 @@ internal class PhysicalEntityPart
 
 
     // Protected methods.
-    protected void TestBoundAgainstEntity(PhysicalEntityPart part, ICollisionBound selfBound, PhysicalEntity entity)
+    /* Collision. */
+    protected virtual void TestBoundAgainstEntity(PhysicalEntityPart selfPart,
+        ICollisionBound selfBound,
+        PhysicalEntity targetEntity)
     {
-        foreach (PhysicalEntityPart TargetPart in entity.Parts) 
+        foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
         {
             if (TargetPart.CollisionBounds == null)
             {
                 return;
             }
 
+            (Vector2[] points, Vector2 surfaceNormal)? CollisionData = null;
+
             foreach (ICollisionBound TargetBound in TargetPart.CollisionBounds) // At this point it is a 4 layer deep foreach loop...
             {
                 if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Rectangle)
                 {
-                    GetCollisionPointsRectToRect();
+                    CollisionData = GetCollisionPointsRectToRect();
                 }
                 else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Rectangle)
                 {
-                    GetCollisionPointsRectToBall((RectangleCollisionBound)TargetBound, 
-                        TargetPart.Position, (BallCollisionBound)selfBound, Position);
+                    CollisionData = GetCollisionPointsRectToBall((RectangleCollisionBound)TargetBound,
+                        TargetPart, (BallCollisionBound)selfBound, this);
                 }
                 else if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Ball)
                 {
-                    GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
-                        Position, (BallCollisionBound)TargetBound, TargetPart.Position);
+                    CollisionData = GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
+                        this, (BallCollisionBound)TargetBound, TargetPart);
                 }
                 else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Ball)
                 {
-                    GetCollisionPointsBallToBall();
+                    CollisionData = GetCollisionPointsBallToBall();
+                }
+
+                if (CollisionData == null)
+                {
+                    continue;
+                }
+
+                foreach (Vector2 Point in CollisionData.Value.points)
+                {
+                    CollisionCase Case = new()
+                    {
+                        EntityA = Entity,
+                        EntityB = targetEntity,
+                        PartA = selfPart,
+                        PartB = TargetPart,
+                        BoundA = selfBound,
+                        BoundB = TargetBound,
+                        CollisionPoint = Point,
+                        SurfaceNormal = CollisionData.Value.surfaceNormal
+                    };
+
+                    Entity.PartCollision(Case);
                 }
             }
         }
     }
 
-    protected virtual Vector2[]? GetCollisionPointsRectToRect()
+    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToRect()
     {
         // Get collision points.
 
         throw new NotImplementedException();
     }
 
-    protected virtual Vector2[]? GetCollisionPointsRectToBall(RectangleCollisionBound rect,
-        Vector2 rectPartPosition,
+    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToBall(
+        RectangleCollisionBound rect,
+        PhysicalEntityPart rectSourcePart,
         BallCollisionBound ball,
-        Vector2 ballPartPosition)
+        PhysicalEntityPart ballSourcePart)
     {
-        Vector2[] Vertices = rect.GetVertices(rectPartPosition, CombinedRotation);
+        // Prepare variables.
         List<Vector2> CollisionPoints = null!;
-        Vector2 BallPosition = ballPartPosition + ball.Offset;
+        Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, CombinedRotation);
+        Vector2 RectPosition = rectSourcePart.Position + rect.Offset;
+        Vector2 BallPosition = ballSourcePart.Position + ball.Offset;
 
         // Find closest point so that a testable ray can be created.
         float ClosestDistance = float.PositiveInfinity;
@@ -389,16 +391,13 @@ internal class PhysicalEntityPart
 
         if (CollisionPoints != null)
         {
-            Vector2 SurfaceNormal = Vector2.Normalize(rectPartPosition - BallPosition);
-
-            //PushOutOfBall(CollisionPoints[0], ball);
-            return CollisionPoints.ToArray();
+            return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition - BallPosition));
         }
 
         return null;
     }
 
-    protected virtual Vector2[]? GetCollisionPointsBallToBall()
+    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsBallToBall()
     {
         throw new NotImplementedException();
     }

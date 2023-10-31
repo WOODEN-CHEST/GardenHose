@@ -33,7 +33,7 @@ internal class TestEntity : PhysicalEntity
         IsMotionDrawn = true;
         IsBoundingBoxDrawn = true;
 
-        MainPart =
+        PhysicalEntityPart NewMainPart =
             new(new ICollisionBound[]
             {
                 new RectangleCollisionBound(new Vector2(20f, 20f), new Vector2(0f, 0f))
@@ -55,10 +55,12 @@ internal class TestEntity : PhysicalEntity
 
 
 
-        MainPart.LinkPart(SidePart1, new Vector2(30f, 0f));
-        MainPart.LinkPart(SidePart2, new Vector2(0f, -30f));
-        MainPart.LinkPart(SidePart3, new Vector2(0f, -60f));
-        MainPart.LinkPart(SidePart4, new Vector2(-30f, 0f));
+        NewMainPart.LinkPart(SidePart1, new Vector2(30f, 0f));
+        NewMainPart.LinkPart(SidePart2, new Vector2(0f, -30f));
+        NewMainPart.LinkPart(SidePart3, new Vector2(0f, -60f));
+        NewMainPart.LinkPart(SidePart4, new Vector2(-30f, 0f));
+
+        MainPart = NewMainPart;
     }
 
     public TestEntity() : this(null) { }

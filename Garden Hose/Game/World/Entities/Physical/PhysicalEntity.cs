@@ -5,6 +5,7 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using System.Runtime.CompilerServices;
+using GardenHose.Game.World.Entities.Physical;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -141,10 +142,21 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Constructors.
     internal PhysicalEntity(EntityType type, GameWorld? world)
-        : base(type, world) { }
+        : this(type, world, Vector2.Zero) { }
+
+    internal PhysicalEntity(EntityType type, GameWorld? world, Vector2 position)
+        : this(type, world, position, 0f) { }
+
+    internal PhysicalEntity(EntityType type, GameWorld? world, Vector2 position, float rotation)
+        : base(type, world)
+    {
+        Rotation = rotation;
+        Position = position;
+    }
 
 
     // Internal Methods.
+    /* Physics. */
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
         // Scuffed code that weirdly calculates force and straight up discards some of it.
@@ -174,34 +186,46 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         return NormalizedMotionDirection * AngularSpeed;
     }
 
-
-    /* Events from parts. */
-    internal void OnPartCollision(PhysicalEntityPart part, Vector2 position)
+    /* Collision. */
+    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
     {
+        // Test bounding circles.
+        if (Vector2.Distance(Position, entity.Position) > (BoundingLength + entity.BoundingLength))
+        {
+            return;
+        }
 
+        // Test parts against entity.
+        foreach (PhysicalEntityPart SelfPart in Parts)
+        {
+            SelfPart.TestCollisionAgainstEntity(entity);
+        }
     }
 
-    internal void OnPartCollisionBoundChange(PhysicalEntityPart part, ICollisionBound[]? bounds)
+
+    /* Part related. */
+    internal void PartCollision(CollisionCase collisionCase) 
+    {
+        Vector2 MotionHitAt = Motion - collisionCase.EntityB.Motion;
+
+        PushOutOfOtherEntity(collisionCase);
+        collisionCase.EntityB.Motion = Vector2.Reflect(Motion, collisionCase.SurfaceNormal);
+    }
+
+    internal void PartCollisionBoundChange()
     {
         _cachedMass = null;
         CreateBoundingBox();
     }
 
-    internal void OnPartParentChange(PhysicalEntityPart part, PartLink? parentLink)
+    internal void PartChange()
     {
         _cachedParts = null;
         _cachedMass = null;
         CreateBoundingBox();
     }
 
-    internal void OnPartSubPartChange(PhysicalEntityPart part, PartLink[]? subPartLinks)
-    {
-        _cachedParts = null;
-        _cachedMass = null;
-        CreateBoundingBox();
-    }
-
-    internal void OnPartLinkDistanceChange(Vector2 distance)
+    internal void PartLinkDistanceChange()
     {
         CreateBoundingBox();
     }
@@ -227,141 +251,22 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position += Motion * World!.PassedTimeSeconds;
     }
 
-
-    /* Collision. */
-    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
+    protected virtual void PushOutOfOtherEntity(CollisionCase collisionCase)
     {
-        // Test bounding circles.
-        if (Vector2.Distance(Position, entity.Position) > BoundingLength + entity.BoundingLength)
+        if (collisionCase.BoundA.Type == CollisionBoundType.Rectangle
+            && collisionCase.BoundB.Type == CollisionBoundType.Ball)
         {
-            return;
-        }
-
-        foreach (PhysicalEntityPart SelfPart in Parts)
-        {
-            SelfPart.TestCollisionAgainstEntity(entity);
+            //PushOutOfBall(collisionCase, ())
         }
     }
 
-    //protected void TestPlanetCollision()
-    //{
-    //    foreach (ICollisionBound Bound in CollisionBounds)
-    //    {
-    //        if (Bound.Type == CollisionBoundType.Rectangle)
-    //        {
-    //            TestColRectToBall((RectangleCollisionBound)Bound, World!.Planet.CollisionBound);
-    //        }
-    //    }
-    //}
+    protected virtual void PushOutOfBall(CollisionCase collisionCase, BallCollisionBound ball)
+    {
 
-    //private void TestColRectToBall(RectangleCollisionBound rect, BallCollisionBound ball)
-    //{
-    //    Vector2[] Vertices = rect.GetVertices();
-    //    List<Vector2> CollisionPoints = null!;
+    }
 
-    //    // Find closest point so that a testable ray can be created.
-    //    float ClosestDistance = float.PositiveInfinity;
-    //    Vector2 ClosestVertex = Vector2.Zero;
-    //    foreach (Vector2 Vertex in Vertices)
-    //    {
-    //        float Distance = Vector2.Distance(ball.Position, Vertex);
-    //        if (Distance < ClosestDistance)
-    //        {
-    //            ClosestDistance = Distance;
-    //            ClosestVertex = Vertex;
-    //        }
-    //    }
-    //    Ray BallToRectRay = new(ball.Position, ClosestVertex);
 
-    //    /* Find collision points. This is done by getting rays from the edge vertices,
-    //     * then finding intersection points in said rays, then testing if the intersection 
-    //     * point is inside of the edge's limits. If so, a collision has occurred.*/
-    //    for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
-    //    {
-    //        Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
-    //        Ray EdgeRay = new(Edge);
-
-    //        Vector2 CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
-
-    //        float MinX = Math.Min(Edge.StartVertex.X, Edge.EndVertex.X);
-    //        float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
-    //        float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
-    //        float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
-
-    //        if (Vector2.Distance(ball.Position, CollisionPoint) <= ball.Radius
-    //            && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
-    //            && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
-    //        {
-    //            CollisionPoints ??= new();
-    //            CollisionPoints.Add(CollisionPoint);
-    //        }
-    //    }
-
-    //    if (CollisionPoints != null)
-    //    {
-    //        Vector2 SurfaceNormal = Vector2.Normalize(rect.Position - ball.Position);
-
-    //        PushOutOfBall(CollisionPoints[0], ball);
-    //        OnCollision(CollisionPoints[0], Vector2.Zero, SurfaceNormal);
-    //    }
-    //}
-
-    //protected Vector2[] GetCollisionPointsRectToBall(Vector2[] rectVertices, RectangleCollisionBound rect, BallCollisionBound ball)
-    //{
-    //    List<Vector2> CollisionPoints = new(4);
-    //    Ray BallRay = new(rect.Position, ball.Position);
-
-    //    for (int vertexIndex = 0; vertexIndex < rectVertices.Length; vertexIndex++)
-    //    {
-    //        Edge RectEdge = new(rectVertices[vertexIndex], rectVertices[(vertexIndex + 1) % rectVertices.Length]);
-    //        Vector2 Point = Ray.GetIntersection(BallRay, new Ray(RectEdge));
-
-    //        float MinX = (Math.Min(RectEdge.StartVertex.X, RectEdge.EndVertex.X));
-    //        float MaxX = (Math.Max(RectEdge.StartVertex.X, RectEdge.EndVertex.X));
-    //        float MinY = (Math.Min(RectEdge.StartVertex.Y, RectEdge.EndVertex.Y));
-    //        float MaxY = (Math.Max(RectEdge.StartVertex.Y, RectEdge.EndVertex.Y));
-
-    //        if ((MinX <= Point.X && Point.X <= MaxX) && (MinY <= Point.Y && Point.Y <= MaxY)
-    //            && Vector2.Distance(ball.Position, Point) <= ball.Radius)
-    //        {
-    //            CollisionPoints.Add(Point);
-    //        }
-    //    }
-
-    //    return CollisionPoints.ToArray();
-    //}
-
-    //protected virtual void OnCollision(Vector2 collisionPoint, Vector2 surface, Vector2 surfaceNormal)
-    //{
-    //    CollisionEvent?.Invoke(this, collisionPoint);
-
-    //    Vector2 CombinedMotionAtPoint = GetAngularMotionAtPoint(collisionPoint) + Motion;
-
-    //    Motion = Vector2.Reflect(Motion, surfaceNormal) * 0.85f;
-    //}
-
-    ///* Other */
-    //protected Vector2 GetAngularMotionAtPoint(Vector2 point)
-    //{
-    //    float SpeedAtPoint = Vector2.Distance(Position, point) * MathHelper.TwoPi * AngularMotion;
-    //    float AngleOfPointToPosition = MathF.Atan2(point.Y - Position.Y, point.X - Position.X);
-
-    //    Vector2 CalculatedAngularMotion = Vector2.Transform(Vector2.UnitY, Matrix.CreateRotationZ(AngleOfPointToPosition));
-    //    CalculatedAngularMotion *= SpeedAtPoint; 
-    //    return CalculatedAngularMotion;
-    //}
-
-    //protected void PushOutOfBall(Vector2 referencePoint, BallCollisionBound ball)
-    //{
-    //    Vector2 Unit = Vector2.Normalize(referencePoint - ball.Position);
-    //    Vector2 NewPoint = Unit * ball.Radius;
-
-    //    Vector2 Difference = new();
-    //    Difference.X = NewPoint.X - referencePoint.X;
-    //    Difference.Y = NewPoint.Y - referencePoint.Y;
-    //    Position += Difference;
-    //}
-
+    /* Other */
     protected virtual void DrawCollisionBounds()
     {
         if (MainPart == null) return;
@@ -394,7 +299,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected void DrawBoundingBox()
     {
-        ICollisionBound.VisualLine.Thickness = 5f * World.Zoom;
+        ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
         ICollisionBound.VisualLine.Mask = Color.Khaki;
 
         ICollisionBound.VisualLine.Set(
@@ -408,8 +313,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         ICollisionBound.VisualLine.Draw();
     }
 
+    /* Bounding box. */
     protected void CreateBoundingBox()
     {
+        if (MainPart == null)
+        {
+            return;
+        }
+
         List<Vector2> Points = GetAllPointsInCollisionBounds();
 
         if (Points.Count == 0)

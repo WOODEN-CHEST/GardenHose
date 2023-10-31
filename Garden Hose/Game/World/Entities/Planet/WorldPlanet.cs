@@ -13,13 +13,18 @@ internal partial class WorldPlanet : PhysicalEntity
 {
     // Static fields.
     public static WorldPlanet TestPlanet => new WorldPlanet(512f, 120f,
-        WorldMaterial.Test, PlanetSurfaceType.Gas1, PlanetAtmosphereType.None)
+        WorldMaterial.Test, PlanetAtmosphereType.None)
     {
+        AtmosphereColor = Color.CornflowerBlue,
+        AtmosphereOpacity = 0.6f,
+        AtmosphereThickness = 50f,
+        AtmosphereType = PlanetAtmosphereType.Default,
         SurfaceColor = new(161, 155, 130),
-        Overlays = new PlanetOverlay[]
+        Textures = new PlanetTexture[]
         {
-            new PlanetOverlay(PlanetOverlayType.Gas1Overlay1, new Color(199, 110, 102)),
-            new PlanetOverlay(PlanetOverlayType.Gas1Overlay2, new Color(158, 145, 58))
+            new PlanetTexture(PlanetTextureType.Water, new Color(22, 28, 102)),
+            new PlanetTexture(PlanetTextureType.Rock1Land, new Color(110, 140, 83)),
+            new PlanetTexture(PlanetTextureType.Clouds4, Color.White),
         }
     };
 
@@ -31,11 +36,9 @@ internal partial class WorldPlanet : PhysicalEntity
 
     internal float Attraction { get; set; }
 
-    internal PlanetSurfaceType SurfaceType { get; private init; }
-
     internal PlanetAtmosphereType AtmosphereType { get; private init; }
 
-    internal PlanetOverlay[]? Overlays { get; init; }
+    internal PlanetTexture[] Textures { get; init; }
 
     internal Color SurfaceColor { get; set; } = Color.White;
 
@@ -46,7 +49,7 @@ internal partial class WorldPlanet : PhysicalEntity
         set
         {
             _atmosphereThickness = Math.Max(0f, value);
-            UpdateTextureScalings();
+            UpdateAtmosphereScaling();
         }
     }
 
@@ -57,7 +60,7 @@ internal partial class WorldPlanet : PhysicalEntity
 
     // Private fields.
     private bool _isLoaded = false;
-    private float _atmosphereThickness = 50f;
+    private float _atmosphereThickness = 5f;
 
     private SpriteItem? _atmosphere;
     private SpriteItem _surface;
@@ -67,7 +70,6 @@ internal partial class WorldPlanet : PhysicalEntity
     private SpriteItem _overlay4;
     private SpriteItem _overlay5;
 
-    private Vector2 _surfaceScaling;
     private Vector2 _atmosphereScaling;
 
 
@@ -75,7 +77,6 @@ internal partial class WorldPlanet : PhysicalEntity
     public WorldPlanet(float radius,
         float attraction,
         WorldMaterial material,
-        PlanetSurfaceType surfaceType,
         PlanetAtmosphereType atmosphereType,
         GameWorld? world = null) 
         : base(EntityType.Planet, world)
@@ -84,7 +85,6 @@ internal partial class WorldPlanet : PhysicalEntity
         Radius = Math.Max(0, radius);
         RadiusSquared = Radius * Radius;
         Attraction = attraction;
-        SurfaceType = surfaceType;
         AtmosphereType = atmosphereType;
         DrawLayer = DrawLayer.Bottom;
 
@@ -100,20 +100,9 @@ internal partial class WorldPlanet : PhysicalEntity
 
     internal override void Load(GHGameAssetManager assetManager)
     {
-        _surface = SurfaceType switch
+        foreach (PlanetTexture Overlay in Textures)
         {
-            PlanetSurfaceType.Gas1 => new(assetManager.PlanetGas1Surface),
-
-            _ => throw new EnumValueException(nameof(SurfaceType), nameof(PlanetSurfaceType),
-                SurfaceType.ToString(), (int)SurfaceType)
-        };
-
-        if (Overlays != null)
-        {
-            foreach (PlanetOverlay Overlay in Overlays)
-            {
-                Overlay.Load(assetManager, Radius * 2f);
-            }
+            Overlay.Load(assetManager, Radius * 2f);
         }
 
         _atmosphere = AtmosphereType switch
@@ -126,42 +115,28 @@ internal partial class WorldPlanet : PhysicalEntity
         };
 
         _isLoaded = true;
-        UpdateTextureScalings();
+        UpdateAtmosphereScaling();
     }
 
 
     // Private methods.
-    private void UpdateTextureScalings()
+    private void UpdateAtmosphereScaling()
     {
-        if (!_isLoaded)
+        if (!_isLoaded || AtmosphereType == PlanetAtmosphereType.None)
         {
             return;
         }
 
         float Diameter = Radius * 2f;
-
-        _surfaceScaling = new Vector2(Diameter / _surface.TextureSize.X, Diameter / _surface.TextureSize.Y);
-
-        if (AtmosphereType != PlanetAtmosphereType.None)
-        {
-            _atmosphereScaling = new Vector2((Diameter + AtmosphereThickness) / _atmosphere!.TextureSize.X,
-                (Diameter + AtmosphereThickness) / _atmosphere.TextureSize.Y);
-        }
+        _atmosphereScaling = new Vector2((Diameter + AtmosphereThickness) / _atmosphere!.TextureSize.X,
+            (Diameter + AtmosphereThickness) / _atmosphere.TextureSize.Y);
     }
 
     private void DrawPlanet()
     {
-        _surface.Position.Vector = World!.ToViewportPosition(Position);
-        _surface.Scale.Vector = _surfaceScaling * World.Zoom;
-        _surface.Mask = SurfaceColor;
-        _surface.Draw();
-
-        if (Overlays != null)
+        foreach (PlanetTexture Texture in Textures)
         {
-            foreach (PlanetOverlay Overlay in Overlays)
-            {
-                Overlay.Draw(Position, World);
-            }
+            Texture.Draw(Position, World!);
         }
 
         if (AtmosphereType == PlanetAtmosphereType.None)

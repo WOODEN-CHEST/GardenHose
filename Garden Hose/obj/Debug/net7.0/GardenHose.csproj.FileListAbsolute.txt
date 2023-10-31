@@ -103,3 +103,10 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\stars\big.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\overlays\gas_1_overlay_1.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\overlays\gas_1_overlay_2.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\clouds\clouds1.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\clouds\clouds2.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\clouds\clouds3.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\clouds\clouds4.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\clouds\clouds5.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\surface\rock1_land.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\surface\water.xnb
