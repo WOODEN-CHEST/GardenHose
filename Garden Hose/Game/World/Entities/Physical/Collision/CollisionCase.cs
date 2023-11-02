@@ -21,7 +21,7 @@ internal record class CollisionCase
 
     internal ICollisionBound BoundB { get; set; }
 
-    internal Vector2 CollisionPoint { get; set; }
+    internal Vector2[] CollisionPoints { get; set; }
 
     internal Vector2 SurfaceNormal { get; set; }
 }

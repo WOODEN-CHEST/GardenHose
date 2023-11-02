@@ -21,3 +21,5 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.WinMM.dll
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\MonoGame.Framework.dll
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\obj\Debug\net7.0\Tests.csproj.CopyComplete
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NAudio.Vorbis.dll
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Tests\bin\Debug\net7.0\NVorbis.dll

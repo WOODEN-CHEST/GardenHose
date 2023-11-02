@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
-using System.Runtime.CompilerServices;
 using GardenHose.Game.World.Entities.Physical;
 
 namespace GardenHose.Game.World.Entities;
@@ -253,16 +252,19 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected virtual void PushOutOfOtherEntity(CollisionCase collisionCase)
     {
-        if (collisionCase.BoundA.Type == CollisionBoundType.Rectangle
-            && collisionCase.BoundB.Type == CollisionBoundType.Ball)
+        if (collisionCase.BoundB.Type == CollisionBoundType.Ball)
         {
-            //PushOutOfBall(collisionCase, ())
+            PushOutOfBall(collisionCase, (BallCollisionBound)collisionCase.BoundB);
         }
     }
 
     protected virtual void PushOutOfBall(CollisionCase collisionCase, BallCollisionBound ball)
     {
-
+        Vector2 Unit = Vector2.Normalize((collisionCase.PartB.Position + ball.Offset) 
+            - (collisionCase.PartA.Position + collisionCase.BoundA.Offset));
+        Vector2 NewPointLocation = Unit * ball.Radius;
+        
+        Position += ()
     }
 
 

@@ -1,15 +1,13 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Material;
-using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using Microsoft.Xna.Framework;
-using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+
 
 namespace GardenHose.Game.World.Entities;
+
 
 internal class PhysicalEntityPart
 {
@@ -310,22 +308,19 @@ internal class PhysicalEntityPart
                     continue;
                 }
 
-                foreach (Vector2 Point in CollisionData.Value.points)
+                CollisionCase Case = new()
                 {
-                    CollisionCase Case = new()
-                    {
-                        EntityA = Entity,
-                        EntityB = targetEntity,
-                        PartA = selfPart,
-                        PartB = TargetPart,
-                        BoundA = selfBound,
-                        BoundB = TargetBound,
-                        CollisionPoint = Point,
-                        SurfaceNormal = CollisionData.Value.surfaceNormal
-                    };
+                    EntityA = Entity,
+                    EntityB = targetEntity,
+                    PartA = selfPart,
+                    PartB = TargetPart,
+                    BoundA = selfBound,
+                    BoundB = TargetBound,
+                    CollisionPoints = CollisionData.Value.points,
+                    SurfaceNormal = CollisionData.Value.surfaceNormal
+                };
 
-                    Entity.PartCollision(Case);
-                }
+                Entity.PartCollision(Case);
             }
         }
     }
@@ -346,11 +341,36 @@ internal class PhysicalEntityPart
         // Prepare variables.
         List<Vector2> CollisionPoints = null!;
         Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, CombinedRotation);
+
         Vector2 RectPosition = rectSourcePart.Position + rect.Offset;
         Vector2 BallPosition = ballSourcePart.Position + ball.Offset;
 
-        // Find closest point so that a testable ray can be created.
-        float ClosestDistance = float.PositiveInfinity;
+        Circle BallCircle = new(ball.Radius, BallPosition);
+
+        // Iterate over edge rays, find intersections with circle.
+        for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
+        {
+            Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
+            Ray EdgeRay = new(Edge);
+
+            Vector2[] Points = Circle.GetIntersections(BallCircle, EdgeRay);
+            if (Points.Length != 0)
+            {
+                CollisionPoints ??= new();
+                CollisionPoints.AddRange(Points);
+            }
+        }
+
+        if (CollisionPoints == null)
+        {
+            return null;
+        }
+
+        return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition- BallPosition));
+
+
+            // Find closest point so that a testable ray can be created.
+            float ClosestDistance = float.PositiveInfinity;
         Vector2 ClosestVertex = Vector2.Zero;
 
         foreach (Vector2 Vertex in Vertices)
@@ -373,19 +393,23 @@ internal class PhysicalEntityPart
             Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
             Ray EdgeRay = new(Edge);
 
-            Vector2 CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
+            Vector2? CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
+            if (CollisionPoint == null)
+            {
+                continue;
+            }
 
             float MinX = Math.Min(Edge.StartVertex.X, Edge.EndVertex.X);
             float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
             float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
             float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
 
-            if (Vector2.Distance(BallPosition, CollisionPoint) <= ball.Radius
-                && (MinX <= CollisionPoint.X) && (CollisionPoint.X <= MaxX)
-                && (MinY <= CollisionPoint.Y) && (CollisionPoint.Y <= MaxY))
+            if (Vector2.Distance(BallPosition, CollisionPoint.Value) <= ball.Radius
+                && (MinX <= CollisionPoint.Value.X) && (CollisionPoint.Value.X <= MaxX)
+                && (MinY <= CollisionPoint.Value.Y) && (CollisionPoint.Value.Y <= MaxY))
             {
                 CollisionPoints ??= new();
-                CollisionPoints.Add(CollisionPoint);
+                CollisionPoints.Add(CollisionPoint.Value);
             }
         }
 

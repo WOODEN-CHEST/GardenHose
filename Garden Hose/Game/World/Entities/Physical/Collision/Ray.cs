@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,16 +19,14 @@ internal struct Ray
     internal float OriginX { get; private set; } // Cheap band-aid fix for vertical ray cases where y=∞x+.
 
 
-    // Private static fields.
-    private static readonly Vector2 s_noCollisionVector = new(float.PositiveInfinity, float.PositiveInfinity);
-
-
-
     // Constructors.
-    internal Ray(float xOffset, float xStep)
+    internal Ray(float xOffset, float xStep) : this(xOffset, xStep, 0f) { }
+
+    internal Ray(float xOffset, float xStep, float originX)
     {
         YOffset = xOffset;
         YStep = xStep;
+        OriginX = originX;
     }
 
     internal Ray(Vector2 lineStart, Vector2 lineEnd)
@@ -46,7 +45,7 @@ internal struct Ray
 
 
     // Internal static methods.
-    internal static Vector2 GetIntersection(Ray ray1, Ray ray2)
+    internal static Vector2? GetIntersection(Ray ray1, Ray ray2)
     {
         if (ray1 == ray2)
         {
@@ -54,7 +53,7 @@ internal struct Ray
         }
         if (ray1.YStep == ray2.YStep)
         {
-            return s_noCollisionVector;
+            return null;
         }
 
         if (float.IsInfinity(ray1.YStep))
@@ -77,6 +76,11 @@ internal struct Ray
 
         return new Vector2(XValue, YValue);
     }
+
+
+    // Internal methods.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal float GetValueAtX(float x) => YStep * x + YOffset;
 
 
     // Inherited methods.

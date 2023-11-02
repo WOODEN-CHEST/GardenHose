@@ -73,6 +73,12 @@
         "dependencies": {
           "NAudio.Core": "2.2.0",
           "NVorbis": "0.10.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/NAudio.Vorbis.dll": {
+            "assemblyVersion": "1.5.0.0",
+            "fileVersion": "1.5.0.0"
+          }
         }
       },
       "NAudio.Wasapi/22.0.0": {
@@ -102,6 +108,12 @@
         "dependencies": {
           "System.Memory": "4.5.3",
           "System.ValueTuple": "4.5.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/NVorbis.dll": {
+            "assemblyVersion": "0.10.4.0",
+            "fileVersion": "0.10.4.0"
+          }
         }
       },
       "System.Memory/4.5.3": {},
