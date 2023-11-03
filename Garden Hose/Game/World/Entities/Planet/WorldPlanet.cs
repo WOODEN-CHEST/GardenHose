@@ -1,6 +1,8 @@
 ﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
+using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
@@ -116,6 +118,49 @@ internal partial class WorldPlanet : PhysicalEntity
 
         _isLoaded = true;
         UpdateAtmosphereScaling();
+    }
+
+
+    // Protected methods.
+    protected override void PushOutOfOtherEntity(CollisionCase collisionCase) // Overrides to push other entity rather than self.
+    {
+        // Prepare variables.
+        Vector2 PushOutDirection = -GetPushOutDirection(collisionCase);
+        const int StepCount = 5;
+        const float FallBackStepDistance = 100f;
+
+        float StepDistance = (collisionCase.EntityA.Motion.Length() + collisionCase.EntityB.Motion.Length())
+            * World!.PassedTimeSeconds;
+        if (StepDistance is 0f or -0f)
+        {
+            StepDistance = FallBackStepDistance;
+        }
+
+        //// First step.
+        //collisionCase.EntityB.Position += StepDistance * PushOutDirection;
+
+        //// Consequent steps.
+        //Vector2 ClosestPushOutPosition = collisionCase.EntityB.Position;
+        //bool IsColliding = false;
+
+        //for (int Step = 0; Step < StepCount; Step++)
+        //{
+        //    StepDistance *= 0.5f;
+        //    collisionCase.EntityB.Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
+
+        //    var CollisionData = collisionCase.PartA.TestBoundAgainstBound(
+        //        collisionCase.BoundA, collisionCase.BoundB, collisionCase.PartB);
+        //    IsColliding = CollisionData != null;
+
+        //    if (!IsColliding)
+        //    {
+        //        ClosestPushOutPosition = collisionCase.EntityB.Position;
+        //    }
+        //}
+
+        // Update position.
+        collisionCase.EntityB.Position += PushOutDirection * StepDistance;
+        //collisionCase.EntityB.Position = ClosestPushOutPosition;
     }
 
 

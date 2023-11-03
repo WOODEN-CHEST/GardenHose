@@ -10,14 +10,14 @@ namespace GardenHose.Game.World.Entities;
 
 internal abstract class Entity
 {
-    // Fields.
+    // Internal fields.
     internal ulong ID { get; set; }
 
     internal EntityType EntityType { get; private init; }
 
     internal GameWorld? World { get; set; }
 
-    internal virtual bool IsPhysical { get; } = false;
+    internal virtual bool IsPhysical => false;
 
 
     // Constructors.
@@ -25,13 +25,13 @@ internal abstract class Entity
     {
         EntityType = type;
         World = world;
-        ID = World?.GetID() ?? 0ul;
+        ID = World?.GetID() ?? 0uL;
     }
 
     internal Entity(EntityType entityType) : this(entityType, null) { }
 
 
-    // Methods.
+    // Internal methods.
     internal abstract void Tick();
 
     internal abstract void Load(GHGameAssetManager assetManager);
@@ -50,8 +50,6 @@ internal abstract class Entity
         return ID == ((Entity)obj).ID;
     }
 
-
-    // Operators.
     public override int GetHashCode()
     {
         return int.MinValue + (int)ID;

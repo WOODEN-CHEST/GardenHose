@@ -30,6 +30,19 @@ internal struct Edge
     }
 
 
+    // Internal methods.
+    internal bool IsPointInEdgeArea(Vector2 point)
+    {
+        float MinX = Math.Min(StartVertex.X, EndVertex.X);
+        float MaxX = Math.Max(StartVertex.X, EndVertex.X);
+        float MinY = Math.Min(StartVertex.Y, EndVertex.Y);
+        float MaxY = Math.Max(StartVertex.Y, EndVertex.Y);
+
+        return (MinX <= point.X && point.X <= MaxX)
+            && (MinY <= point.Y && point.Y <= MaxY);
+    }
+
+
     // Inherited methods.
     public override bool Equals([NotNullWhen(true)] object? obj)
     {

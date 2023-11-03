@@ -1,27 +1,45 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace GardenHose.Game.World.Entities.Physical;
 
+
 internal record class CollisionCase
 {
-    internal PhysicalEntity EntityA { get; set; }
+    // Fields.
+    internal PhysicalEntity EntityA { get; init; }
 
-    internal PhysicalEntity EntityB { get; set; }
+    internal PhysicalEntity EntityB { get; init; }
 
-    internal PhysicalEntityPart PartA { get; set; }
+    internal PhysicalEntityPart PartA { get; init; }
 
-    internal PhysicalEntityPart PartB { get; set; }
+    internal PhysicalEntityPart PartB { get; init; }
 
-    internal ICollisionBound BoundA { get; set; }
+    internal ICollisionBound BoundA { get; init; }
 
-    internal ICollisionBound BoundB { get; set; }
+    internal ICollisionBound BoundB { get; init; }
 
-    internal Vector2[] CollisionPoints { get; set; }
+    internal Vector2 BoundAPosition => PartA.Position + BoundA.Offset;
 
-    internal Vector2 SurfaceNormal { get; set; }
+    internal Vector2 BoundBPosition => PartB.Position + BoundB.Offset;
+
+    internal Vector2[] CollisionPoints { get; init; }
+
+    internal Vector2 AverageCollisionPoint
+    {
+        get
+        {
+            Vector2 CollisionPoint = Vector2.Zero;
+
+            foreach (Vector2 Point in CollisionPoints)
+            {
+                CollisionPoint += Point;
+            }
+
+            return CollisionPoint / CollisionPoints.Length;
+        }
+    }
+
+    internal Vector2 SurfaceNormal { get; init; }
 }

@@ -5,6 +5,7 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHose.Game.World.Entities.Physical;
+using GardenHoseEngine.Frame;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -20,11 +21,27 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     // Internal fields.
     internal sealed override bool IsPhysical => true;
 
-    internal virtual Vector2 Position { get; set; }
+    internal virtual Vector2 Position
+    {
+        get => EntityPosition;
+        set
+        {
+            EntityPosition = value;
+            MainPart?.SetPositionAndRotation(Position, Rotation);
+        }
+    }
 
     internal virtual Vector2 Motion { get; set; }
 
-    internal virtual float Rotation { get; set; }
+    internal virtual float Rotation
+    {
+        get => EntityRotation;
+        set
+        {
+            EntityRotation = value;
+            MainPart?.SetPositionAndRotation(Position, Rotation);
+        }
+    }
 
     internal virtual float AngularMotion { get; set; }
 
@@ -70,10 +87,16 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         get => _mainpart;
         set
         {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             _mainpart = value;
             _cachedParts = null;
             _cachedMass = null;
             CreateBoundingBox();
+            _mainpart.SetPositionAndRotation(Position, Rotation);
         }
     }
 
@@ -123,17 +146,23 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal bool IsBoundingBoxDrawn { get; set; } = false;
 
-    internal event EventHandler<Vector2> Collision;
+    internal event EventHandler<Vector2>? Collision;
 
-    internal event EventHandler CollisionBoundChange;
+    internal event EventHandler? CollisionBoundChange;
 
-    internal event EventHandler ParentChange;
+    internal event EventHandler? ParentChange;
 
-    internal event EventHandler SubPartChange;
+    internal event EventHandler? SubPartChange;
+
+
+    // Protected fields.
+    protected Vector2 EntityPosition;
+    protected float EntityRotation;
 
 
     // Private fields.
     private PhysicalEntityPart _mainpart;
+
     private PhysicalEntityPart[]? _cachedParts = null;
     private float? _cachedMass = null;
 
@@ -203,12 +232,15 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Part related. */
-    internal void PartCollision(CollisionCase collisionCase) 
+    internal void PartCollision(CollisionCase collisionCase)
     {
-        Vector2 MotionHitAt = Motion - collisionCase.EntityB.Motion;
-
+        // Begin by pushing ->self<- out of the other entity.
         PushOutOfOtherEntity(collisionCase);
-        collisionCase.EntityB.Motion = Vector2.Reflect(Motion, collisionCase.SurfaceNormal);
+
+        // Stuff.
+        Vector2 MotionHitAt = Motion - collisionCase.EntityB.Motion;
+        //Motion = Vector2.Zero;
+        collisionCase.EntityB.Motion = Vector2.Reflect(collisionCase.EntityB.Motion, collisionCase.SurfaceNormal);
     }
 
     internal void PartCollisionBoundChange()
@@ -246,25 +278,79 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected virtual void FinalizeTickSimulation()
     {
-        Rotation += AngularMotion * World!.PassedTimeSeconds;
-        Position += Motion * World!.PassedTimeSeconds;
+        EntityRotation += AngularMotion * World!.PassedTimeSeconds;
+        EntityPosition += Motion * World!.PassedTimeSeconds;
+        MainPart.SetPositionAndRotation(Position, Rotation);
     }
 
     protected virtual void PushOutOfOtherEntity(CollisionCase collisionCase)
     {
-        if (collisionCase.BoundB.Type == CollisionBoundType.Ball)
+        // Prepare variables.
+        Vector2 PushOutDirection = GetPushOutDirection(collisionCase);
+        const int StepCount = 8;
+        const float FallBackStepDistance = 100f;
+
+        float StepDistance = (collisionCase.EntityA.Motion.Length() + collisionCase.EntityB.Motion.Length())
+            * GameFrameManager.PassedTimeSeconds;
+        if (StepDistance is 0f or -0f)
         {
-            PushOutOfBall(collisionCase, (BallCollisionBound)collisionCase.BoundB);
+            StepDistance = FallBackStepDistance;
         }
+
+        // First step.
+        EntityPosition += StepDistance * PushOutDirection;
+
+        // Consequent steps.
+        Vector2 ClosestPushOutPosition = EntityPosition;
+        bool IsColliding = false;
+
+        for (int Step = 0; Step < StepCount; Step++)
+        {
+            StepDistance *= 0.5f;
+            Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
+
+            var CollisionData = collisionCase.PartA.TestBoundAgainstBound(
+                collisionCase.BoundA, collisionCase.BoundB, collisionCase.PartB);
+            IsColliding = CollisionData != null;
+
+            if (!IsColliding)
+            {
+                ClosestPushOutPosition = EntityPosition;
+            }
+        }
+
+        // Update position.
+        Position = ClosestPushOutPosition;
     }
 
-    protected virtual void PushOutOfBall(CollisionCase collisionCase, BallCollisionBound ball)
+    protected Vector2 GetPushOutDirection(CollisionCase collisionCase)
     {
-        Vector2 Unit = Vector2.Normalize((collisionCase.PartB.Position + ball.Offset) 
-            - (collisionCase.PartA.Position + collisionCase.BoundA.Offset));
-        Vector2 NewPointLocation = Unit * ball.Radius;
-        
-        Position += ()
+        // Try self motion.
+        Vector2 Direction = -collisionCase.EntityA.Motion;
+
+        if (Direction.Length() is not 0f and not -0f)
+        {
+            return Vector2.Normalize(Direction);
+        }
+
+        // Try other entity's motion.
+        Direction = collisionCase.EntityB.Motion;
+
+        if (Direction.Length() is not 0f and not -0f)
+        {
+            return Vector2.Normalize(Direction);
+        }
+
+        // Try positions.
+        Direction = Vector2.Normalize(collisionCase.EntityA.Position - collisionCase.EntityB.Position);
+
+        if (Direction.Length() is not 0f and not -0f)
+        {
+            return Vector2.Normalize(Direction);
+        }
+
+        // Worst case: Make up random direction.
+        return Vector2.UnitX;
     }
 
 

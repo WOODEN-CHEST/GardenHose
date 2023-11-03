@@ -205,6 +205,35 @@ internal class PhysicalEntityPart
         }
     }
 
+    internal (Vector2[] points, Vector2 surfaceNormal)? TestBoundAgainstBound(ICollisionBound selfBound,
+        ICollisionBound targetBound, PhysicalEntityPart targetPart)
+    {
+        if (selfBound.Type == CollisionBoundType.Rectangle && targetBound.Type == CollisionBoundType.Rectangle)
+        {
+            return GetCollisionPointsRectToRect();
+        }
+        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Rectangle)
+        {
+            return GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound,
+                targetPart, (BallCollisionBound)selfBound, this);
+        }
+        else if (selfBound.Type == CollisionBoundType.Rectangle && targetBound.Type == CollisionBoundType.Ball)
+        {
+            return GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
+                this, (BallCollisionBound)targetBound, targetPart);
+        }
+        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Ball)
+        {
+            return GetCollisionPointsBallToBall();
+        }
+        else
+        {
+            throw new NotSupportedException("Unknown bound types, cannot test collision. " +
+               $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
+               $"Bound type 1: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
+        }
+    }
+
     /* Properties. */
     internal virtual void SetPositionAndRotation(Vector2 position, float rotation)
     {
@@ -284,24 +313,7 @@ internal class PhysicalEntityPart
 
             foreach (ICollisionBound TargetBound in TargetPart.CollisionBounds) // At this point it is a 4 layer deep foreach loop...
             {
-                if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Rectangle)
-                {
-                    CollisionData = GetCollisionPointsRectToRect();
-                }
-                else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Rectangle)
-                {
-                    CollisionData = GetCollisionPointsRectToBall((RectangleCollisionBound)TargetBound,
-                        TargetPart, (BallCollisionBound)selfBound, this);
-                }
-                else if (selfBound.Type == CollisionBoundType.Rectangle && TargetBound.Type == CollisionBoundType.Ball)
-                {
-                    CollisionData = GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
-                        this, (BallCollisionBound)TargetBound, TargetPart);
-                }
-                else if (selfBound.Type == CollisionBoundType.Ball && TargetBound.Type == CollisionBoundType.Ball)
-                {
-                    CollisionData = GetCollisionPointsBallToBall();
-                }
+                CollisionData = TestBoundAgainstBound(selfBound, TargetBound, TargetPart);
 
                 if (CollisionData == null)
                 {
@@ -339,7 +351,7 @@ internal class PhysicalEntityPart
         PhysicalEntityPart ballSourcePart)
     {
         // Prepare variables.
-        List<Vector2> CollisionPoints = null!;
+        List<Vector2> CollisionPoints = new();
         Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, CombinedRotation);
 
         Vector2 RectPosition = rectSourcePart.Position + rect.Offset;
@@ -356,69 +368,23 @@ internal class PhysicalEntityPart
             Vector2[] Points = Circle.GetIntersections(BallCircle, EdgeRay);
             if (Points.Length != 0)
             {
-                CollisionPoints ??= new();
-                CollisionPoints.AddRange(Points);
+                foreach (Vector2 Point in Points)
+                {
+                    if (Edge.IsPointInEdgeArea(Point))
+                    {
+                        CollisionPoints.Add(Point);
+                    }
+                }
             }
         }
 
-        if (CollisionPoints == null)
+        // Return intersection points.
+        if (CollisionPoints.Count == 0)
         {
             return null;
         }
 
         return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition- BallPosition));
-
-
-            // Find closest point so that a testable ray can be created.
-            float ClosestDistance = float.PositiveInfinity;
-        Vector2 ClosestVertex = Vector2.Zero;
-
-        foreach (Vector2 Vertex in Vertices)
-        {
-            float Distance = Vector2.Distance(BallPosition, Vertex);
-            if (Distance < ClosestDistance)
-            {
-                ClosestDistance = Distance;
-                ClosestVertex = Vertex;
-            }
-        }
-
-        Ray BallToRectRay = new(BallPosition, ClosestVertex);
-
-        /* Find collision points. This is done by getting rays from the edge vertices,
-         * then finding intersection points in said rays, then testing if the intersection 
-         * point is inside of the edge's limits. If so, a collision has occurred.*/
-        for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
-        {
-            Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
-            Ray EdgeRay = new(Edge);
-
-            Vector2? CollisionPoint = Ray.GetIntersection(EdgeRay, BallToRectRay);
-            if (CollisionPoint == null)
-            {
-                continue;
-            }
-
-            float MinX = Math.Min(Edge.StartVertex.X, Edge.EndVertex.X);
-            float MaxX = Math.Max(Edge.StartVertex.X, Edge.EndVertex.X);
-            float MinY = Math.Min(Edge.StartVertex.Y, Edge.EndVertex.Y);
-            float MaxY = Math.Max(Edge.StartVertex.Y, Edge.EndVertex.Y);
-
-            if (Vector2.Distance(BallPosition, CollisionPoint.Value) <= ball.Radius
-                && (MinX <= CollisionPoint.Value.X) && (CollisionPoint.Value.X <= MaxX)
-                && (MinY <= CollisionPoint.Value.Y) && (CollisionPoint.Value.Y <= MaxY))
-            {
-                CollisionPoints ??= new();
-                CollisionPoints.Add(CollisionPoint.Value);
-            }
-        }
-
-        if (CollisionPoints != null)
-        {
-            return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition - BallPosition));
-        }
-
-        return null;
     }
 
     protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsBallToBall()
