@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine.Frame;
+using System.Runtime.Intrinsics;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -23,10 +24,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal virtual Vector2 Position
     {
-        get => EntityPosition;
+        get => SelfPosition;
         set
         {
-            EntityPosition = value;
+            SelfPosition = value;
             MainPart?.SetPositionAndRotation(Position, Rotation);
         }
     }
@@ -35,10 +36,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal virtual float Rotation
     {
-        get => EntityRotation;
+        get => SelfRotation;
         set
         {
-            EntityRotation = value;
+            SelfRotation = value;
             MainPart?.SetPositionAndRotation(Position, Rotation);
         }
     }
@@ -156,8 +157,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Protected fields.
-    protected Vector2 EntityPosition;
-    protected float EntityRotation;
+    protected Vector2 SelfPosition;
+    protected float SelfRotation;
 
 
     // Private fields.
@@ -187,19 +188,28 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     /* Physics. */
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
-        // Scuffed code that weirdly calculates force and straight up discards some of it.
         float CurrentMass = Mass;
-        const float ROTATION_SANITY_MULTIPLIER = 0.02f; // Keep rotation from becoming ridiculous.
+        const float ROTATION_SANITY_MULTIPLIER = 0.2f; // Keep rotation from becoming ridiculous.
+        float TotalAppliedMotion = force.Length() / CurrentMass;
 
-        // Linear motion.
-        Motion += force / CurrentMass;
+        // Linear velocity.
+        float LinearVelocity = TotalAppliedMotion;
 
-        // Rotation.
+        // Rotational velocity.
         Vector2 LeverArm = location - Position;
         Vector2 LeverArmNorm = Vector2.Normalize(GHMath.PerpVectorClockwise(LeverArm));
-        float AppliedForce = Vector2.Dot(force, LeverArmNorm) * ROTATION_SANITY_MULTIPLIER;
+        float AppliedRotationalForce = Vector2.Dot(force, LeverArmNorm) * ROTATION_SANITY_MULTIPLIER;
+        float RotationalVelocity = AppliedRotationalForce / CurrentMass;
 
-        AngularMotion += AppliedForce / CurrentMass;
+        // Modify values so they make any sense (Conserve motion).
+        float TotalVelocity = LinearVelocity + Math.Abs(RotationalVelocity);
+        float LinearVelocityFactor = LinearVelocity / TotalVelocity;
+        float RotationalVelocityFactor = 1f - LinearVelocityFactor;
+
+        // Apply values.
+        Motion += (force / CurrentMass) * LinearVelocityFactor;
+        AngularMotion += RotationalVelocity * RotationalVelocityFactor;
+        
     }
 
     internal Vector2 GetAngularMotionAtPoint(Vector2 point)
@@ -234,13 +244,23 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     /* Part related. */
     internal void PartCollision(CollisionCase collisionCase)
     {
-        // Begin by pushing ->self<- out of the other entity.
+        // Begin by pushing self out of the other entity.
         PushOutOfOtherEntity(collisionCase);
 
         // Stuff.
-        Vector2 MotionHitAt = Motion - collisionCase.EntityB.Motion;
-        //Motion = Vector2.Zero;
-        collisionCase.EntityB.Motion = Vector2.Reflect(collisionCase.EntityB.Motion, collisionCase.SurfaceNormal);
+        Vector2 AvgCollisionPoint = collisionCase.AverageCollisionPoint;
+
+
+        //  Properties.
+        Vector2 SelfMotionHitAt = GetAngularMotionAtPoint(AvgCollisionPoint) + collisionCase.EntityA.Motion;
+        Vector2 OtherMotionHitAt = collisionCase.EntityB.GetAngularMotionAtPoint(AvgCollisionPoint)
+            + collisionCase.EntityB.Motion;
+
+        // Entity B.
+        Vector2 ForceEntityB = (-OtherMotionHitAt + SelfMotionHitAt) * collisionCase.EntityB.Mass;
+        ForceEntityB += collisionCase.SurfaceNormal * Math.Abs(Vector2.Dot(ForceEntityB, collisionCase.SurfaceNormal))
+            * collisionCase.PartB.MaterialInstance.Material.Elasticity;
+        collisionCase.EntityB.ApplyForce(ForceEntityB * 0.9f, AvgCollisionPoint);
     }
 
     internal void PartCollisionBoundChange()
@@ -278,8 +298,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected virtual void FinalizeTickSimulation()
     {
-        EntityRotation += AngularMotion * World!.PassedTimeSeconds;
-        EntityPosition += Motion * World!.PassedTimeSeconds;
+        SelfRotation += AngularMotion * World!.PassedTimeSeconds;
+        SelfPosition += Motion * World!.PassedTimeSeconds;
         MainPart.SetPositionAndRotation(Position, Rotation);
     }
 
@@ -288,20 +308,13 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         // Prepare variables.
         Vector2 PushOutDirection = GetPushOutDirection(collisionCase);
         const int StepCount = 8;
-        const float FallBackStepDistance = 100f;
-
-        float StepDistance = (collisionCase.EntityA.Motion.Length() + collisionCase.EntityB.Motion.Length())
-            * GameFrameManager.PassedTimeSeconds;
-        if (StepDistance is 0f or -0f)
-        {
-            StepDistance = FallBackStepDistance;
-        }
+        float StepDistance = 10f;
 
         // First step.
-        EntityPosition += StepDistance * PushOutDirection;
+        SelfPosition += StepDistance * PushOutDirection;
 
         // Consequent steps.
-        Vector2 ClosestPushOutPosition = EntityPosition;
+        Vector2 ClosestPushOutPosition = Position;
         bool IsColliding = false;
 
         for (int Step = 0; Step < StepCount; Step++)
@@ -315,7 +328,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
             if (!IsColliding)
             {
-                ClosestPushOutPosition = EntityPosition;
+                ClosestPushOutPosition = Position;
             }
         }
 
@@ -326,31 +339,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     protected Vector2 GetPushOutDirection(CollisionCase collisionCase)
     {
         // Try self motion.
-        Vector2 Direction = -collisionCase.EntityA.Motion;
+        Vector2 Direction = collisionCase.EntityA.Position - collisionCase.EntityB.Position;
 
-        if (Direction.Length() is not 0f and not -0f)
+        if (Direction.Length() is 0f or -0f)
         {
-            return Vector2.Normalize(Direction);
+            Direction = Vector2.One;
         }
 
-        // Try other entity's motion.
-        Direction = collisionCase.EntityB.Motion;
-
-        if (Direction.Length() is not 0f and not -0f)
-        {
-            return Vector2.Normalize(Direction);
-        }
-
-        // Try positions.
-        Direction = Vector2.Normalize(collisionCase.EntityA.Position - collisionCase.EntityB.Position);
-
-        if (Direction.Length() is not 0f and not -0f)
-        {
-            return Vector2.Normalize(Direction);
-        }
-
-        // Worst case: Make up random direction.
-        return Vector2.UnitX;
+        return Vector2.Normalize(Direction);
     }
 
 

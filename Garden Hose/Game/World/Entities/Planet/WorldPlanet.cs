@@ -126,41 +126,33 @@ internal partial class WorldPlanet : PhysicalEntity
     {
         // Prepare variables.
         Vector2 PushOutDirection = -GetPushOutDirection(collisionCase);
-        const int StepCount = 5;
-        const float FallBackStepDistance = 100f;
+        const int StepCount = 8;
+        float StepDistance = 10f;
 
-        float StepDistance = (collisionCase.EntityA.Motion.Length() + collisionCase.EntityB.Motion.Length())
-            * World!.PassedTimeSeconds;
-        if (StepDistance is 0f or -0f)
+        // First step.
+        collisionCase.EntityB.Position += StepDistance * PushOutDirection;
+
+        // Consequent steps.
+        Vector2 ClosestPushOutPosition = collisionCase.EntityB.Position;
+        bool IsColliding = false;
+
+        for (int Step = 0; Step < StepCount; Step++)
         {
-            StepDistance = FallBackStepDistance;
+            StepDistance *= 0.5f;
+            collisionCase.EntityB.Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
+
+            var CollisionData = collisionCase.PartA.TestBoundAgainstBound(
+                collisionCase.BoundA, collisionCase.BoundB, collisionCase.PartB);
+            IsColliding = CollisionData != null;
+
+            if (!IsColliding)
+            {
+                ClosestPushOutPosition = collisionCase.EntityB.Position;
+            }
         }
 
-        //// First step.
-        //collisionCase.EntityB.Position += StepDistance * PushOutDirection;
-
-        //// Consequent steps.
-        //Vector2 ClosestPushOutPosition = collisionCase.EntityB.Position;
-        //bool IsColliding = false;
-
-        //for (int Step = 0; Step < StepCount; Step++)
-        //{
-        //    StepDistance *= 0.5f;
-        //    collisionCase.EntityB.Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
-
-        //    var CollisionData = collisionCase.PartA.TestBoundAgainstBound(
-        //        collisionCase.BoundA, collisionCase.BoundB, collisionCase.PartB);
-        //    IsColliding = CollisionData != null;
-
-        //    if (!IsColliding)
-        //    {
-        //        ClosestPushOutPosition = collisionCase.EntityB.Position;
-        //    }
-        //}
-
         // Update position.
-        collisionCase.EntityB.Position += PushOutDirection * StepDistance;
-        //collisionCase.EntityB.Position = ClosestPushOutPosition;
+        collisionCase.EntityB.Position = ClosestPushOutPosition;
     }
 
 

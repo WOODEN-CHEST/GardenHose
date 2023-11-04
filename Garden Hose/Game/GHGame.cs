@@ -63,7 +63,7 @@ internal class GHGame
 
     private float _simulationSpeed = 1f;
     private float _passedTimeSeconds = 0f;
-    private const float MAXIMUM_PASSED_TIME_SECONDS = 0.05f;
+    private const float MAXIMUM_PASSED_TIME_SECONDS = 1f / 20f;
     private const float MINIMUM_PASSED_TIME_SECONDS = 1f / 20f;
 
 
