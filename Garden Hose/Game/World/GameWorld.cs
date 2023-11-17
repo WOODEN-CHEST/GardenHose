@@ -15,7 +15,7 @@ namespace GardenHose.Game.World;
 public class GameWorld : IIDProvider
 {
     // Internal fields.
-    internal WorldPlanet Planet { get; private set; }
+    internal WorldPlanet? Planet { get; private set; }
 
     internal IEnumerable<Entity> Entitites => _entities;
 

@@ -16,8 +16,8 @@ internal class WorldMaterial
         HeatTransferRate = 10f,
         MeltingPoint = 400f,
         BoilingPoint = 500f,
-        Elasticity = 0.2f,
-        FrictionCoefficient = 0.35f,
+        Friction = 0.85f,
+        Bounciness = 0.4f,
         Magnetism = 0f,
         Conductivity = 0f,
         Attraction = 0f
@@ -40,9 +40,9 @@ internal class WorldMaterial
 
     internal required float BoilingPoint { get; set; }
 
-    internal required float Elasticity { get; set; }
+    internal required float Friction { get; set; }
 
-    internal required float FrictionCoefficient { get; set; }
+    internal required float Bounciness { get; set; }
 
     internal required float Magnetism { get; set; }
 

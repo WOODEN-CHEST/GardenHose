@@ -11,5 +11,6 @@ public enum EntityType
     Unknown,
     Planet,
     Marker,
-    Test
+    Test,
+    Stray
 }

@@ -59,6 +59,8 @@ internal partial class WorldPlanet : PhysicalEntity
 
     internal float AtmosphereOpacity { get; set; } = 1f;
 
+    internal override float Mass => 5.972e24f;
+
 
     // Private fields.
     private bool _isLoaded = false;
@@ -119,7 +121,6 @@ internal partial class WorldPlanet : PhysicalEntity
         _isLoaded = true;
         UpdateAtmosphereScaling();
     }
-
 
     // Protected methods.
     protected override void PushOutOfOtherEntity(CollisionCase collisionCase) // Overrides to push other entity rather than self.

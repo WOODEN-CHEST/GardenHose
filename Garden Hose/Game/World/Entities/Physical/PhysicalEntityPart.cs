@@ -210,7 +210,7 @@ internal class PhysicalEntityPart
     {
         if (selfBound.Type == CollisionBoundType.Rectangle && targetBound.Type == CollisionBoundType.Rectangle)
         {
-            return GetCollisionPointsRectToRect();
+            return GetCollisionPointsRectToRect((RectangleCollisionBound)selfBound, (RectangleCollisionBound)targetBound, targetPart);
         }
         else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Rectangle)
         {
@@ -224,13 +224,13 @@ internal class PhysicalEntityPart
         }
         else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Ball)
         {
-            return GetCollisionPointsBallToBall();
+            return GetCollisionPointsBallToBall((BallCollisionBound)selfBound, (BallCollisionBound)targetBound, targetPart);
         }
         else
         {
             throw new NotSupportedException("Unknown bound types, cannot test collision. " +
                $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
-               $"Bound type 1: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
+               $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
         }
     }
 
@@ -337,11 +337,54 @@ internal class PhysicalEntityPart
         }
     }
 
-    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToRect()
+    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToRect(RectangleCollisionBound rect1,
+        RectangleCollisionBound rect2,
+        PhysicalEntityPart rect2SourcePart)
     {
-        // Get collision points.
+        // Prepare variables.
+        Vector2[] VerticesRect1 = rect1.GetVertices(Position, CombinedRotation);
+        Vector2[] VerticesRect2 = rect1.GetVertices(rect2SourcePart.Position, rect2SourcePart.CombinedRotation);
+        Edge[] rect2Edges = new Edge[]
+        {
+            new Edge(VerticesRect2[0], VerticesRect2[1]),
+            new Edge(VerticesRect2[1], VerticesRect2[2]),
+            new Edge(VerticesRect2[2], VerticesRect2[3]),
+            new Edge(VerticesRect2[3], VerticesRect2[0])
+        };
+        Ray[] rect2Rays = new Ray[]
+        {
+            new(rect2Edges[0]),
+            new(rect2Edges[1]),
+            new(rect2Edges[2]),
+            new(rect2Edges[3]),
+        };
+        List<Vector2> CollisionPoints = new();
 
-        throw new NotImplementedException();
+        // Find collision points.
+        for (int EdgeIndex1 = 0; EdgeIndex1 < VerticesRect1.Length; EdgeIndex1++)
+        {
+            Edge PrimaryEdge = new Edge(VerticesRect1[EdgeIndex1], VerticesRect1[(EdgeIndex1 + 1) % VerticesRect1.Length]);
+            Ray PrimaryEdgeRay = new Ray(PrimaryEdge);
+
+            for (int EdgeIndex2 = 0; EdgeIndex2 < rect2Rays.Length; EdgeIndex2++)
+            {
+                Vector2? CollisionPoint = Ray.GetIntersection(PrimaryEdgeRay, rect2Rays[EdgeIndex2]);
+
+                if  (CollisionPoint != null 
+                    && PrimaryEdge.IsPointInEdgeArea(CollisionPoint.Value)
+                    && rect2Edges[EdgeIndex2].IsPointInEdgeArea(CollisionPoint.Value))
+                {
+                    CollisionPoints.Add(CollisionPoint.Value);
+                }
+            }
+        }
+
+        // Return intersection points.
+        if (CollisionPoints.Count == 0)
+        {
+            return null;
+        }
+        return (CollisionPoints.ToArray(), Vector2.Normalize((rect2SourcePart.Position + rect2.Offset) - (Position + rect1.Offset)));
     }
 
     protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToBall(
@@ -387,8 +430,23 @@ internal class PhysicalEntityPart
         return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition- BallPosition));
     }
 
-    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsBallToBall()
+    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsBallToBall(BallCollisionBound ball1,
+        BallCollisionBound ball2,
+        PhysicalEntityPart ball2SourcePart
+        )
     {
-        throw new NotImplementedException();
+        // Prepare variables.
+        Circle PrimaryCircle = new(ball1.Radius, Position + ball1.Offset);
+        Circle SecondaryCircle = new(ball2.Radius, ball2SourcePart.Position + ball2.Offset);
+
+        // Find collision points.
+        Vector2[] CollisionPoints = Circle.GetIntersections(PrimaryCircle, SecondaryCircle);
+
+        if (CollisionPoints.Length == 0)
+        {
+            return null;
+        }
+
+        return (CollisionPoints, Vector2.Normalize((ball2SourcePart.Position + ball2.Offset) - (Position + ball1.Offset)));
     }
 }

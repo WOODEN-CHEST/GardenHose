@@ -36,7 +36,7 @@ internal class InGameFrame : GameFrame
             Planet = WorldPlanet.TestPlanet,
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(700f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0.25f }
+                new TestEntity() { Position = new Vector2(700f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0f },
             },
             Background = new(BackgroundImage.Default)
             {
@@ -94,7 +94,7 @@ internal class InGameFrame : GameFrame
             },
             Keys.R));
 
-        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.OnPress,
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(this, KeyCondition.WhileDown,
             (sender, args) =>
             {
                 Game.World.CameraCenter = Game.World.GetEntity<PhysicalEntity>(2uL)!.Position;

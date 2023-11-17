@@ -32,7 +32,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    internal virtual Vector2 Motion { get; set; }
+    internal virtual Vector2 Motion { get; set; } = Vector2.Zero;
 
     internal virtual float Rotation
     {
@@ -188,28 +188,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     /* Physics. */
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
-        float CurrentMass = Mass;
-        const float ROTATION_SANITY_MULTIPLIER = 0.2f; // Keep rotation from becoming ridiculous.
-        float TotalAppliedMotion = force.Length() / CurrentMass;
+        // Linear.
+        Vector2 LinearAcceleration = force / Mass;
 
-        // Linear velocity.
-        float LinearVelocity = TotalAppliedMotion;
+        // Rotational.
+        Vector2 LeverArm = Vector2.Normalize(location - Position);
+        Vector2 LeverArmNormal = GHMath.PerpVectorClockwise(LeverArm);
+        float DistanceFromCenter = Vector2.Distance(Position, location);
+        float AppliedTorque = Vector2.Dot(force, LeverArmNormal) * DistanceFromCenter;
+        float MomentOfInertia = Vector2.DistanceSquared(Position, location) * Mass;
+        float AngularAcceleration = AppliedTorque / MomentOfInertia;
 
-        // Rotational velocity.
-        Vector2 LeverArm = location - Position;
-        Vector2 LeverArmNorm = Vector2.Normalize(GHMath.PerpVectorClockwise(LeverArm));
-        float AppliedRotationalForce = Vector2.Dot(force, LeverArmNorm) * ROTATION_SANITY_MULTIPLIER;
-        float RotationalVelocity = AppliedRotationalForce / CurrentMass;
-
-        // Modify values so they make any sense (Conserve motion).
-        float TotalVelocity = LinearVelocity + Math.Abs(RotationalVelocity);
-        float LinearVelocityFactor = LinearVelocity / TotalVelocity;
-        float RotationalVelocityFactor = 1f - LinearVelocityFactor;
-
-        // Apply values.
-        Motion += (force / CurrentMass) * LinearVelocityFactor;
-        AngularMotion += RotationalVelocity * RotationalVelocityFactor;
-        
+        // Apply.
+        Motion += LinearAcceleration;
+        AngularMotion += AngularAcceleration; 
     }
 
     internal Vector2 GetAngularMotionAtPoint(Vector2 point)
@@ -242,7 +234,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Part related. */
-    internal void PartCollision(CollisionCase collisionCase)
+    internal virtual void PartCollision(CollisionCase collisionCase)
     {
         // Begin by pushing self out of the other entity.
         PushOutOfOtherEntity(collisionCase);
@@ -251,32 +243,59 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Vector2 AvgCollisionPoint = collisionCase.AverageCollisionPoint;
 
 
-        //  Properties.
-        Vector2 SelfMotionHitAt = GetAngularMotionAtPoint(AvgCollisionPoint) + collisionCase.EntityA.Motion;
-        Vector2 OtherMotionHitAt = collisionCase.EntityB.GetAngularMotionAtPoint(AvgCollisionPoint)
-            + collisionCase.EntityB.Motion;
+        // Get motion.
+        Vector2 AngularMotionA = collisionCase.EntityA.GetAngularMotionAtPoint(AvgCollisionPoint);
+        Vector2 AngularMotionB = collisionCase.EntityB.GetAngularMotionAtPoint(AvgCollisionPoint);
 
-        // Entity B.
-        Vector2 ForceEntityB = (-OtherMotionHitAt + SelfMotionHitAt) * collisionCase.EntityB.Mass;
-        ForceEntityB += collisionCase.SurfaceNormal * Math.Abs(Vector2.Dot(ForceEntityB, collisionCase.SurfaceNormal))
-            * collisionCase.PartB.MaterialInstance.Material.Elasticity;
-        collisionCase.EntityB.ApplyForce(ForceEntityB * 0.9f, AvgCollisionPoint);
+        // Multiply by 0.5 so physics are more stable.
+        Vector2 EntityAMotionAtPoint = AngularMotionA * 0.5f + collisionCase.EntityA.Motion;
+        Vector2 EntityBMotionAtPoint = AngularMotionB * 0.5f + collisionCase.EntityB.Motion;
+
+        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
+        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
+        // So here I just stole some formula from online and I don't know how it works (Since my calculations give different results)
+
+        Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
+        float EntityAAlignedY = Vector2.Dot(EntityAMotionAtPoint, collisionCase.SurfaceNormal);
+        float EntityBAlignedY = Vector2.Dot(EntityBMotionAtPoint, collisionCase.SurfaceNormal);
+        float EntityAAlignedX = Vector2.Dot(EntityAMotionAtPoint, Surface);
+        float EntityBAlignedX = Vector2.Dot(EntityBMotionAtPoint, Surface);
+
+        float CombinedBounciness = (collisionCase.PartA.MaterialInstance.Material.Bounciness
+            + collisionCase.PartB.MaterialInstance.Material.Bounciness) / 2f;
+        float CombinedFrictionCoef = (collisionCase.PartA.MaterialInstance.Material.Friction
+            + collisionCase.PartB.MaterialInstance.Material.Friction) / 2f;
+
+
+        (float MotionYA, float MotionYB) = CalculateSpeedOnAxis(EntityAAlignedY, collisionCase.EntityA.Mass,
+            EntityBAlignedY, collisionCase.EntityB.Mass, CombinedBounciness);
+
+        Vector2 NewEntityAMotion = (collisionCase.SurfaceNormal * MotionYA) + (Surface * EntityAAlignedX * CombinedFrictionCoef);
+        Vector2 NewEntityBMotion = (collisionCase.SurfaceNormal * MotionYB) + (Surface * EntityBAlignedX * CombinedFrictionCoef);
+
+        Vector2 ForceEntityA = collisionCase.EntityA.Mass * (NewEntityAMotion - EntityAMotionAtPoint);
+        Vector2 ForceEntityB = collisionCase.EntityB.Mass * (NewEntityBMotion - EntityBMotionAtPoint);
+
+
+        // Apply forces.
+        collisionCase.EntityA.ApplyForce(ForceEntityA, AvgCollisionPoint);
+        collisionCase.EntityB.ApplyForce(ForceEntityB, AvgCollisionPoint);
     }
 
-    internal void PartCollisionBoundChange()
+    internal virtual void PartCollisionBoundChange()
     {
         _cachedMass = null;
         CreateBoundingBox();
     }
 
-    internal void PartChange()
+    internal virtual void PartChange()
     {
         _cachedParts = null;
         _cachedMass = null;
         CreateBoundingBox();
     }
 
-    internal void PartLinkDistanceChange()
+    internal virtual void PartLinkDistanceChange()
     {
         CreateBoundingBox();
     }
@@ -291,6 +310,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         AttractionStrength = float.IsFinite(AttractionStrength) ? AttractionStrength : 0f;
 
         Vector2 AddedMotion = -Vector2.Normalize(Position - World.Planet.Position);
+        AddedMotion.X = float.IsFinite(AddedMotion.X) ? AddedMotion.X : 0f;
+        AddedMotion.Y = float.IsFinite(AddedMotion.Y) ? AddedMotion.Y : 0f;
+
         AddedMotion *= AttractionStrength;
 
         Motion += AddedMotion;
@@ -336,7 +358,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position = ClosestPushOutPosition;
     }
 
-    protected Vector2 GetPushOutDirection(CollisionCase collisionCase)
+    protected virtual Vector2 GetPushOutDirection(CollisionCase collisionCase)
     {
         // Try self motion.
         Vector2 Direction = collisionCase.EntityA.Position - collisionCase.EntityB.Position;
@@ -347,6 +369,13 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
 
         return Vector2.Normalize(Direction);
+    }
+
+    protected (float v1f, float v2f) CalculateSpeedOnAxis(float v1, float m1, float v2, float m2, float cor)
+    {
+        float V1f = (m1 * v1 + m2 * v2 + m2*(v2 - v1)) / (m1 + m2) * cor;
+        float V2f = (m1 * v1 + m2 * v2 + m1*(v1 - v2)) / (m1 + m2) * cor;
+        return (V1f, V2f);
     }
 
 
@@ -363,7 +392,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    protected void DrawMotion()
+    protected virtual void DrawMotion()
     {
         ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
         ICollisionBound.VisualLine.Mask = Color.Green;
@@ -372,7 +401,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         ICollisionBound.VisualLine.Draw();
     }
 
-    protected void DrawCenterOfMass()
+    protected virtual void DrawCenterOfMass()
     {
         ICollisionBound.VisualLine.Thickness = 10f * World!.Zoom;
         ICollisionBound.VisualLine.Mask = Color.Yellow;
@@ -381,7 +410,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         ICollisionBound.VisualLine.Draw();
     }
 
-    protected void DrawBoundingBox()
+    protected virtual void DrawBoundingBox()
     {
         ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
         ICollisionBound.VisualLine.Mask = Color.Khaki;
@@ -398,7 +427,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     /* Bounding box. */
-    protected void CreateBoundingBox()
+    protected virtual void CreateBoundingBox()
     {
         if (MainPart == null)
         {
@@ -445,14 +474,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
             foreach (ICollisionBound Bound in Part.CollisionBounds)
             {
-                Points.AddRange(GetCollisionBoundPoints(Part, Bound, PartPosition));
+                Points.AddRange(GetCollisionBoundPoints(Bound, PartPosition));
             }
         }
 
         return Points;
     }
 
-    private Vector2[] GetCollisionBoundPoints(PhysicalEntityPart part, ICollisionBound bound, Vector2 partPosition)
+    private Vector2[] GetCollisionBoundPoints(ICollisionBound bound, Vector2 partPosition)
     {
         Vector2 BoundPosition = partPosition + bound.Offset;
 
@@ -500,10 +529,12 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     // Inherited methods.
     internal override void Tick()
     {
-        SimulatePhysicsPlanet();
+        if (World!.Planet != null)
+        {
+            SimulatePhysicsPlanet();
+        }
         FinalizeTickSimulation();
 
-        MainPart.SetPositionAndRotation(Position, Rotation);
         MainPart.Tick();
     }
 

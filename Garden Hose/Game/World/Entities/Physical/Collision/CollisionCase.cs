@@ -41,5 +41,20 @@ internal record class CollisionCase
         }
     }
 
-    internal Vector2 SurfaceNormal { get; init; }
+    internal Vector2 SurfaceNormal
+    {
+        get => _surfaceNormal;
+        init
+        {
+            _surfaceNormal = value;
+            if (!float.IsFinite(_surfaceNormal.LengthSquared()))
+            {
+                _surfaceNormal = Vector2.One;
+            }
+        }
+    }
+
+
+    // Private fields.
+    private Vector2 _surfaceNormal;
 }
