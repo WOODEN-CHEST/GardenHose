@@ -66,6 +66,15 @@ internal class GHGameAssetManager
         get => _planetClouds5 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds5");
     }
 
+    /* Particles. */
+    internal SpriteAnimation ParticleTest
+    {
+        get => _particleTest ??= new SpriteAnimation(4f, _parentFrame, Origin.Center, 
+            "game/particles/test/0", "game/particles/test/1", "game/particles/test/2", "game/particles/test/3",
+            "game/particles/test/4", "game/particles/test/5", "game/particles/test/6", "game/particles/test/7",
+            "game/particles/test/8", "game/particles/test/9");
+    }
+
 
     /* Background. */
     internal SpriteAnimation BackgroundDefault
@@ -103,6 +112,9 @@ internal class GHGameAssetManager
     private SpriteAnimation? _planetClouds3;
     private SpriteAnimation? _planetClouds4;
     private SpriteAnimation? _planetClouds5;
+
+    /* Particles. */
+    private SpriteAnimation? _particleTest;
 
     /* Background. */
     private SpriteAnimation? _backgroundDefault;

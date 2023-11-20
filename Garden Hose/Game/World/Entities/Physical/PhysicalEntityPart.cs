@@ -9,11 +9,13 @@ using System.Collections.Generic;
 namespace GardenHose.Game.World.Entities;
 
 
-internal class PhysicalEntityPart
+internal abstract class PhysicalEntityPart
 {
     // Fields.
-    internal bool IsMainPart => ParentLink == null;
+    internal virtual PhysicalEntity Entity { get; init; }
 
+
+    /* Part properties. */
     internal virtual Vector2 Position { get; private set; }
 
     internal virtual float SelfRotation
@@ -48,8 +50,10 @@ internal class PhysicalEntityPart
         }
     }
 
-    public virtual float Temperature => MaterialInstance.Temperature;
+    internal virtual bool IsInvulnerable { get; set; } = false;
 
+
+    /* Collision bounds and parts. */
     internal virtual ICollisionBound[]? CollisionBounds
     {
         get => _collisionBounds;
@@ -62,10 +66,12 @@ internal class PhysicalEntityPart
 
             _collisionBounds = value;
 
-            Entity.PartCollisionBoundChange();
+            Entity.OnPartCollisionBoundChange();
             CollisionBoundChange?.Invoke(this, _collisionBounds);
         }
     }
+
+    internal bool IsMainPart => ParentLink == null;
 
     internal virtual PartLink[]? SubPartLinks { get; private set; } = null;
 
@@ -81,15 +87,16 @@ internal class PhysicalEntityPart
 
             _parentLink = value;
 
-            Entity.PartChange();
+            Entity.OnPartChange();
             ParentChange?.Invoke(this, _parentLink);
         }
     }
 
-    internal virtual PhysicalEntity Entity { get; init; }
-
+    /* Material. */
     internal virtual WorldMaterialInstance MaterialInstance { get; set; }
 
+
+    /* Events. */
     internal event EventHandler<Vector2>? Collision;
 
     internal event EventHandler<ICollisionBound[]?>? CollisionBoundChange;
@@ -97,6 +104,10 @@ internal class PhysicalEntityPart
     internal event EventHandler<PartLink?>? ParentChange;
 
     internal event EventHandler<PartLink[]?>? SubPartChange;
+
+    internal event EventHandler<PhysicalEntityPart>? PartDamage;
+
+    internal event EventHandler<PhysicalEntityPart>? PartBreak;
 
 
     // Private fields.
@@ -107,10 +118,16 @@ internal class PhysicalEntityPart
 
 
     // Constructors.
-    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, WorldMaterial material, PhysicalEntity entity)
+    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, WorldMaterial material, PhysicalEntity entity)
         : this(collisionBounds, material.CreateInstance(), entity) { }
 
-    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, 
+    internal PhysicalEntityPart(WorldMaterial material, PhysicalEntity entity)
+        : this(null, material, entity) { }
+
+    internal PhysicalEntityPart(WorldMaterialInstance material, PhysicalEntity entity)
+        : this(null, material, entity) { }
+
+    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, 
         WorldMaterialInstance material,
         PhysicalEntity entity)
     {
@@ -118,6 +135,8 @@ internal class PhysicalEntityPart
         CollisionBounds = collisionBounds;
         MaterialInstance = material;
     }
+
+    
 
 
     // Internal methods.
@@ -144,7 +163,7 @@ internal class PhysicalEntityPart
 
         part.ParentLink = Link;
 
-        Entity.PartChange();
+        Entity.OnPartChange();
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 
@@ -173,7 +192,7 @@ internal class PhysicalEntityPart
 
         SubPartLinks = Links.Count == 0 ? null : Links.ToArray();
 
-        Entity.PartChange();
+        Entity.OnPartChange();
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 
@@ -192,17 +211,19 @@ internal class PhysicalEntityPart
     }
 
     /* Collision. */
-    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
+    internal virtual CollisionCase[] TestCollisionAgainstEntity(PhysicalEntity entity)
     {
         if (CollisionBounds == null)
         {
-            return;
+            return Array.Empty<CollisionCase>();
         }
 
         foreach (ICollisionBound CollisionBound in CollisionBounds)
         {
-            TestBoundAgainstEntity(this, CollisionBound, entity);
+            return TestBoundAgainstEntity(this, CollisionBound, entity);
         }
+
+        return Array.Empty<CollisionCase>();
     }
 
     internal (Vector2[] points, Vector2 surfaceNormal)? TestBoundAgainstBound(ICollisionBound selfBound,
@@ -231,6 +252,33 @@ internal class PhysicalEntityPart
             throw new NotSupportedException("Unknown bound types, cannot test collision. " +
                $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
                $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
+        }
+    }
+
+    internal virtual void ApplyForce(Vector2 location, float forceAmount)
+    {
+        const float SOUND_FORCE_DOWNSCALE = 0.7f;
+        if (forceAmount >= (MaterialInstance.Material.Resistance * SOUND_FORCE_DOWNSCALE))
+        {
+
+        }
+
+        if (forceAmount >= MaterialInstance.Material.Resistance && !IsInvulnerable)
+        {
+            MaterialInstance.CurrentStrength -= forceAmount;
+
+            if (MaterialInstance.Stage == WorldMaterialStage.Destroyed)
+            {
+                Entity.OnPartBreak();
+                PartBreak?.Invoke(this, this);
+                OnBreakPart();
+            }
+            else
+            {
+                Entity.OnPartDamage();
+                PartDamage?.Invoke(this, this);
+                OnPartDamage();
+            }
         }
     }
 
@@ -269,13 +317,9 @@ internal class PhysicalEntityPart
         }
     }
 
-    internal virtual void Draw(bool drawCollisionBounds)
+    /* Drawing. */
+    internal virtual void Draw()
     {
-        if (drawCollisionBounds && (_collisionBounds != null))
-        {
-            DrawCollisionBounds();
-        }
-
         if (SubPartLinks == null)
         {
             return;
@@ -283,12 +327,17 @@ internal class PhysicalEntityPart
 
         foreach (PartLink Link in SubPartLinks)
         {
-            Link.LinkedPart.Draw(drawCollisionBounds);
+            Link.LinkedPart.Draw();
         }
     }
 
     internal virtual void DrawCollisionBounds()
     {
+        if (CollisionBounds == null)
+        {
+            return;
+        }
+
         foreach (ICollisionBound Bound in CollisionBounds!)
         {
             Bound.Draw(Position, CombinedRotation, Entity.World!);
@@ -298,15 +347,17 @@ internal class PhysicalEntityPart
 
     // Protected methods.
     /* Collision. */
-    protected virtual void TestBoundAgainstEntity(PhysicalEntityPart selfPart,
+    protected virtual CollisionCase[] TestBoundAgainstEntity(PhysicalEntityPart selfPart,
         ICollisionBound selfBound,
         PhysicalEntity targetEntity)
     {
+        List<CollisionCase> CollisionCases = new();
+
         foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
         {
             if (TargetPart.CollisionBounds == null)
             {
-                return;
+                return CollisionCases.ToArray();
             }
 
             (Vector2[] points, Vector2 surfaceNormal)? CollisionData = null;
@@ -332,9 +383,11 @@ internal class PhysicalEntityPart
                     SurfaceNormal = CollisionData.Value.surfaceNormal
                 };
 
-                Entity.PartCollision(Case);
+                CollisionCases.Add(Case);
             }
         }
+
+        return CollisionCases.ToArray();
     }
 
     protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToRect(RectangleCollisionBound rect1,
@@ -449,4 +502,10 @@ internal class PhysicalEntityPart
 
         return (CollisionPoints, Vector2.Normalize((ball2SourcePart.Position + ball2.Offset) - (Position + ball1.Offset)));
     }
+
+
+    /* Parts. */
+    protected abstract void OnPartDamage();
+
+    protected abstract void OnBreakPart();
 }

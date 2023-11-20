@@ -10,8 +10,8 @@ internal class WorldMaterial
     internal static WorldMaterial Test { get; } = new()
     {
         Density = 0.1f,
-        Strength = 500f,
-        Resistance = 100f,
+        Strength = 80_000f,
+        Resistance = 3000f,
         HeatCapacity = 10f,
         HeatTransferRate = 10f,
         MeltingPoint = 400f,

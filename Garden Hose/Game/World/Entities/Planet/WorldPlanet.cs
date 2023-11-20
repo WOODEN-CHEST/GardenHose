@@ -85,7 +85,6 @@ internal partial class WorldPlanet : PhysicalEntity
         GameWorld? world = null) 
         : base(EntityType.Planet, world)
     {
-        IsBoundingBoxDrawn = true;
         Radius = Math.Max(0, radius);
         RadiusSquared = Radius * Radius;
         Attraction = attraction;
@@ -97,11 +96,6 @@ internal partial class WorldPlanet : PhysicalEntity
 
 
     // Internal methods.
-    internal override void Delete()
-    {
-        throw new NotImplementedException();
-    }
-
     internal override void Load(GHGameAssetManager assetManager)
     {
         foreach (PlanetTexture Overlay in Textures)
@@ -198,13 +192,10 @@ internal partial class WorldPlanet : PhysicalEntity
             DrawPlanet();
         }
 
-        if (IsBoundingBoxDrawn)
-        {
-            DrawBoundingBox();
-        }
+        base.Draw();
     }
 
-    internal override void ApplyForce(Vector2 force, Vector2 location) { }
+    internal override void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null) { }
 
     internal override void Tick() { }
 }

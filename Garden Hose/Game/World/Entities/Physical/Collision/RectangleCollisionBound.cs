@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine.Frame.Item.Basic;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
 using System.Runtime.InteropServices.Marshalling;
@@ -81,8 +82,8 @@ internal struct RectangleCollisionBound : ICollisionBound
     // Inherited methods.
     public void Draw(Vector2 position, float rotation, GameWorld world)
     {
-        ICollisionBound.VisualLine.Mask = Color.Red;
-        ICollisionBound.VisualLine.Thickness = 3f * world.Zoom;
+        Display.SharedLine.Mask = Color.Red;
+        Display.SharedLine.Thickness = 3f * world.Zoom;
 
         Vector2[] Vertices = GetVertices(position, rotation);
 
@@ -91,17 +92,17 @@ internal struct RectangleCollisionBound : ICollisionBound
         Vertices[2] = Vertices[2] * world.Zoom + world.ObjectVisualOffset;
         Vertices[3] = Vertices[3] * world.Zoom + world.ObjectVisualOffset;
 
-        ICollisionBound.VisualLine.Set(Vertices[0], Vertices[1]);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Set(Vertices[0], Vertices[1]);
+        Display.SharedLine.Draw();
 
-        ICollisionBound.VisualLine.Set(Vertices[1], Vertices[2]);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Set(Vertices[1], Vertices[2]);
+        Display.SharedLine.Draw();
 
-        ICollisionBound.VisualLine.Set(Vertices[2], Vertices[3]);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Set(Vertices[2], Vertices[3]);
+        Display.SharedLine.Draw();
 
-        ICollisionBound.VisualLine.Set(Vertices[3], Vertices[0]);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Set(Vertices[3], Vertices[0]);
+        Display.SharedLine.Draw();
     }
 
     public float GetArea()

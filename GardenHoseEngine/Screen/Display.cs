@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
 using GardenHoseEngine.Engine;
+using GardenHoseEngine.Frame;
+using GardenHoseEngine.Frame.Item.Basic;
 
 namespace GardenHoseEngine.Screen;
 
@@ -12,7 +14,13 @@ public static class Display
     // Fields.
     public static GraphicsDeviceManager GraphicsManager { get; set; }
 
-    public static Texture2D SinglePixel { get; set; }
+    public static Texture2D SinglePixel { get; internal set; }
+
+    public static Line SharedLine
+    {
+        get => s_sharedLine;
+        set => s_sharedLine = value;
+    }
 
 
     public static readonly Vector2 MinimumWindowSize = new(144f, 80f);
@@ -31,7 +39,7 @@ public static class Display
 
     public static Vector2 FullScreenSize
     {
-        get => _fullScreenSize;
+        get => s_fullScreenSize;
         set
         {
             if (IsFullScreen)
@@ -40,14 +48,14 @@ public static class Display
             }
             else
             {
-                _fullScreenSize = ValidateScreenSize(value);
+                s_fullScreenSize = ValidateScreenSize(value);
             }
         }
     }
 
     public static Vector2 WindowedSize
     {
-        get => _windowedSize;
+        get => s_windowedSize;
         set
         {
             if (!IsFullScreen)
@@ -56,7 +64,7 @@ public static class Display
             }
             else
             {
-                _windowedSize = ValidateScreenSize(value);
+                s_windowedSize = ValidateScreenSize(value);
             }
         }
     }
@@ -87,13 +95,23 @@ public static class Display
 
     public static float InverseItemScale { get; private set; }
 
+    public static float FPS { get; private set; }
 
     public static event EventHandler? DisplayChanged;
 
 
-    // Private fields.
-    private static Vector2 _windowedSize;
-    private static Vector2 _fullScreenSize;
+    // Private static fields.
+    private static Vector2 s_windowedSize;
+    private static Vector2 s_fullScreenSize;
+
+    [ThreadStatic]
+    private static Line s_sharedLine;
+
+    /* Info. */
+    private static float _infoUpdateRequiredTime = 0.5f; // 0.5 seconds.
+    private static float _timeSinceUpdate = 0f;
+    private static int _infoUpdatesReceived = 0;
+    private static float _totalFPSOverUpdates = 0;
 
 
     // Static methods.
@@ -129,6 +147,25 @@ public static class Display
         else IsFullScreen = !IsFullScreen;
     }
 
+    internal static void Update()
+    {
+        _infoUpdatesReceived++;
+        _timeSinceUpdate += GameFrameManager.PassedTimeSeconds;
+        _totalFPSOverUpdates += (1f / GameFrameManager.PassedTimeSeconds);
+
+        if (_timeSinceUpdate <= _infoUpdateRequiredTime)
+        {
+            return;
+        }
+
+
+        FPS = _totalFPSOverUpdates / _infoUpdatesReceived;
+
+        _timeSinceUpdate = 0f;
+        _infoUpdatesReceived = 0;
+        _totalFPSOverUpdates = 0f;
+    }
+
 
     // Private static methods.
     private static void SetDisplay(Vector2 newSize, bool isFullScreen)
@@ -148,11 +185,11 @@ public static class Display
         // Update size info.
         if (IsFullScreen)
         {
-            _fullScreenSize = WindowSize;
+            s_fullScreenSize = WindowSize;
         }
         else
         {
-            _windowedSize = WindowSize;
+            s_windowedSize = WindowSize;
         }
 
         // Calculate properties.

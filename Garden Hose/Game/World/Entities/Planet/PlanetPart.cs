@@ -13,9 +13,16 @@ internal class PlanetPart : PhysicalEntityPart
     internal PlanetPart(float radius, 
         WorldMaterial material, 
         PhysicalEntity entity) : base(new ICollisionBound[] { new BallCollisionBound(radius) }, material, entity)
-    { }
+
+    {
+        IsInvulnerable = true;
+    }
 
 
     // Inherited methods.
     internal override void Tick() { }
+
+    protected override void OnBreakPart() { }
+
+    protected override void OnPartDamage() { }
 }

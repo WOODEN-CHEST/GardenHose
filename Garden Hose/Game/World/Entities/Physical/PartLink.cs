@@ -22,7 +22,7 @@ internal class PartLink
         set
         {
             _linkDistance = value;
-            Entity.PartLinkDistanceChange();
+            Entity.OnPartLinkDistanceChange();
         }
     }
 

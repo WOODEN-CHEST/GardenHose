@@ -3,6 +3,13 @@ using GardenHose.Game.World;
 using GardenHoseEngine.Frame;
 using GardenHose.Frames.InGame;
 using GardenHose.Game.AssetManager;
+using GardenHoseEngine.IO;
+using Microsoft.Xna.Framework.Input;
+using GardenHoseEngine.Frame.Item.Text;
+using GardenHose.Frames.Global;
+using GardenHoseEngine.Screen;
+using GardenHoseEngine;
+using System.Diagnostics;
 
 namespace GardenHose.Game;
 
@@ -54,10 +61,22 @@ internal class GHGame
 
     internal bool IsRunningSlowly { get; private set; } = false;
 
+    internal float UpdateTime { get; private set; } = 0f;
+
     internal GameBackground Background { get; private init; }
 
 
     // Private fields.
+    private bool _isDebugTextEnabled = false;
+    private bool _areEntityOverlaysEnabled = false;
+    private bool _toggledDebugOption = false;
+
+    private float _timeSinceInfoUpdate = 0f;
+    private float _totalUpdateTime = 0f;
+    private int _infoUpdateCount = 0;
+    private const float INFO_UPDATE_TIME = 0.5f; // 0.5 seconds.
+
+
     /* Ticking. */
     private bool _isPaused = false;
 
@@ -65,6 +84,12 @@ internal class GHGame
     private float _passedTimeSeconds = 0f;
     private const float MAXIMUM_PASSED_TIME_SECONDS = 1f / 20;
     private const float MINIMUM_PASSED_TIME_SECONDS = 1f / 400f;
+
+
+    /* Input listening. */
+    private IInputListener _debugToggleListener;
+    private IInputListener _entityOverlayToggleListener;
+    private SimpleTextBox _debugText = new(GlobalFrame.GeEichFont, "") { Origin = Origin.TopLeft, IsShadowEnabled = true };
 
 
     // Constructors.
@@ -87,28 +112,35 @@ internal class GHGame
 
 
     // Private methods.
-    private void CreateBackground()
+    private void OnDebugToggleEvent(object? sender, EventArgs args)
     {
-
-    }
-
-
-    // Inherited methods.
-    internal void OnStart()
-    {
-        if (IsRunning) return;
-
-        IsRunning = true;
-        World.Start();
-    }
-
-    internal void Update()
-    {
-        if (!IsRunning)
+        if (_toggledDebugOption)
         {
+            _toggledDebugOption = false;
             return;
         }
 
+        _isDebugTextEnabled = !_isDebugTextEnabled;
+        if (_isDebugTextEnabled)
+        {
+            UILayer.AddDrawableItem(_debugText);
+        }
+        else
+        {
+            UILayer.RemoveDrawableItem(_debugText);
+        }
+    }
+
+    private void OnOverlaysToggleEvent(object? sender, EventArgs args)
+    {
+        _toggledDebugOption = true;
+        _areEntityOverlaysEnabled = !_areEntityOverlaysEnabled;
+
+        World.IsDebugInfoEnabled = !World.IsDebugInfoEnabled;
+    }
+
+    private void UpdateGame()
+    {
         /* Non-tick dependent things. */
         Background.Update();
 
@@ -128,8 +160,56 @@ internal class GHGame
         _passedTimeSeconds *= SimulationSpeed;
 
         World.PassedTimeSeconds = _passedTimeSeconds;
+
         World.Tick();
         _passedTimeSeconds = 0f;
+    }
+
+    // Inherited methods.
+    internal void OnStart()
+    {
+        if (IsRunning) return;
+
+        _debugToggleListener = KeyboardListenerCreator.SingleKey(this, KeyCondition.OnRelease, OnDebugToggleEvent, Keys.F3);
+        UserInput.AddListener(_debugToggleListener);
+        _entityOverlayToggleListener = KeyboardListenerCreator.Shortcut(this, KeyCondition.OnPress, OnOverlaysToggleEvent, Keys.F3, Keys.G);
+        UserInput.AddListener(_entityOverlayToggleListener);
+
+        IsRunning = true;
+        World.Start();
+    }
+
+    internal void Update()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        Stopwatch UpdateTimeMeasurer = Stopwatch.StartNew();
+        UpdateGame();
+        UpdateTimeMeasurer.Stop();
+
+        _timeSinceInfoUpdate += GameFrameManager.PassedTimeSeconds;
+        _totalUpdateTime += (float)UpdateTimeMeasurer.Elapsed.TotalMilliseconds;
+        _infoUpdateCount++;
+        if (_timeSinceInfoUpdate > INFO_UPDATE_TIME)
+        {
+            UpdateTime = _totalUpdateTime / _infoUpdateCount;
+            if (!float.IsFinite(UpdateTime))
+            {
+                UpdateTime = 0f;
+            }
+            _infoUpdateCount = 0;
+            _totalUpdateTime = 0f;
+            _timeSinceInfoUpdate = 0f;
+        }
+
+        if (_isDebugTextEnabled)
+        {
+            _debugText.Text = $"FPS: {Display.FPS}" +
+                $"\nTick Time: {UpdateTime}ms";
+        }
     }
 
     internal void OnEnd()
@@ -138,6 +218,9 @@ internal class GHGame
         {
             return;
         }
+
+        _debugToggleListener.StopListening();
+        _entityOverlayToggleListener.StopListening();
 
         World.End();
         IsRunning = false;

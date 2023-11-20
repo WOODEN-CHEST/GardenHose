@@ -1,5 +1,4 @@
-﻿using GardenHoseEngine;
-using GardenHoseEngine.Audio;
+﻿using GardenHoseEngine.Audio;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
@@ -34,6 +33,7 @@ public partial class GHEngineGame : Game
         Display.FullScreenSize = Display.ScreenSize;
         Display.SinglePixel = new(Display.GraphicsManager.GraphicsDevice, 1, 1);
         Display.SinglePixel.SetData(new Color[] { Color.White });
+        Display.SharedLine = new();
         Window.ClientSizeChanged += Display.OnWindowSizeChangeByUserEvent;
         UserInput.AddListener(KeyboardListenerCreator.SingleKey(null, KeyCondition.OnPress,
             Display.OnUserToggleFullscreenEvent, Keys.F11));
@@ -65,7 +65,7 @@ public partial class GHEngineGame : Game
     {
         UserInput.ListenForInput(IsActive);
         GameFrameManager.UpdateFrames((float)gameTime.ElapsedGameTime.TotalSeconds);
-
+        Display.Update();
     }
 
     protected override void Draw(GameTime gameTime)

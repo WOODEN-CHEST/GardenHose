@@ -25,7 +25,7 @@ internal sealed class WorldMaterialInstance
             _currentStrength = Math.Clamp(value, 0f, Material.Strength);
 
             const float STAGE_COUNT = 4f;
-            Stage = (WorldMaterialStage)MathF.Ceiling(_currentStrength / (Material.Strength / STAGE_COUNT));
+            Stage = (WorldMaterialStage)(STAGE_COUNT - MathF.Ceiling(_currentStrength / (Material.Strength / STAGE_COUNT)));
         }
     }
 

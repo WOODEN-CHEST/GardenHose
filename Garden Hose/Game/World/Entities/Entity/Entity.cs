@@ -36,7 +36,10 @@ internal abstract class Entity
 
     internal abstract void Load(GHGameAssetManager assetManager);
 
-    internal abstract void Delete();
+    internal virtual void Delete()
+    {
+        World?.RemoveEntity(this);
+    }
 
 
     // Inherited methods.

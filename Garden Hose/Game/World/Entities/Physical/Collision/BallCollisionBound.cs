@@ -28,6 +28,8 @@ internal struct BallCollisionBound : ICollisionBound
     // Inherited methods.
     public void Draw(Vector2 position, float rotation, GameWorld world)
     {
+        position += Offset;
+
 
     }
 

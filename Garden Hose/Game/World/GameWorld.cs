@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.World.Entities;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Screen;
@@ -17,7 +18,7 @@ public class GameWorld : IIDProvider
     // Internal fields.
     internal WorldPlanet? Planet { get; private set; }
 
-    internal IEnumerable<Entity> Entitites => _entities;
+    internal IEnumerable<Entity> Entities => _livingEntities.Concat(_entitiesCreated);
 
     internal IEnumerable<Entity> EntitiesCreated => _entitiesCreated;
 
@@ -49,13 +50,24 @@ public class GameWorld : IIDProvider
 
     internal float PassedTimeSeconds { get; set; }
 
+    internal bool IsDebugInfoEnabled
+    {
+        get => _isDebugInfoEnabled;
+        set
+        {
+            _isDebugInfoEnabled = value;
+            UpdateDebugInfoVisibility();
+        }
+    }
+
 
     // Private fields
+    /* Layers. */
     private readonly ILayer _bottomLayer;
     private readonly ILayer _topLayer;
 
     /* Entities. */
-    private readonly List<Entity> _entities = new(); // For reasons decided to store entities in list instead of dictionary.
+    private readonly List<Entity> _livingEntities = new(); // For reasons decided to store entities in list instead of dictionary.
     private readonly List<Entity> _entitiesCreated = new();
     private readonly List<Entity> _entitiesRemoved = new();
 
@@ -65,6 +77,9 @@ public class GameWorld : IIDProvider
     /* Camera. */
     private Vector2 _cameraCenter;
     private float _zoom = 1f;
+
+    /* Debug. */
+    private bool _isDebugInfoEnabled = false;
 
 
     // Constructors.
@@ -99,7 +114,7 @@ public class GameWorld : IIDProvider
         {
             foreach (Entity WorldEntity in _entitiesCreated)
             {
-                _entities.Add(WorldEntity);
+                _livingEntities.Add(WorldEntity);
 
                 if (WorldEntity.IsPhysical)
                 {
@@ -113,18 +128,23 @@ public class GameWorld : IIDProvider
         {
             foreach (Entity WorldEntity in _entitiesRemoved)
             {
-                _entities.Remove(WorldEntity);
+                _livingEntities.Remove(WorldEntity);
 
                 if (WorldEntity.IsPhysical)
                 {
-                    _physicalEntities.Remove((PhysicalEntity)WorldEntity);
+                    PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
+                    _physicalEntities.Remove(PhysicalWorldEntity);
+                    _topLayer.RemoveDrawableItem(PhysicalWorldEntity);
+                    _bottomLayer.RemoveDrawableItem(PhysicalWorldEntity);
                 }
+
+                
             }
             _entitiesRemoved.Clear();
         }
 
         // Tick entities.
-        foreach (Entity WorldEntity in _entities)
+        foreach (Entity WorldEntity in _livingEntities)
         {
             WorldEntity.Tick();
         }
@@ -134,7 +154,16 @@ public class GameWorld : IIDProvider
         {
             for (int SecondIndex = FirstIndex + 1; SecondIndex < _physicalEntities.Count; SecondIndex++)
             {
-                _physicalEntities[FirstIndex].TestCollisionAgainstEntity(_physicalEntities[SecondIndex]);
+                if (!_physicalEntities[FirstIndex].TestCollisionAgainstEntity(
+                    _physicalEntities[SecondIndex], out CollisionCase[] collisions))
+                {
+                    continue;
+                }
+
+                foreach (CollisionCase Case in collisions)
+                {
+
+                }
             }
         }
     }
@@ -166,6 +195,7 @@ public class GameWorld : IIDProvider
                 throw new EnumValueException(nameof(DrawableEntity.DrawLayer), nameof(DrawLayer),
                     DrawableEntity.DrawLayer.ToString(), (int)DrawableEntity.DrawLayer);
             }
+            DrawableEntity.IsDebugInfoDrawn = IsDebugInfoEnabled;
         }
 
         // Load entity's assets.
@@ -184,7 +214,7 @@ public class GameWorld : IIDProvider
     {
         Entity? WorldEntity = null;
 
-        foreach (Entity AddedEntity in _entities)
+        foreach (Entity AddedEntity in _livingEntities)
         {
             if (AddedEntity.ID == id)
             {
@@ -207,6 +237,7 @@ public class GameWorld : IIDProvider
 
         return WorldEntity as EntityType;
     }
+
 
     /* Camera. */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -237,6 +268,14 @@ public class GameWorld : IIDProvider
         foreach (var Entity in settings.StartingEntities)
         {
             AddEntity(Entity);
+        }
+    }
+
+    private void UpdateDebugInfoVisibility()
+    {
+        foreach (PhysicalEntity WorldEntity in _physicalEntities)
+        {
+            WorldEntity.IsDebugInfoDrawn = IsDebugInfoEnabled;
         }
     }
 

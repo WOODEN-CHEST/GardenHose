@@ -35,7 +35,14 @@ public static class UserInput
 
 
     // Methods.
-    public static void AddListener(IInputListener listener) => s_listeners.Add(listener);
+    public static void AddListener(IInputListener listener)
+    {
+        if (listener == null)
+        {
+            throw new ArgumentNullException(nameof(listener));
+        }
+        s_listeners.Add(listener);
+    }
 
     public static void RemoveListener(IInputListener listener) => s_listeners.Remove(listener);
 

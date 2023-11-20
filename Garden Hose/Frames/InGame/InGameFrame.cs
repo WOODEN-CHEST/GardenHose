@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using GardenHose.Game.Background;
+using System.Collections.Generic;
 
 namespace GardenHose.Frames.InGame;
 
@@ -36,7 +37,7 @@ internal class InGameFrame : GameFrame
             Planet = WorldPlanet.TestPlanet,
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(700f, 0f), Motion = new Vector2(0f, 0f), Rotation = MathF.PI * 0f },
+                new TestEntity() { Position = new Vector2(0f, 700f) }
             },
             Background = new(BackgroundImage.Default)
             {

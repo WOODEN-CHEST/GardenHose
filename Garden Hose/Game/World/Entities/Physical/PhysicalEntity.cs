@@ -5,8 +5,7 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHose.Game.World.Entities.Physical;
-using GardenHoseEngine.Frame;
-using System.Runtime.Intrinsics;
+using GardenHoseEngine.Screen;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -22,6 +21,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     // Internal fields.
     internal sealed override bool IsPhysical => true;
 
+
+    /* Entity properties. */
     internal virtual Vector2 Position
     {
         get => SelfPosition;
@@ -83,6 +84,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
+    internal bool IsPushableInCollisions { get; set; } = true;
+
+
+    /* Parts. */
     internal virtual PhysicalEntityPart MainPart
     {
         get => _mainpart;
@@ -137,16 +142,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal virtual float BoundingLength { get; private set; }
 
+
+    /* Drawing. */
     internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
 
-    internal bool AreCollisionBoundsDrawn { get; set; } = false;
+    internal bool IsDebugInfoDrawn { get; set; } = false;
 
-    internal bool IsMotionDrawn { get; set; } = false;
 
-    internal bool IsCenterOfMassDrawn { get; set; } = false;
-
-    internal bool IsBoundingBoxDrawn { get; set; } = false;
-
+    /* Events. */
     internal event EventHandler<Vector2>? Collision;
 
     internal event EventHandler? CollisionBoundChange;
@@ -186,7 +189,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal Methods.
     /* Physics. */
-    internal virtual void ApplyForce(Vector2 force, Vector2 location)
+    internal virtual void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null)
     {
         // Linear.
         Vector2 LinearAcceleration = force / Mass;
@@ -194,7 +197,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         // Rotational.
         Vector2 LeverArm = Vector2.Normalize(location - Position);
         Vector2 LeverArmNormal = GHMath.PerpVectorClockwise(LeverArm);
-        float DistanceFromCenter = Vector2.Distance(Position, location);
+        float DistanceFromCenter = Vector2.Distance(CenterOfMass, location);
         float AppliedTorque = Vector2.Dot(force, LeverArmNormal) * DistanceFromCenter;
         float MomentOfInertia = Vector2.DistanceSquared(Position, location) * Mass;
         float AngularAcceleration = AppliedTorque / MomentOfInertia;
@@ -217,24 +220,30 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     /* Collision. */
-    internal virtual void TestCollisionAgainstEntity(PhysicalEntity entity)
+    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[] collisions)
     {
+        collisions = Array.Empty<CollisionCase>();
+
         // Test bounding circles.
         if (Vector2.Distance(Position, entity.Position) > (BoundingLength + entity.BoundingLength))
         {
-            return;
+            return false;
         }
 
         // Test parts against entity.
         foreach (PhysicalEntityPart SelfPart in Parts)
         {
-            SelfPart.TestCollisionAgainstEntity(entity);
+            collisions = SelfPart.TestCollisionAgainstEntity(entity);
         }
+
+        return collisions.Length > 0;
     }
 
-
-    /* Part related. */
-    internal virtual void PartCollision(CollisionCase collisionCase)
+    internal virtual void OnCollision(PhysicalEntity otherEntity,
+        PhysicalEntityPart otherPart,
+        ICollisionBound selfBound,
+        ICollisionBound otherBound,
+        Vector2 surfaceNormal)
     {
         // Begin by pushing self out of the other entity.
         PushOutOfOtherEntity(collisionCase);
@@ -278,57 +287,16 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
         // Apply forces.
-        collisionCase.EntityA.ApplyForce(ForceEntityA, AvgCollisionPoint);
-        collisionCase.EntityB.ApplyForce(ForceEntityB, AvgCollisionPoint);
+        collisionCase.EntityA.ApplyForce(ForceEntityA, AvgCollisionPoint, collisionCase.PartA);
+        collisionCase.PartA.ApplyForce(AvgCollisionPoint, ForceEntityA.Length());
+        collisionCase.EntityB.ApplyForce(ForceEntityB, AvgCollisionPoint, collisionCase.PartB);
+        collisionCase.PartB.ApplyForce(AvgCollisionPoint, ForceEntityB.Length());
     }
 
-    internal virtual void PartCollisionBoundChange()
-    {
-        _cachedMass = null;
-        CreateBoundingBox();
-    }
-
-    internal virtual void PartChange()
-    {
-        _cachedParts = null;
-        _cachedMass = null;
-        CreateBoundingBox();
-    }
-
-    internal virtual void PartLinkDistanceChange()
-    {
-        CreateBoundingBox();
-    }
-
-
-    // Protected methods.
-    /* Physics. */
-    protected virtual void SimulatePhysicsPlanet()
-    {
-        float AttractionStrength = (World!.Planet.Radius / Vector2.Distance(Position, World.Planet.Position))
-            * World.Planet.Attraction * World!.PassedTimeSeconds;
-        AttractionStrength = float.IsFinite(AttractionStrength) ? AttractionStrength : 0f;
-
-        Vector2 AddedMotion = -Vector2.Normalize(Position - World.Planet.Position);
-        AddedMotion.X = float.IsFinite(AddedMotion.X) ? AddedMotion.X : 0f;
-        AddedMotion.Y = float.IsFinite(AddedMotion.Y) ? AddedMotion.Y : 0f;
-
-        AddedMotion *= AttractionStrength;
-
-        Motion += AddedMotion;
-    }
-
-    protected virtual void FinalizeTickSimulation()
-    {
-        SelfRotation += AngularMotion * World!.PassedTimeSeconds;
-        SelfPosition += Motion * World!.PassedTimeSeconds;
-        MainPart.SetPositionAndRotation(Position, Rotation);
-    }
-
-    protected virtual void PushOutOfOtherEntity(CollisionCase collisionCase)
+    internal virtual void PushOutOfOtherEntity(ICollisionBound selfBound, ICollisionBound otherbound, PhysicalEntity otherEntity)
     {
         // Prepare variables.
-        Vector2 PushOutDirection = GetPushOutDirection(collisionCase);
+        Vector2 PushOutDirection = GetPushOutDirection(otherEntity);
         const int StepCount = 8;
         float StepDistance = 10f;
 
@@ -358,14 +326,65 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position = ClosestPushOutPosition;
     }
 
-    protected virtual Vector2 GetPushOutDirection(CollisionCase collisionCase)
+
+    /* Part events. */
+    internal virtual void OnPartCollisionBoundChange()
+    {
+        _cachedMass = null;
+        CreateBoundingBox();
+    }
+
+    internal virtual void OnPartChange()
+    {
+        _cachedParts = null;
+        _cachedMass = null;
+        CreateBoundingBox();
+    }
+
+    internal virtual void OnPartLinkDistanceChange()
+    {
+        CreateBoundingBox();
+    }
+
+    internal virtual void OnPartDamage() { }
+
+    internal virtual void OnPartBreak() { }
+
+
+    // Protected methods.
+    /* Physics. */
+    protected virtual void SimulatePhysicsPlanet()
+    {
+        float AttractionStrength = (World!.Planet!.Radius / Vector2.Distance(Position, World.Planet.Position))
+            * World.Planet.Attraction * World!.PassedTimeSeconds;
+        AttractionStrength = float.IsFinite(AttractionStrength) ? AttractionStrength : 0f;
+
+        Vector2 AddedMotion = -Vector2.Normalize(Position - World.Planet.Position);
+        AddedMotion.X = float.IsFinite(AddedMotion.X) ? AddedMotion.X : 0f;
+        AddedMotion.Y = float.IsFinite(AddedMotion.Y) ? AddedMotion.Y : 0f;
+
+        AddedMotion *= AttractionStrength;
+
+        Motion += AddedMotion;
+    }
+
+    protected virtual void FinalizeTickSimulation()
+    {
+        SelfRotation += AngularMotion * World!.PassedTimeSeconds;
+        SelfPosition += Motion * World!.PassedTimeSeconds;
+        MainPart.SetPositionAndRotation(Position, Rotation);
+    }
+
+
+    /* Collision. */
+    protected virtual Vector2 GetPushOutDirection(PhysicalEntity otherEntity)
     {
         // Try self motion.
-        Vector2 Direction = collisionCase.EntityA.Position - collisionCase.EntityB.Position;
+        Vector2 Direction = Position - otherEntity.Position;
 
         if (Direction.Length() is 0f or -0f)
         {
-            Direction = Vector2.One;
+            Direction = Vector2.UnitX;
         }
 
         return Vector2.Normalize(Direction);
@@ -379,8 +398,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
 
-    /* Other */
-    protected virtual void DrawCollisionBounds()
+    // Private methods.
+    /* Drawing */
+    private void DrawHitboxes()
     {
         if (MainPart == null) return;
 
@@ -392,42 +412,43 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    protected virtual void DrawMotion()
+    private void DrawMotion()
     {
-        ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
-        ICollisionBound.VisualLine.Mask = Color.Green;
-        ICollisionBound.VisualLine.Set(Position * World!.Zoom + World.ObjectVisualOffset,
+        Display.SharedLine.Thickness = 5f * World!.Zoom;
+        Display.SharedLine.Mask = Color.Green;
+        Display.SharedLine.Set(Position * World!.Zoom + World.ObjectVisualOffset,
             (Position + Motion / 2f) * World.Zoom + World.ObjectVisualOffset);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Draw();
     }
 
-    protected virtual void DrawCenterOfMass()
+    private void DrawCenterOfMass()
     {
-        ICollisionBound.VisualLine.Thickness = 10f * World!.Zoom;
-        ICollisionBound.VisualLine.Mask = Color.Yellow;
-        ICollisionBound.VisualLine.Set((CenterOfMass - new Vector2(5f, 0f)) * World.Zoom + World.ObjectVisualOffset, 
-            ICollisionBound.VisualLine.Thickness, 0f);
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Thickness = 10f * World!.Zoom;
+        Display.SharedLine.Mask = Color.Yellow;
+        Display.SharedLine.Set((CenterOfMass - new Vector2(5f, 0f)) * World.Zoom + World.ObjectVisualOffset,
+            Display.SharedLine.Thickness, 0f);
+        Display.SharedLine.Draw();
     }
 
-    protected virtual void DrawBoundingBox()
+    private void DrawBoundingBox()
     {
-        ICollisionBound.VisualLine.Thickness = 5f * World!.Zoom;
-        ICollisionBound.VisualLine.Mask = Color.Khaki;
+        Display.SharedLine.Thickness = 5f * World!.Zoom;
+        Display.SharedLine.Mask = Color.Khaki;
 
-        ICollisionBound.VisualLine.Set(
+        Display.SharedLine.Set(
             World.ToViewportPosition(Position + new Vector2(-BoundingLength, 0f)),
             World.ToViewportPosition(Position + new Vector2(BoundingLength, 0f)));
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Draw();
 
-        ICollisionBound.VisualLine.Set(
+        Display.SharedLine.Set(
             World.ToViewportPosition(Position + new Vector2(0f, -BoundingLength)),
             World.ToViewportPosition(Position + new Vector2(0f, BoundingLength)));
-        ICollisionBound.VisualLine.Draw();
+        Display.SharedLine.Draw();
     }
 
-    /* Bounding box. */
-    protected virtual void CreateBoundingBox()
+
+    /* Collision. */
+    private void CreateBoundingBox()
     {
         if (MainPart == null)
         {
@@ -453,8 +474,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         BoundingLength = FurthestPoint!.Value.Length();
     }
 
-
-    // Private methods.
     private List<Vector2> GetAllPointsInCollisionBounds()
     {
         List<Vector2> Points = new();
@@ -542,19 +561,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         if (IsVisible)
         {
-            MainPart.Draw(AreCollisionBoundsDrawn);
+            MainPart.Draw();
         }
-        if (IsMotionDrawn)
-        {
-            DrawMotion();
-        }
-        if (IsCenterOfMassDrawn)
-        {
-            DrawCenterOfMass();
-        }
-        if (IsBoundingBoxDrawn)
+        if (IsDebugInfoDrawn)
         {
             DrawBoundingBox();
+            DrawHitboxes();
+            DrawMotion();
+            DrawCenterOfMass();
         }
     }
 }
