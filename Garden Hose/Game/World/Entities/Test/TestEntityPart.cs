@@ -27,22 +27,22 @@ internal class TestEntityPart : PhysicalEntityPart
 
     protected override void OnPartDamage()
     {
-        //ParticleSettings Settings = new(WorldMaterial.Test, () => Entity!.World!.Game.AssetManager.ParticleTest)
-        //{
-        //    CountMin = 8,
-        //    CountMax = 16,
+        ParticleSettings Settings = new(WorldMaterial.Test, () => Entity!.World!.Game.AssetManager.ParticleTest)
+        {
+            CountMin = 4,
+            CountMax = 8,
 
-        //    Lifetime = 6f,
-        //    RandomLifetimeBonus = 3f,
+            Lifetime = 6f,
+            RandomLifetimeBonus = 3f,
 
-        //    Motion = Entity.Motion,
-        //    RandomMotionBonus = 20f,
-        //    MotionDirectionRandomness = MathF.PI / 4f,
-        //    Position = Position,
-        //    Scale = 0.3f,
-        //    RandomScaleBonus = 0.125f,
-        //};
+            Motion = Entity.Motion,
+            RandomMotionBonus = 20f,
+            MotionDirectionRandomness = MathF.PI / 4f,
+            Position = Position,
+            Scale = 0.3f,
+            RandomScaleBonus = 0.125f,
+        };
 
-        //ParticleEntity.CreateParticles(Entity.World!, Settings);
+        ParticleEntity.CreateParticles(Entity.World!, Settings);
     }
 }

@@ -208,7 +208,8 @@ internal class GHGame
         if (_isDebugTextEnabled)
         {
             _debugText.Text = $"FPS: {Display.FPS}" +
-                $"\nTick Time: {UpdateTime}ms";
+                $"\nTick Time: {UpdateTime}ms" +
+                $"\nEntity Count: {World.EntityCount}";
         }
     }
 

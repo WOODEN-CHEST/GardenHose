@@ -37,4 +37,6 @@ internal struct BallCollisionBound : ICollisionBound
     {
         return Radius * Radius * MathF.PI;
     }
+
+    public float GetRadius() => Radius;
 }

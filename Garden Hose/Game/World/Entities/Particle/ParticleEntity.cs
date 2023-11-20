@@ -91,11 +91,15 @@ internal class ParticleEntity : PhysicalEntity
         Part.Sprite.Scale.Vector = new(_particleScale);
     }
 
-    internal override void OnPartCollision(CollisionCase collisionCase)
+    internal override void OnCollision(PhysicalEntity otherEntity,
+        PhysicalEntityPart selfPart,
+        PhysicalEntityPart otherPart,
+        ICollisionBound selfBound,
+        ICollisionBound otherBound,
+        Vector2 surfaceNormal,
+        Vector2 collisionPoint)
     {
-        if (IsKilledByPlanets && 
-            (collisionCase.EntityA.EntityType == EntityType.Planet
-            || collisionCase.EntityB.EntityType == EntityType.Planet))
+        if (IsKilledByPlanets && otherEntity.EntityType == EntityType.Planet)
         {
             Delete();
         }

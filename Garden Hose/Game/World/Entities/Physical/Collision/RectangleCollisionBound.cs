@@ -109,4 +109,9 @@ internal struct RectangleCollisionBound : ICollisionBound
     {
         return Size.X * Size.Y;
     }
+
+    public float GetRadius()
+    {
+        return MathF.Sqrt((Size.X * Size.X) + (Size.Y *  Size.Y));
+    }
 }

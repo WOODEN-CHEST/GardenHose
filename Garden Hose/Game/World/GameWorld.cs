@@ -5,10 +5,13 @@ using GardenHoseEngine.Frame;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GardenHose.Game.World;
 
@@ -17,6 +20,8 @@ public class GameWorld : IIDProvider
 {
     // Internal fields.
     internal WorldPlanet? Planet { get; private set; }
+
+    internal int EntityCount => _livingEntities.Count + _entitiesCreated.Count;
 
     internal IEnumerable<Entity> Entities => _livingEntities.Concat(_entitiesCreated);
 
@@ -81,6 +86,19 @@ public class GameWorld : IIDProvider
     /* Debug. */
     private bool _isDebugInfoEnabled = false;
 
+    /* Collision. */
+    private const int THREAD_COUNT = 10;
+    private readonly AutoResetEvent[] _startFireEvent = new AutoResetEvent[THREAD_COUNT];
+    private readonly AutoResetEvent[] _endFireEvent = new AutoResetEvent[THREAD_COUNT];
+    private readonly Range[] _entityHandlingRanges =new Range[THREAD_COUNT];
+    private readonly CancellationTokenSource _threadCanellationSource = new();
+
+    private ConcurrentQueue<CollisionCase[]> _collisionCases = new();
+    private const int WORLD_PART_SIZE = 256;
+    private const int WORLD_PART_COUNT = 16;
+    private readonly List<PhysicalEntity>[,] _worldParts = new List<PhysicalEntity>[WORLD_PART_COUNT, WORLD_PART_COUNT];
+    
+
 
     // Constructors.
     internal GameWorld(GHGame game, ILayer bottomLayer, ILayer topLayer, GameWorldSettings settings)
@@ -91,6 +109,14 @@ public class GameWorld : IIDProvider
         _bottomLayer = bottomLayer ?? throw new ArgumentNullException(nameof(bottomLayer));
         _topLayer = topLayer ?? throw new ArgumentNullException(nameof(topLayer));
 
+        for (int i = 0; i < WORLD_PART_COUNT; i++)
+        {
+            for (int j = 0; j < WORLD_PART_COUNT; j++)
+            {
+                _worldParts[i, j] = new();
+            }
+        }
+
         ReadStartupSettings(settings);
     }
 
@@ -99,12 +125,23 @@ public class GameWorld : IIDProvider
     /* Flow control. */
     internal void Start()
     {
-
+        for (int i = 0; i < THREAD_COUNT; i++)
+        {
+            int ThreadID = i;
+            _startFireEvent[i] = new(false);
+            _endFireEvent[i] = new(false);
+            Task.Factory.StartNew(() => CollisionTestTask(ThreadID, _threadCanellationSource.Token), TaskCreationOptions.LongRunning);
+        }
     }
 
     internal void End()
     {
-
+        _threadCanellationSource.Cancel();
+        for (int i = 0; i < THREAD_COUNT; i++)
+        {
+            _startFireEvent[i].Set();
+        }
+        WaitForAllThreads();
     }
 
     internal void Tick()
@@ -144,28 +181,26 @@ public class GameWorld : IIDProvider
         }
 
         // Tick entities.
+        foreach (List<PhysicalEntity> EntityCollection in _worldParts)
+        {
+            EntityCollection.Clear();
+        }
+
         foreach (Entity WorldEntity in _livingEntities)
         {
             WorldEntity.Tick();
         }
 
         // Test collision for physical entities.
-        for (int FirstIndex = 0; FirstIndex < _physicalEntities.Count; FirstIndex++)
+        DivideEntitiesAmongThreads();
+        FireAllThreads();
+        WaitForAllThreads();
+
+        foreach (var CaseCollection in _collisionCases)
         {
-            for (int SecondIndex = FirstIndex + 1; SecondIndex < _physicalEntities.Count; SecondIndex++)
-            {
-                if (!_physicalEntities[FirstIndex].TestCollisionAgainstEntity(
-                    _physicalEntities[SecondIndex], out CollisionCase[] collisions))
-                {
-                    continue;
-                }
-
-                foreach (CollisionCase Case in collisions)
-                {
-
-                }
-            }
+            HandleEntityCollisionCases(CaseCollection);
         }
+        _collisionCases.Clear();
     }
 
     /* Entities. */
@@ -247,6 +282,26 @@ public class GameWorld : IIDProvider
     }
 
 
+    /* Collision. */
+    internal void AddPhysicalEntityToWorldPart(PhysicalEntity entity)
+    {
+        int HALF_WORLD_PART_COUNT = WORLD_PART_COUNT / 2;
+        int LowerX = Math.Max(0, (int)(entity.Position.X - entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
+        int LowerY = Math.Max(0, (int)(entity.Position.Y - entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
+
+        int UpperX = Math.Min(WORLD_PART_COUNT - 1, (int)(entity.Position.X + entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
+        int UpperY = Math.Min(WORLD_PART_COUNT - 1, (int)(entity.Position.Y + entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
+
+        for (int i = LowerX; i <= UpperX; i++)
+        {
+            for (int j = LowerY; j <= UpperY; j++)
+            {
+                _worldParts[i,j].Add(entity);
+            }
+        }
+    }
+
+
     // Private methods.
     [MemberNotNull(nameof(Planet))]
     private void ReadStartupSettings(GameWorldSettings settings)
@@ -276,6 +331,104 @@ public class GameWorld : IIDProvider
         foreach (PhysicalEntity WorldEntity in _physicalEntities)
         {
             WorldEntity.IsDebugInfoDrawn = IsDebugInfoEnabled;
+        }
+    }
+
+    private void HandleEntityCollisionCases(CollisionCase[] collisionCases)
+    {
+        foreach (CollisionCase Case in collisionCases)
+        {
+            if (Case.EntityA.Mass > Case.EntityB.Mass)
+            {
+                Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
+            }
+            else
+            {
+                Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
+            }
+
+            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
+                Case.BoundB, Case.SurfaceNormal, Case.AverageCollisionPoint);
+            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
+                Case.BoundA, Case.SurfaceNormal, Case.AverageCollisionPoint);
+
+        }
+    }
+
+    /* Collision threads. */
+    private void FireAllThreads()
+    {
+        foreach (AutoResetEvent Event in _startFireEvent)
+        {
+            Event.Set();    
+        }
+    }
+
+    private void WaitForAllThreads()
+    {
+        foreach (AutoResetEvent Event in _endFireEvent)
+        {
+            Event.WaitOne(2000);
+        }
+    }
+
+    private void DivideEntitiesAmongThreads()
+    {
+        int EntitiesPerThread = Math.Max(1, _livingEntities.Count / THREAD_COUNT);
+        int LeftoverEntities = Math.Max(0, _livingEntities.Count - (EntitiesPerThread * THREAD_COUNT));
+        int ThreadIndex;
+        int EntityIndex;
+
+        // First thread.
+        EntityIndex = EntitiesPerThread + LeftoverEntities;
+        _entityHandlingRanges[0] = new(0, EntityIndex);
+
+        // Remaining threads.
+        for (ThreadIndex = 1; (ThreadIndex < THREAD_COUNT); ThreadIndex++)
+        {
+            int UpperRange = Math.Min(EntityIndex + EntitiesPerThread, _livingEntities.Count);
+            _entityHandlingRanges[ThreadIndex] = new(EntityIndex, UpperRange);
+            EntityIndex = UpperRange;
+        }
+    }
+
+    private void CollisionTestTask(int assignedID, CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                _startFireEvent[assignedID].WaitOne();
+                if (token.IsCancellationRequested)
+                {
+                    _endFireEvent[assignedID].Set();
+                    return;
+                }
+
+                TestCollisionInRange(_entityHandlingRanges[assignedID]);
+                _endFireEvent[assignedID].Set();
+            }
+        }
+        catch (Exception e)
+        {
+            GameFrameManager.EnqueueAction(() => throw new Exception($"Exception in physics simulation thread. {e}"));
+        }
+    }
+
+    private void TestCollisionInRange(Range range)
+    {
+        for (int FirstIndex = range.Start.Value; FirstIndex < range.End.Value; FirstIndex++)
+        {
+            for (int SecondIndex = FirstIndex + 1; SecondIndex < _physicalEntities.Count; SecondIndex++)
+            {
+                if (!_physicalEntities[FirstIndex].TestCollisionAgainstEntity(
+                    _physicalEntities[SecondIndex], out CollisionCase[] collisions))
+                {
+                    continue;
+                }
+
+                _collisionCases.Enqueue(collisions);
+            }
         }
     }
 

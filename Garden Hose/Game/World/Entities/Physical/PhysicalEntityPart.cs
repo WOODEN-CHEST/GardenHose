@@ -220,7 +220,7 @@ internal abstract class PhysicalEntityPart
 
         foreach (ICollisionBound CollisionBound in CollisionBounds)
         {
-            return TestBoundAgainstEntity(this, CollisionBound, entity);
+            return TestBoundAgainstEntity(CollisionBound, entity);
         }
 
         return Array.Empty<CollisionCase>();
@@ -253,6 +253,12 @@ internal abstract class PhysicalEntityPart
                $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
                $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
         }
+    }
+
+    internal void OnCollision(Vector2 location, float appliedForce)
+    {
+        Collision?.Invoke(this, location);
+        ApplyForce(location, appliedForce);
     }
 
     internal virtual void ApplyForce(Vector2 location, float forceAmount)
@@ -347,8 +353,7 @@ internal abstract class PhysicalEntityPart
 
     // Protected methods.
     /* Collision. */
-    protected virtual CollisionCase[] TestBoundAgainstEntity(PhysicalEntityPart selfPart,
-        ICollisionBound selfBound,
+    protected virtual CollisionCase[] TestBoundAgainstEntity(ICollisionBound selfBound,
         PhysicalEntity targetEntity)
     {
         List<CollisionCase> CollisionCases = new();
@@ -364,6 +369,16 @@ internal abstract class PhysicalEntityPart
 
             foreach (ICollisionBound TargetBound in TargetPart.CollisionBounds) // At this point it is a 4 layer deep foreach loop...
             {
+                //Test collision box bounds.
+                float Radius1 = selfBound.GetRadius();
+                float Radius2 = TargetBound.GetRadius();
+
+                if (Vector2.Distance(Position + selfBound.Offset, TargetPart.Position + TargetBound.Offset) > Radius1 + Radius2)
+                {
+                    continue;
+                }
+
+                // Get collision data.
                 CollisionData = TestBoundAgainstBound(selfBound, TargetBound, TargetPart);
 
                 if (CollisionData == null)
@@ -371,11 +386,12 @@ internal abstract class PhysicalEntityPart
                     continue;
                 }
 
+                // Build case.
                 CollisionCase Case = new()
                 {
                     EntityA = Entity,
                     EntityB = targetEntity,
-                    PartA = selfPart,
+                    PartA = this,
                     PartB = TargetPart,
                     BoundA = selfBound,
                     BoundB = TargetBound,

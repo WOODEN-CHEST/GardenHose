@@ -32,11 +32,11 @@ internal class ParticlePart : PhysicalEntityPart
 
     internal override void Draw()
     {
-        base.Draw();
-
         Sprite.Scale.Vector = ParticleScale * Entity.World!.Zoom;
         Sprite.Position.Vector = Entity.World.ToViewportPosition(Position);
         Sprite.Draw();
+
+        base.Draw();
     }
 
     internal override void Tick()

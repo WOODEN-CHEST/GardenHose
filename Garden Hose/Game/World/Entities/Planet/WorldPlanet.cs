@@ -116,41 +116,6 @@ internal partial class WorldPlanet : PhysicalEntity
         UpdateAtmosphereScaling();
     }
 
-    // Protected methods.
-    protected override void PushOutOfOtherEntity(CollisionCase collisionCase) // Overrides to push other entity rather than self.
-    {
-        // Prepare variables.
-        Vector2 PushOutDirection = -GetPushOutDirection(collisionCase);
-        const int StepCount = 8;
-        float StepDistance = 10f;
-
-        // First step.
-        collisionCase.EntityB.Position += StepDistance * PushOutDirection;
-
-        // Consequent steps.
-        Vector2 ClosestPushOutPosition = collisionCase.EntityB.Position;
-        bool IsColliding = false;
-
-        for (int Step = 0; Step < StepCount; Step++)
-        {
-            StepDistance *= 0.5f;
-            collisionCase.EntityB.Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
-
-            var CollisionData = collisionCase.PartA.TestBoundAgainstBound(
-                collisionCase.BoundA, collisionCase.BoundB, collisionCase.PartB);
-            IsColliding = CollisionData != null;
-
-            if (!IsColliding)
-            {
-                ClosestPushOutPosition = collisionCase.EntityB.Position;
-            }
-        }
-
-        // Update position.
-        collisionCase.EntityB.Position = ClosestPushOutPosition;
-    }
-
-
     // Private methods.
     private void UpdateAtmosphereScaling()
     {
@@ -197,5 +162,8 @@ internal partial class WorldPlanet : PhysicalEntity
 
     internal override void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null) { }
 
-    internal override void Tick() { }
+    internal override void Tick()
+    {
+        World.AddPhysicalEntityToWorldPart(this);
+    }
 }
