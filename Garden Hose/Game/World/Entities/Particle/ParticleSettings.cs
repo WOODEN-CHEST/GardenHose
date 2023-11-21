@@ -13,33 +13,33 @@ namespace GardenHose.Game.World.Entities;
 internal class ParticleSettings
 {
     // Internal fields.
-    internal WorldMaterial Material { get; init; }
+    internal WorldMaterial Material { get; set; }
 
     internal int CountMin { get; set; }
 
     internal int CountMax { get; set; }
 
-    internal float Lifetime { get; init; } = 4f;
+    internal float Lifetime { get; set; } = 4f;
 
-    internal float RandomLifetimeBonus { get; init; } = 2f;
+    internal float RandomLifetimeBonus { get; set; } = 2f;
 
-    internal float Scale { get; init; } = 0.9f;
+    internal float Scale { get; set; } = 0.9f;
 
-    internal float RandomScaleBonus { get; init; } = 0.2f;
+    internal float RandomScaleBonus { get; set; } = 0.2f;
 
-    internal float Radius { get; init; } = 2.5f;
+    internal float Radius { get; set; } = 2.5f;
 
-    internal float Rotation { get; init; } = 0f;
+    internal float Rotation { get; set; } = 0f;
 
-    internal float RandomRotationBonus { get; init; } = MathHelper.TwoPi;
+    internal float RandomRotationBonus { get; set; } = MathHelper.TwoPi;
 
-    internal float AngularMotion { get; init; } = 0f;
+    internal float AngularMotion { get; set; } = 0f;
 
-    internal float RandomAngularMotionBonus { get; init; } = 0f;
+    internal float RandomAngularMotionBonus { get; set; } = 0f;
 
-    internal FloatColor ColorMask { get; init; } = FloatColor.White;
+    internal FloatColor ColorMask { get; set; } = FloatColor.White;
 
-    internal FloatColor RandomColorMaskBonus { get; init; } = FloatColor.White;
+    internal FloatColor RandomColorMaskBonus { get; set; } = FloatColor.White;
 
     internal Vector2 Position { get; set; } = Vector2.Zero;
 

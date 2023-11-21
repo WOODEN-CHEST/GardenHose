@@ -47,7 +47,7 @@ public static class Logger
         }
 
         s_fileWriter = new(File.Create(LogPath), Encoding.UTF8);
-        s_fileWriter.WriteLine($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)} " +
+        s_fileWriter.Write($"Program instance started on {GetFormattedDate(Time)} at {GetFormattedTime(Time)}. " +
             $"Log generated in \"{logDirectory}\"");
 
         s_loggerTask = Task.Factory.StartNew(LogWriterAction, new CancellationTokenSource().Token,
@@ -97,6 +97,8 @@ public static class Logger
     // Private static methods.
     private static void ArchiveOldLog(string oldLogDirectory, string oldLogPath)
     {
+        return;
+
         Directory.CreateDirectory(oldLogDirectory);
         DateTime LogDate = File.GetLastWriteTime(oldLogPath);
 
@@ -137,14 +139,14 @@ public static class Logger
         {
             while (!s_cancellationTokenSource.IsCancellationRequested)
             {
-                s_fileWriter.WriteLine(s_messages.Take(s_cancellationTokenSource.Token));
+                s_fileWriter.Write(s_messages.Take(s_cancellationTokenSource.Token));
             }
         }
         catch (OperationCanceledException)
         {
             while (s_messages.TryTake(out string? message))
             {
-                s_fileWriter.WriteLine(message);
+                s_fileWriter.Write(message);
             }
         }
     }

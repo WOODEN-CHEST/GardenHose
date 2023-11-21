@@ -164,6 +164,6 @@ internal partial class WorldPlanet : PhysicalEntity
 
     internal override void Tick()
     {
-        World.AddPhysicalEntityToWorldPart(this);
+        World!.AddPhysicalEntityToWorldPart(this);
     }
 }

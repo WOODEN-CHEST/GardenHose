@@ -30,11 +30,21 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         set
         {
             SelfPosition = value;
-            MainPart?.SetPositionAndRotation(Position, Rotation);
+            SetPositionAndRotation(SelfPosition, Rotation);
         }
     }
 
-    internal virtual Vector2 Motion { get; set; } = Vector2.Zero;
+    internal virtual Vector2 Motion
+    {
+        get => _motion;
+        set
+        {
+            _motion = value;
+
+            _motion.X = float.IsNaN(_motion.X) ? 0f : Math.Clamp(_motion.X, MIN_MOTION, MAX_MOTION);
+            _motion.Y = float.IsNaN(_motion.Y) ? 0f : Math.Clamp(_motion.Y, MIN_MOTION, MAX_MOTION);
+        }
+    }
 
     internal virtual float Rotation
     {
@@ -42,11 +52,19 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         set
         {
             SelfRotation = value;
-            MainPart?.SetPositionAndRotation(Position, Rotation);
+            SetPositionAndRotation(Position, SelfRotation);
         }
     }
 
-    internal virtual float AngularMotion { get; set; }
+    internal virtual float AngularMotion
+
+    {
+        get => _angularMotion;
+        set
+        {
+            _angularMotion = Math.Clamp(value, float.MinValue, float.MaxValue);
+        }
+    }
 
     internal virtual float Mass
     {
@@ -101,7 +119,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             _cachedParts = null;
             _cachedMass = null;
             CreateBoundingBox();
-            _mainpart.SetPositionAndRotation(Position, Rotation);
+            SetPositionAndRotation(Position, Rotation);
         }
     }
 
@@ -162,12 +180,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     protected Vector2 SelfPosition;
     protected float SelfRotation;
 
+    protected const float MIN_MOTION = -1_000_000f;
+    protected const float MAX_MOTION = 1_000_000f;
+    protected const float MIN_POSITION = -100_000f;
+    protected const float MAX_POSITION = 100_000f;
+
 
     // Private fields.
     private PhysicalEntityPart _mainpart;
 
     private PhysicalEntityPart[]? _cachedParts = null;
     private float? _cachedMass = null;
+
+    private Vector2 _motion;
+    private float _angularMotion;
 
 
 
@@ -219,23 +245,31 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     /* Collision. */
-    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[] collisions)
+    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[]? collisions)
     {
-        collisions = Array.Empty<CollisionCase>();
+        List<CollisionCase> Collisions = null!;
 
         // Test bounding circles.
         if (Vector2.Distance(Position, entity.Position) > (BoundingLength + entity.BoundingLength))
         {
+            collisions = null;
             return false;
         }
 
         // Test parts against entity.
         foreach (PhysicalEntityPart SelfPart in Parts)
         {
-            collisions = SelfPart.TestCollisionAgainstEntity(entity);
+            CollisionCase[] CollisionsInPart = SelfPart.TestCollisionAgainstEntity(entity);
+
+            if (CollisionsInPart != null)
+            {
+                Collisions ??= new();
+                Collisions.AddRange(CollisionsInPart);
+            }
         }
 
-        return collisions.Length > 0;
+        collisions = Collisions?.ToArray();
+        return collisions != null;
     }
 
     internal virtual void OnCollision(PhysicalEntity otherEntity,
@@ -357,9 +391,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected virtual void FinalizeTickSimulation()
     {
-        SelfRotation += AngularMotion * World!.PassedTimeSeconds;
-        SelfPosition += Motion * World!.PassedTimeSeconds;
-        MainPart.SetPositionAndRotation(Position, Rotation);
+        Vector2 NewPosition = SelfPosition + (Motion * World!.PassedTimeSeconds);
+        float NewRotation = SelfRotation + (AngularMotion * World!.PassedTimeSeconds);
+        SetPositionAndRotation(NewPosition, NewRotation);
     }
 
 
@@ -527,6 +561,17 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
                 throw new NotImplementedException("Getting collision bound points is not supported for bound type" +
                     $"of \"{bound.Type}\" (int value of {(int)bound.Type})");
         }
+    }
+
+    /* Other. */
+    private void SetPositionAndRotation(Vector2 position, float rotation)
+    {
+        SelfPosition = position;
+        SelfPosition.X = float.IsNaN(SelfPosition.X) ? 0f : Math.Clamp(SelfPosition.X, MIN_POSITION, MAX_POSITION);
+        SelfPosition.Y = float.IsNaN(SelfPosition.Y) ? 0f : Math.Clamp(SelfPosition.Y, MIN_POSITION, MAX_POSITION);
+        SelfRotation = Math.Clamp(rotation, float.MinValue, float.MaxValue);
+
+        _mainpart?.SetPositionAndRotation(SelfPosition, SelfRotation);
     }
 
 

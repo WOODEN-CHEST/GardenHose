@@ -32,65 +32,31 @@ internal class InGameFrame : GameFrame
     {
         base.Load();
 
+        WorldPlanet Planet = WorldPlanet.TestPlanet;
+
+        //List<Entity> Entities = new();
+
+        //for (int i = -10; i < 10; i++)
+        //{
+        //    for (int j = -10; j < 10; j++)
+        //    {
+        //        Vector2 Position = new(150f * i, 150f * j);
+        //        if (Vector2.Distance(Planet.Position, Position) < Planet.Radius)
+        //        {
+        //            continue;
+        //        }
+
+        //        Entities.Add(new TestEntity() { Position = Position });
+        //    }
+        //}
+
         GameWorldSettings StartupSettings = new()
         {
-            Planet = WorldPlanet.TestPlanet,
+
+            Planet = Planet,
             StartingEntities = new Entity[]
             {
                 new TestEntity() { Position = new Vector2(0f, 700f) },
-                //new TestEntity() { Position = new Vector2(0f, 800f) },
-                //new TestEntity() { Position = new Vector2(0f, 900f) },
-                //new TestEntity() { Position = new Vector2(0f, 1000f) },
-                //new TestEntity() { Position = new Vector2(0f, 1100f) },
-                //new TestEntity() { Position = new Vector2(0f, 1200f) },
-                //new TestEntity() { Position = new Vector2(700f, 0f) },
-                //new TestEntity() { Position = new Vector2(800f, 700f) },
-                //new TestEntity() { Position = new Vector2(900f, 700f) },
-                //new TestEntity() { Position = new Vector2(1000f, 700f) },
-                //new TestEntity() { Position = new Vector2(1100f, 700f) },
-                //new TestEntity() { Position = new Vector2(1200f, 700f) },
-                //new TestEntity() { Position = new Vector2(700f, 700f) },
-                //new TestEntity() { Position = new Vector2(700f, 800f) },
-                //new TestEntity() { Position = new Vector2(700f, 900f) },
-                //new TestEntity() { Position = new Vector2(700f, 1000f) },
-                //new TestEntity() { Position = new Vector2(700f, 1100f) },
-                //new TestEntity() { Position = new Vector2(700f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-700f, 700f) },
-                //new TestEntity() { Position = new Vector2(-700f, 800f) },
-                //new TestEntity() { Position = new Vector2(-700f, 900f) },
-                //new TestEntity() { Position = new Vector2(-700f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-700f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-700f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-800f, 700f) },
-                //new TestEntity() { Position = new Vector2(-800f, 800f) },
-                //new TestEntity() { Position = new Vector2(-800f, 900f) },
-                //new TestEntity() { Position = new Vector2(-800f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-800f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-800f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-900f, 700f) },
-                //new TestEntity() { Position = new Vector2(-900f, 800f) },
-                //new TestEntity() { Position = new Vector2(-900f, 900f) },
-                //new TestEntity() { Position = new Vector2(-900f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-900f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-900f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 700f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 800f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 900f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-1000f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-1100f, 700f) },
-                //new TestEntity() { Position = new Vector2(-1100f, 800f) },
-                //new TestEntity() { Position = new Vector2(-1100f, 900f) },
-                //new TestEntity() { Position = new Vector2(-1100f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-1100f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-11000f, 1200f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 700f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 800f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 900f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 1000f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 1100f) },
-                //new TestEntity() { Position = new Vector2(-1200f, 1200f) }
 
             },
             Background = new(BackgroundImage.Default)
