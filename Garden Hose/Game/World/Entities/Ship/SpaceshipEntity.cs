@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine.IO;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,5 +62,28 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         {
             Listener.StopListening();
         }
+    }
+
+    protected abstract void AITick();
+
+    protected abstract void PlayerTick();
+
+    protected abstract void TryToNavigateToLocation(Vector2 location);
+
+
+    // Inherited methods.
+    internal override void Tick()
+    {
+        if (Controller == SpaceshipController.Player)
+        {
+            PlayerTick();
+            TryToNavigateToLocation(World!.ToViewportPosition(UserInput.MouseState.Current.Position.ToVector2()));
+        }
+        else if (Controller == SpaceshipController.AI)
+        {
+            AITick();
+        }
+
+        base.Tick();
     }
 }

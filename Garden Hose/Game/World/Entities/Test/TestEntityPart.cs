@@ -24,6 +24,8 @@ internal class TestEntityPart : PhysicalEntityPart
             Position = Position,
             Scale = 0.3f,
             RandomScaleBonus = 0.125f,
+
+            CollisionRadius = 6f
         };
     }
 
@@ -48,6 +50,6 @@ internal class TestEntityPart : PhysicalEntityPart
         _damageParticleSettings.Position = Position;
         _damageParticleSettings.Motion = Entity.Motion;
 
-        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings);
+        ParticleEntity[] Particles = ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
     }
 }

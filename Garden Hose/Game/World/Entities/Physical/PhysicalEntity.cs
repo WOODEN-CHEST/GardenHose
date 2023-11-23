@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine.Screen;
-using System.Runtime.CompilerServices;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -21,6 +20,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal fields.
     internal sealed override bool IsPhysical => true;
+
+
+    /* Collision. */
+    internal bool IsCollisionEnabled { get; set; } = true;
+
+    internal bool IsCollisionReactionEnabled { get; set; } = true;
+
+    internal float BoundingLength { get; private set; }
 
 
     /* Entity properties. */
@@ -157,8 +164,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    internal virtual float BoundingLength { get; private set; }
-
 
     /* Drawing. */
     internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
@@ -185,6 +190,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     protected const float MIN_POSITION = -100_000f;
     protected const float MAX_POSITION = 100_000f;
 
+    protected readonly HashSet<PhysicalEntity> EntitiesCollidedWith = new();
 
     // Private fields.
     private PhysicalEntityPart _mainpart;
@@ -195,7 +201,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     private Vector2 _motion;
     private float _angularMotion;
 
-
+    private readonly HashSet<PhysicalEntity> _collisionIgnorableEntities = new();
+    
 
     // Constructors.
     internal PhysicalEntity(EntityType type, GameWorld? world)
@@ -245,31 +252,48 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     /* Collision. */
-    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[]? collisions)
+    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[] collisions)
     {
-        List<CollisionCase> Collisions = null!;
+        collisions = Array.Empty<CollisionCase>();
+
+        // Early exits and special cases.
+        if (!IsCollisionEnabled || !entity.IsCollisionEnabled ||
+            _collisionIgnorableEntities.Contains(entity) || entity._collisionIgnorableEntities.Contains(this)
+            || EntitiesCollidedWith.Contains(entity) || entity.EntitiesCollidedWith.Contains(this))
+        {
+            return false;
+        }
 
         // Test bounding circles.
         if (Vector2.Distance(Position, entity.Position) > (BoundingLength + entity.BoundingLength))
         {
-            collisions = null;
             return false;
         }
 
         // Test parts against entity.
+        List<CollisionCase> Collisions = null!;
+
         foreach (PhysicalEntityPart SelfPart in Parts)
         {
             CollisionCase[] CollisionsInPart = SelfPart.TestCollisionAgainstEntity(entity);
-
-            if (CollisionsInPart != null)
+            
+            if (CollisionsInPart.Length != 0)
             {
                 Collisions ??= new();
                 Collisions.AddRange(CollisionsInPart);
             }
         }
 
-        collisions = Collisions?.ToArray();
-        return collisions != null;
+        collisions = Collisions?.ToArray() ?? Array.Empty<CollisionCase>();
+
+        if (collisions.Length != 0)
+        {
+            EntitiesCollidedWith.Add(entity);
+
+            entity.EntitiesCollidedWith.Add(this);
+            return true;
+        }
+        return false;
     }
 
     internal virtual void OnCollision(PhysicalEntity otherEntity,
@@ -347,6 +371,37 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position = ClosestPushOutPosition;
     }
 
+    internal void AddCollisionIgnorable(PhysicalEntity entity)
+    {
+        if  (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+
+        if (_collisionIgnorableEntities.Add(entity))
+        {
+            entity.EntityDelete += OnCollisionIgnorableEntityDeleteEvent;
+        }
+    }
+
+    internal void RemoveCollisionIgnorable(PhysicalEntity entity)
+    {
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+
+        if (_collisionIgnorableEntities.Remove(entity))
+        {
+            entity.EntityDelete -= OnCollisionIgnorableEntityDeleteEvent;
+        }
+    }
+
+    internal bool IsCollisionIgnored(PhysicalEntity targetEntity)
+    {
+        return _collisionIgnorableEntities.Contains(targetEntity);
+    }
+
 
     /* Part events. */
     internal virtual void OnPartCollisionBoundChange()
@@ -367,9 +422,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         CreateBoundingBox();
     }
 
-    internal virtual void OnPartDamage() { }
+    internal abstract void OnPartDamage();
 
-    internal virtual void OnPartBreak() { }
+    internal abstract void OnPartBreak();
 
 
     // Protected methods.
@@ -389,7 +444,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Motion += AddedMotion;
     }
 
-    protected virtual void FinalizeTickSimulation()
+    protected virtual void FinalizeTickPhysicsSimulation()
     {
         Vector2 NewPosition = SelfPosition + (Motion * World!.PassedTimeSeconds);
         float NewRotation = SelfRotation + (AngularMotion * World!.PassedTimeSeconds);
@@ -416,6 +471,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         return (m1 * v1 + m2 * v2 + m2*(v2 - v1)) / (m1 + m2) * cor;
     }
 
+    protected virtual void CollisionTick()
+    {
+        EntitiesCollidedWith.Clear();
+        World!.AddPhysicalEntityToWorldPart(this);
+    }
 
     // Private methods.
     /* Drawing */
@@ -563,6 +623,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
+    private void OnCollisionIgnorableEntityDeleteEvent(object? sender, EventArgs args)
+    {
+        if (sender != null)
+        {
+            _collisionIgnorableEntities.Remove((PhysicalEntity)sender);
+        }
+    }
+
     /* Other. */
     private void SetPositionAndRotation(Vector2 position, float rotation)
     {
@@ -582,10 +650,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         {
             SimulatePhysicsPlanet();
         }
-        FinalizeTickSimulation();
+        FinalizeTickPhysicsSimulation();
 
         MainPart.Tick();
-        World!.AddPhysicalEntityToWorldPart(this);
+
+        CollisionTick();
     }
 
     public virtual void Draw()

@@ -63,5 +63,12 @@ internal class TestEntity : PhysicalEntity
 
 
     // Inherited methods.
-    internal override void Load(GHGameAssetManager assetManager) { }
+    internal override void Load(GHGameAssetManager assetManager)
+    {
+
+    }
+
+    internal override void OnPartDamage() { }
+
+    internal override void OnPartBreak() { }
 }

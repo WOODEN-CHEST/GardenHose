@@ -27,7 +27,7 @@ internal class ParticleSettings
 
     internal float RandomScaleBonus { get; set; } = 0.2f;
 
-    internal float Radius { get; set; } = 2.5f;
+    internal float CollisionRadius { get; set; } = 2.5f;
 
     internal float Rotation { get; set; } = 0f;
 

@@ -23,7 +23,7 @@ internal class ParticlePart : PhysicalEntityPart
     public ParticlePart(ParticleEntity entity, ParticleSettings settings) : base(settings.Material, entity)
     {
         ParticleScale = new(settings.GetScale());
-        CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.Radius) };
+        CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
     }
 
 
@@ -34,7 +34,7 @@ internal class ParticlePart : PhysicalEntityPart
     {
         Sprite.Scale.Vector = ParticleScale * Entity.World!.Zoom;
         Sprite.Position.Vector = Entity.World.ToViewportPosition(Position);
-        Sprite.Draw();
+        //Sprite.Draw();
 
         base.Draw();
     }

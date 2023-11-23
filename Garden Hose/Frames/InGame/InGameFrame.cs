@@ -32,33 +32,34 @@ internal class InGameFrame : GameFrame
     {
         base.Load();
 
-        WorldPlanet Planet = WorldPlanet.TestPlanet;
+        WorldPlanetEntity Planet = WorldPlanetEntity.TestPlanet;
 
-        //List<Entity> Entities = new();
+        List<Entity> Entities = new();
 
-        //for (int i = -10; i < 10; i++)
-        //{
-        //    for (int j = -10; j < 10; j++)
-        //    {
-        //        Vector2 Position = new(150f * i, 150f * j);
-        //        if (Vector2.Distance(Planet.Position, Position) < Planet.Radius)
-        //        {
-        //            continue;
-        //        }
+        for (int i = -10; i < 10; i++)
+        {
+            for (int j = -10; j < 10; j++)
+            {
+                Vector2 Position = new(150f * i, 150f * j);
+                if (Vector2.Distance(Planet.Position, Position) < Planet.Radius)
+                {
+                    continue;
+                }
 
-        //        Entities.Add(new TestEntity() { Position = Position });
-        //    }
-        //}
+                Entities.Add(new TestEntity() { Position = Position });
+            }
+        }
 
         GameWorldSettings StartupSettings = new()
         {
 
             Planet = Planet,
-            StartingEntities = new Entity[]
-            {
-                new TestEntity() { Position = new Vector2(0f, 700f) },
+            StartingEntities = Entities.ToArray(),
+            //StartingEntities = new Entity[]
+            //{
+            //    new TestEntity() { Position = new Vector2(0f, 700f) },
 
-            },
+            //},
             Background = new(BackgroundImage.Default)
             {
                 SmallStarCount = 80,
@@ -97,7 +98,7 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
             (sender, args) => {
                 Game.World.GetEntity<PhysicalEntity>(2uL)!.Position = 
-                     (UserInput.VirtualMousePosition.Current - Game.World.ObjectVisualOffset) * (1f / Game.World.Zoom);
+                Game.World.ToWorldPosition(UserInput.MouseState.Current.Position.ToVector2());
             },
             MouseButton.Left));
 

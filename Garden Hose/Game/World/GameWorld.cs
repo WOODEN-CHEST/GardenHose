@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +20,7 @@ namespace GardenHose.Game.World;
 public class GameWorld : IIDProvider
 {
     // Internal fields.
-    internal WorldPlanet? Planet { get; private set; }
+    internal WorldPlanetEntity? Planet { get; private set; }
 
     internal int EntityCount => _livingEntities.Count + _entitiesCreated.Count;
 
@@ -195,11 +194,13 @@ public class GameWorld : IIDProvider
         FireAllThreads();
         WaitForAllThreads();
 
+        DateTime Start = DateTime.Now; 
         foreach (var CaseCollection in _collisionCases)
         {
             HandleEntityCollisionCases(CaseCollection);
         }
         _collisionCases.Clear();
+        TimeSpan Elapsed = DateTime.Now - Start;
     }
 
     /* Entities. */
@@ -280,6 +281,12 @@ public class GameWorld : IIDProvider
         return (worldPosition * Zoom) + ObjectVisualOffset;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal Vector2 ToWorldPosition(Vector2 viewportPosition)
+    {
+        return (viewportPosition - ObjectVisualOffset) / Zoom;
+    }
+
 
     /* Collision. */
     internal void AddPhysicalEntityToWorldPart(PhysicalEntity entity)
@@ -288,8 +295,10 @@ public class GameWorld : IIDProvider
         int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
         int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
-        int UpperX = Math.Min(WORLD_PART_COUNT - 1, (int)(entity.Position.X + entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
-        int UpperY = Math.Min(WORLD_PART_COUNT - 1, (int)(entity.Position.Y + entity.BoundingLength) / WORLD_PART_SIZE + HALF_WORLD_PART_COUNT);
+        int UpperX = Math.Min(WORLD_PART_COUNT - 1,
+            ((int)(entity.Position.X + entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int UpperY = Math.Min(WORLD_PART_COUNT - 1,
+            ((int)(entity.Position.Y + entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
         for (int i = LowerX; i <= UpperX; i++)
         {
@@ -337,20 +346,25 @@ public class GameWorld : IIDProvider
     {
         foreach (CollisionCase Case in collisionCases)
         {
-            if (Case.EntityA.Mass > Case.EntityB.Mass)
+            if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
             {
                 Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
             }
-            else
+            else if (Case.EntityA.IsCollisionReactionEnabled)
             {
                 Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
             }
 
-            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
+            if  (Case.EntityA.IsCollisionReactionEnabled)
+            {
+                Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
                 Case.BoundB, Case.SurfaceNormal, Case.AverageCollisionPoint);
-            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
+            }
+            if (Case.EntityB.IsCollisionReactionEnabled)
+            {
+                Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
                 Case.BoundA, Case.SurfaceNormal, Case.AverageCollisionPoint);
-
+            }
         }
     }
 
@@ -388,6 +402,26 @@ public class GameWorld : IIDProvider
             int UpperRange = Math.Min(RowIndex + RowsPerThread, WORLD_PART_COUNT);
             _entityHandlingRanges[ThreadIndex] = new(RowIndex, UpperRange);
             RowIndex = UpperRange;
+        }
+    }
+
+    private void DivideEntitiesAmongThreads()
+    {
+        int EntitiesPerThread = Math.Max(1, _livingEntities.Count / THREAD_COUNT);
+        int LeftoverEntities = Math.Max(0, _livingEntities.Count - (EntitiesPerThread * THREAD_COUNT));
+        int ThreadIndex;
+        int EntityIndex;
+
+        // First thread.
+        EntityIndex = EntitiesPerThread + LeftoverEntities;
+        _entityHandlingRanges[0] = new(0, EntityIndex);
+
+        // Remaining threads.
+        for (ThreadIndex = 1; (ThreadIndex < THREAD_COUNT); ThreadIndex++)
+        {
+            int UpperRange = Math.Min(EntityIndex + EntitiesPerThread, _livingEntities.Count);
+            _entityHandlingRanges[ThreadIndex] = new(EntityIndex, UpperRange);
+            EntityIndex = UpperRange;
         }
     }
 
@@ -435,15 +469,18 @@ public class GameWorld : IIDProvider
         {
             for (int SecondIndex = FirstIndex + 1; SecondIndex < entities.Count; SecondIndex++)
             {
-                if (!entities[FirstIndex].TestCollisionAgainstEntity(
-                    entities[SecondIndex], out CollisionCase[]? collisions))
+                lock (entities[FirstIndex])
                 {
-                    continue;
-                }
+                    if (!entities[FirstIndex].TestCollisionAgainstEntity(
+                        entities[SecondIndex], out CollisionCase[] collisions))
+                    {
+                        continue;
+                    }
 
-                if (collisions != null)
-                {
-                    _collisionCases.Enqueue(collisions);
+                    if (collisions.Length > 0)
+                    {
+                        _collisionCases.Enqueue(collisions);
+                    }
                 }
             }
         }

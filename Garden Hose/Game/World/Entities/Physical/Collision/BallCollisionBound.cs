@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine.Frame.Item.Basic;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -30,7 +31,18 @@ internal struct BallCollisionBound : ICollisionBound
     {
         position += Offset;
 
+        Display.SharedLine.Thickness = 5f * world!.Zoom;
+        Display.SharedLine.Mask = Color.Red;
 
+        Display.SharedLine.Set(
+            world.ToViewportPosition(position + new Vector2(-Radius, 0f)),
+            world.ToViewportPosition(position + new Vector2(Radius, 0f)));
+        Display.SharedLine.Draw();
+
+        Display.SharedLine.Set(
+            world.ToViewportPosition(position + new Vector2(0f, -Radius)),
+            world.ToViewportPosition(position + new Vector2(0f, Radius)));
+        Display.SharedLine.Draw();
     }
 
     public float GetArea()

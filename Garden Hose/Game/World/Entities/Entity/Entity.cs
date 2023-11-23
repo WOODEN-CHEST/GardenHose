@@ -19,6 +19,8 @@ internal abstract class Entity
 
     internal virtual bool IsPhysical => false;
 
+    internal event EventHandler? EntityDelete;
+
 
     // Constructors.
     internal Entity(EntityType type, GameWorld? world = null)
@@ -38,6 +40,7 @@ internal abstract class Entity
 
     internal virtual void Delete()
     {
+        EntityDelete?.Invoke(this, EventArgs.Empty);
         World?.RemoveEntity(this);
     }
 

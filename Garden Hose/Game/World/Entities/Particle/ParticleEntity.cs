@@ -55,7 +55,7 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Internal static methods.
-    internal static ParticleEntity[] CreateParticles(GameWorld world, ParticleSettings settings)
+    internal static ParticleEntity[] CreateParticles(GameWorld world, ParticleSettings settings, PhysicalEntity? sourceEntity = null)
     {
         ParticleEntity[] Particles = new ParticleEntity[settings.GetCount()];
 
@@ -64,6 +64,14 @@ internal class ParticleEntity : PhysicalEntity
             ParticleEntity Particle = new(world, settings);
             world.AddEntity(Particle);
             Particles[i] = Particle;
+        }
+
+        if (sourceEntity != null)
+        {
+            foreach (ParticleEntity Particle in Particles)
+            {
+                Particle.AddCollisionIgnorable(sourceEntity);
+            }
         }
 
         return Particles;
@@ -104,4 +112,8 @@ internal class ParticleEntity : PhysicalEntity
             Delete();
         }
     }
+
+    internal override void OnPartDamage() { }
+
+    internal override void OnPartBreak() { }
 }
