@@ -143,6 +143,11 @@ internal abstract class PhysicalEntityPart
     /* Parts. */
     internal virtual void LinkPart(PhysicalEntityPart part, Vector2 distance)
     {
+        LinkPart(part, distance, float.PositiveInfinity);
+    }
+
+    internal virtual void LinkPart(PhysicalEntityPart part, Vector2 distance, float strength)
+    {
         if (part == null)
         {
             throw new ArgumentNullException(nameof(part));
@@ -157,7 +162,7 @@ internal abstract class PhysicalEntityPart
         var NewPartLinks = SubPartLinks == null ? new PartLink[1] : new PartLink[SubPartLinks.Length + 1];
         SubPartLinks?.CopyTo(NewPartLinks, 0);
 
-        PartLink Link = new PartLink(this, part, Entity, distance);
+        PartLink Link = new PartLink(this, part, Entity, distance, strength);
         NewPartLinks[^1] = Link;
         SubPartLinks = NewPartLinks;
 
@@ -170,6 +175,11 @@ internal abstract class PhysicalEntityPart
     internal virtual void LinkEntityAsPart(PhysicalEntity entity, Vector2 distance)
     {
         LinkPart(entity.MainPart, distance);
+    }
+
+    internal virtual void LinkEntityAsPart(PhysicalEntity entity, Vector2 distance, float strength)
+    {
+        LinkPart(entity.MainPart, distance, strength);
     }
 
     internal virtual void UnlinkPart(PhysicalEntityPart part)
@@ -275,9 +285,10 @@ internal abstract class PhysicalEntityPart
 
             if (MaterialInstance.Stage == WorldMaterialStage.Destroyed)
             {
-                Entity.OnPartBreak();
+                Entity.OnPartDestroy();
                 PartBreak?.Invoke(this, this);
-                OnBreakPart();
+                OnPartDestroy();
+                return;
             }
             else
             {
@@ -285,6 +296,11 @@ internal abstract class PhysicalEntityPart
                 PartDamage?.Invoke(this, this);
                 OnPartDamage();
             }
+        }
+
+        if ((ParentLink != null) && (forceAmount >= ParentLink.LinkStrength))
+        {
+            OnPartBreakOff();
         }
     }
 
@@ -308,19 +324,30 @@ internal abstract class PhysicalEntityPart
     }
 
     /* Game flow. */
-    internal virtual void Tick()
+    internal virtual void ParallelTick()
     {
-        SelfRotation += AngularMotion * GameFrameManager.PassedTimeSeconds;
+        SelfRotation += AngularMotion * Entity.World!.PassedTimeSeconds;
 
-        if (SubPartLinks ==  null)
+        if (SubPartLinks != null)
         {
-            return;
+            foreach (PartLink Link in SubPartLinks)
+            {
+                Link.LinkedPart.ParallelTick();
+            }
+        }
+    }
+
+    internal virtual void SequentialTick()
+    {
+        if (SubPartLinks != null)
+        {
+            foreach (PartLink Link in SubPartLinks)
+            {
+                Link.LinkedPart.SequentialTick();
+            }
         }
 
-        foreach (PartLink Link in SubPartLinks)
-        {
-            Link.LinkedPart.Tick();
-        }
+        MaterialTick();
     }
 
     /* Drawing. */
@@ -520,8 +547,26 @@ internal abstract class PhysicalEntityPart
     }
 
 
+    /* Physics. */
+    protected virtual void MaterialTick()
+    {
+        MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
+
+        if (MaterialInstance.Temperature > MaterialInstance.Material.BoilingPoint)
+        {
+
+        }
+        else if (MaterialInstance.Temperature > MaterialInstance.Material.MeltingPoint)
+        {
+
+        }
+    }
+
+
     /* Parts. */
     protected abstract void OnPartDamage();
 
-    protected abstract void OnBreakPart();
+    protected abstract void OnPartDestroy();
+
+    protected abstract void OnPartBreakOff();
 }

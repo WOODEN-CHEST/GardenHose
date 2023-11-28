@@ -88,3 +88,7 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\ui\buttons\connector\slider\panel.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\ui\buttons\connector\slider\pointer.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\ui\buttons\connector\toggle\light.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\game\ships\probe\base.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\game\ships\probe\head.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\game\ships\probe\main_thruster.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Release\net7.0\assets\textures\game\ships\probe\side_thruster.xnb

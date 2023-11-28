@@ -34,7 +34,9 @@ internal abstract class Entity
 
 
     // Internal methods.
-    internal abstract void Tick();
+    internal abstract void SequentalTick();
+
+    internal abstract void ParallelTick();
 
     internal abstract void Load(GHGameAssetManager assetManager);
 
@@ -43,6 +45,8 @@ internal abstract class Entity
         EntityDelete?.Invoke(this, EventArgs.Empty);
         World?.RemoveEntity(this);
     }
+
+    internal abstract void UpdateThreadData();
 
 
     // Inherited methods.

@@ -36,30 +36,31 @@ internal class InGameFrame : GameFrame
 
         List<Entity> Entities = new();
 
-        for (int i = -10; i < 10; i++)
-        {
-            for (int j = -10; j < 10; j++)
-            {
-                Vector2 Position = new(150f * i, 150f * j);
-                if (Vector2.Distance(Planet.Position, Position) < Planet.Radius)
-                {
-                    continue;
-                }
+        //const int SIZE = 7;
+        //for (int i = -SIZE; i < SIZE; i++)
+        //{
+        //    for (int j = -SIZE; j < SIZE; j++)
+        //    {
+        //        Vector2 Position = new(150f * i, 150f * j);
+        //        if (Vector2.Distance(Planet.Position, Position) < Planet.Radius)
+        //        {
+        //            continue;
+        //        }
 
-                Entities.Add(new TestEntity() { Position = Position });
-            }
-        }
+        //        Entities.Add(new TestEntity() { Position = Position });
+        //    }
+        //}
 
         GameWorldSettings StartupSettings = new()
         {
 
             Planet = Planet,
-            StartingEntities = Entities.ToArray(),
-            //StartingEntities = new Entity[]
-            //{
-            //    new TestEntity() { Position = new Vector2(0f, 700f) },
+            //StartingEntities = Entities.ToArray(),
+            StartingEntities = new Entity[]
+            {
+                new TestEntity() { Position = new Vector2(0f, 700f) },
 
-            //},
+            },
             Background = new(BackgroundImage.Default)
             {
                 SmallStarCount = 80,

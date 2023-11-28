@@ -23,7 +23,11 @@ internal class ParticlePart : PhysicalEntityPart
     public ParticlePart(ParticleEntity entity, ParticleSettings settings) : base(settings.Material, entity)
     {
         ParticleScale = new(settings.GetScale());
-        CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
+
+        if (settings.CollisionRadius > 0)
+        {
+            CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
+        }
     }
 
 
@@ -34,18 +38,20 @@ internal class ParticlePart : PhysicalEntityPart
     {
         Sprite.Scale.Vector = ParticleScale * Entity.World!.Zoom;
         Sprite.Position.Vector = Entity.World.ToViewportPosition(Position);
-        //Sprite.Draw();
+        Sprite.Draw();
 
         base.Draw();
     }
 
-    internal override void Tick()
+    internal override void ParallelTick()
     {
-        base.Tick();
+        base.ParallelTick();
         Sprite.ActiveAnimation.Update();
     }
 
-    protected override void OnBreakPart() { }
+    protected override void OnPartDestroy() { }
 
     protected override void OnPartDamage() { }
+
+    protected override void OnPartBreakOff() { }
 }

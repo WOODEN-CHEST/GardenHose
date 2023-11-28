@@ -70,5 +70,5 @@ internal class TestEntity : PhysicalEntity
 
     internal override void OnPartDamage() { }
 
-    internal override void OnPartBreak() { }
+    internal override void OnPartDestroy() { }
 }

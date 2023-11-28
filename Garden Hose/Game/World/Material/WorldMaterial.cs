@@ -13,11 +13,27 @@ internal class WorldMaterial
         Strength = 80_000f,
         Resistance = 3000f,
         HeatCapacity = 10f,
-        HeatTransferRate = 10f,
+        HeatTransferRate = 1f,
         MeltingPoint = 400f,
         BoilingPoint = 500f,
         Friction = 0.85f,
         Bounciness = 0.4f,
+        Magnetism = 0f,
+        Conductivity = 0f,
+        Attraction = 0f
+    };
+
+    internal static WorldMaterial Void { get; } = new() // Random values go!
+    {
+        Density = 0.000005f,
+        Strength = 10f,
+        Resistance = 10f,
+        HeatCapacity = 1_000_009f,
+        HeatTransferRate = 0.06f,
+        MeltingPoint = 0.002f,
+        BoilingPoint = 0.002375f,
+        Friction = 0.009f,
+        Bounciness = 0.35f,
         Magnetism = 0f,
         Conductivity = 0f,
         Attraction = 0f

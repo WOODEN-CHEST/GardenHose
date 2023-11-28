@@ -424,7 +424,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal abstract void OnPartDamage();
 
-    internal abstract void OnPartBreak();
+    internal abstract void OnPartDestroy();
 
 
     // Protected methods.
@@ -450,7 +450,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         float NewRotation = SelfRotation + (AngularMotion * World!.PassedTimeSeconds);
         SetPositionAndRotation(NewPosition, NewRotation);
     }
-
 
     /* Collision. */
     protected virtual Vector2 GetPushOutDirection(PhysicalEntity otherEntity)
@@ -644,7 +643,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Inherited methods.
-    internal override void Tick()
+    internal override void ParallelTick()
     {
         if (World!.Planet != null)
         {
@@ -652,9 +651,13 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
         FinalizeTickPhysicsSimulation();
 
-        MainPart.Tick();
+        MainPart.ParallelTick();
+    }
 
+    internal override void SequentalTick()
+    {
         CollisionTick();
+        MainPart.SequentialTick();
     }
 
     public virtual void Draw()
@@ -670,5 +673,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             DrawMotion();
             DrawCenterOfMass();
         }
+    }
+
+    internal override void UpdateThreadData()
+    {
+        throw new NotImplementedException();
     }
 }

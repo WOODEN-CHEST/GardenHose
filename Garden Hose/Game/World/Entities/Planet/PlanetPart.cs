@@ -20,9 +20,11 @@ internal class PlanetPart : PhysicalEntityPart
 
 
     // Inherited methods.
-    internal override void Tick() { }
+    internal override void ParallelTick() { }
 
-    protected override void OnBreakPart() { }
+    protected override void OnPartDestroy() { }
 
     protected override void OnPartDamage() { }
+
+    protected override void OnPartBreakOff() { }
 }

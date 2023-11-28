@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.World.Entities;
+using GardenHose.Game.World.Material;
 using System;
 
 
@@ -13,6 +14,8 @@ internal class GameWorldSettings
     internal required Entity[] StartingEntities { get; init; }
 
     internal required GameBackground Background { get; init; }
+
+    internal required WorldMaterial AmbientMaterial { get; init; }
 
 
     // Constructors.

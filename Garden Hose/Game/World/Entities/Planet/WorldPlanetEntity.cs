@@ -157,12 +157,9 @@ internal partial class WorldPlanetEntity : PhysicalEntity
 
     internal override void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null) { }
 
-    internal override void Tick()
-    {
-        CollisionTick();
-    }
+    internal override void ParallelTick() { }
 
     internal override void OnPartDamage() { }
 
-    internal override void OnPartBreak() { }
+    internal override void OnPartDestroy() { }
 }

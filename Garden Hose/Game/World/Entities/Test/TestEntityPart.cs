@@ -34,7 +34,7 @@ internal class TestEntityPart : PhysicalEntityPart
     ParticleSettings _damageParticleSettings;
 
     // Inherited methods.
-    protected override void OnBreakPart()
+    protected override void OnPartDestroy()
     {
         if (IsMainPart)
         {
@@ -43,13 +43,28 @@ internal class TestEntityPart : PhysicalEntityPart
         }
 
         ParentLink!.ParentPart.UnlinkPart(this);
+
+        _damageParticleSettings.Position = Position;
+        _damageParticleSettings.Motion = Entity.Motion;
+
+        _damageParticleSettings.CountMin = 6;
+        _damageParticleSettings.CountMax = 16;
+
+        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
     }
 
     protected override void OnPartDamage()
     {
         _damageParticleSettings.Position = Position;
         _damageParticleSettings.Motion = Entity.Motion;
+        _damageParticleSettings.CountMin = 2;
+        _damageParticleSettings.CountMax = 5;
 
-        ParticleEntity[] Particles = ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
+        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
+    }
+
+    protected override void OnPartBreakOff()
+    {
+
     }
 }

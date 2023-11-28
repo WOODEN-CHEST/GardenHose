@@ -79,9 +79,9 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Inherited methods.
-    internal override void Tick()
+    internal override void ParallelTick()
     {
-        base.Tick();
+        base.ParallelTick();
 
         TimeAlive += World!.PassedTimeSeconds;
         if (TimeAlive >= Lifetime)
@@ -115,5 +115,5 @@ internal class ParticleEntity : PhysicalEntity
 
     internal override void OnPartDamage() { }
 
-    internal override void OnPartBreak() { }
+    internal override void OnPartDestroy() { }
 }

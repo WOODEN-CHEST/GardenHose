@@ -26,6 +26,8 @@ internal class PartLink
         }
     }
 
+    internal float LinkStrength { get; set; }
+
 
     // Private fields.
     private Vector2 _linkDistance;
@@ -33,10 +35,18 @@ internal class PartLink
 
     // Constructors.
     public PartLink(PhysicalEntityPart mainPart, PhysicalEntityPart linkedPart, PhysicalEntity entity, Vector2 linkDistance)
+        : this(mainPart, linkedPart, entity, linkDistance, float.PositiveInfinity) { } 
+
+    public PartLink(PhysicalEntityPart mainPart,
+        PhysicalEntityPart linkedPart,
+        PhysicalEntity entity,
+        Vector2 linkDistance,
+        float linkStrength)
     {
         ParentPart = mainPart ?? throw new ArgumentNullException(nameof(mainPart));
         LinkedPart = linkedPart ?? throw new ArgumentNullException(nameof(linkedPart));
         Entity = entity ?? throw new ArgumentNullException(nameof(entity));
         LinkDistance = linkDistance;
+        LinkStrength = linkStrength;
     }
 }
