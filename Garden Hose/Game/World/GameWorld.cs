@@ -183,7 +183,10 @@ public class GameWorld : IIDProvider
         // Tick entities (Sequential).
         foreach (Entity WorldEntity in _livingEntities)
         {
-            WorldEntity.SequentalTick();
+            if (WorldEntity.IsTicked)
+            {
+                WorldEntity.SequentalTick();
+            }
         }
 
         // Tick entities (Parallel).
@@ -352,25 +355,24 @@ public class GameWorld : IIDProvider
     {
         foreach (CollisionCase Case in collisionCases)
         {
-            if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
+            if (Case.PartA.MaterialInstance.State == WorldMaterialState.Solid 
+                && Case.PartB.MaterialInstance.State == WorldMaterialState.Solid)
             {
-                Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
-            }
-            else if (Case.EntityA.IsCollisionReactionEnabled)
-            {
-                Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
+                if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
+                {
+                    Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
+                }
+                else if (Case.EntityA.IsCollisionReactionEnabled)
+                {
+                    Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
+                }
             }
 
-            if  (Case.EntityA.IsCollisionReactionEnabled)
-            {
-                Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
-                Case.BoundB, Case.SurfaceNormal, Case.AverageCollisionPoint);
-            }
-            if (Case.EntityB.IsCollisionReactionEnabled)
-            {
-                Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
-                Case.BoundA, Case.SurfaceNormal, Case.AverageCollisionPoint);
-            }
+            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
+            Case.BoundB, Case.SurfaceNormal, Case.AverageCollisionPoint);
+
+            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
+            Case.BoundA, Case.SurfaceNormal, Case.AverageCollisionPoint);
         }
     }
 
@@ -425,10 +427,14 @@ public class GameWorld : IIDProvider
     {
         foreach (AutoResetEvent Event in _endFireEvent)
         {
+#if DEBUG
+            Event.WaitOne();
+#else
             if (!Event.WaitOne(10_000))
             {
                 throw new Exception("Thread took too long to respond, aborting simulation.");
             }
+#endif
         }
     }
 
@@ -513,7 +519,10 @@ public class GameWorld : IIDProvider
                 // Parallel entity tick.
                 for (int i = _threadHandlingRanges[assignedID].Start.Value; i < _threadHandlingRanges[assignedID].End.Value; i++)
                 {
-                    _livingEntities[i].ParallelTick();
+                    if (_livingEntities[i].IsTicked)
+                    {
+                        _livingEntities[i].ParallelTick();
+                    }
                 }
                 MainThreadEvent.Set();
 

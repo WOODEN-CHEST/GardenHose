@@ -87,6 +87,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         MainPart = new PlanetPart(Radius, material, this);
 
         IsCollisionReactionEnabled = false;
+        IsInvulnerable = true;
     }
 
 

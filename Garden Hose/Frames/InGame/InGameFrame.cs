@@ -66,7 +66,8 @@ internal class InGameFrame : GameFrame
                 SmallStarCount = 80,
                 MediumStarCount = 15,
                 BigStarCount = 2
-            }
+            },
+            AmbientMaterial = GardenHose.Game.World.Material.WorldMaterial.Void
         };
         Game = new(this, StartupSettings);
     }

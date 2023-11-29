@@ -22,8 +22,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="assets\Office\**" />
+    <Compile Remove="Game\World\Entities\Probe\**" />
+    <Compile Remove="Game\World\Entities\Ship\**" />
     <EmbeddedResource Remove="assets\Office\**" />
+    <EmbeddedResource Remove="Game\World\Entities\Probe\**" />
+    <EmbeddedResource Remove="Game\World\Entities\Ship\**" />
     <None Remove="assets\Office\**" />
+    <None Remove="Game\World\Entities\Probe\**" />
+    <None Remove="Game\World\Entities\Ship\**" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Icon.ico" />

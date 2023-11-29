@@ -15,11 +15,14 @@ internal class PlanetPart : PhysicalEntityPart
         PhysicalEntity entity) : base(new ICollisionBound[] { new BallCollisionBound(radius) }, material, entity)
 
     {
+        MaterialInstance.Temperature = 900f;
         IsInvulnerable = true;
     }
 
 
     // Inherited methods.
+    internal override void SequentialTick() { }
+
     internal override void ParallelTick() { }
 
     protected override void OnPartDestroy() { }

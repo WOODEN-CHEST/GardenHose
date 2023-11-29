@@ -19,6 +19,8 @@ internal abstract class Entity
 
     internal virtual bool IsPhysical => false;
 
+    internal virtual bool IsTicked { get; set; } = true;
+
     internal event EventHandler? EntityDelete;
 
 
@@ -45,8 +47,6 @@ internal abstract class Entity
         EntityDelete?.Invoke(this, EventArgs.Empty);
         World?.RemoveEntity(this);
     }
-
-    internal abstract void UpdateThreadData();
 
 
     // Inherited methods.

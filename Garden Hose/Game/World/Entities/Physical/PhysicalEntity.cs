@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine.Screen;
+using GardenHose.Game.World.Material;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -28,6 +29,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal bool IsCollisionReactionEnabled { get; set; } = true;
 
     internal float BoundingLength { get; private set; }
+
+    internal bool IsInvulnerable { get; set; } = false;
 
 
     /* Entity properties. */
@@ -192,6 +195,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected readonly HashSet<PhysicalEntity> EntitiesCollidedWith = new();
 
+
     // Private fields.
     private PhysicalEntityPart _mainpart;
 
@@ -304,6 +308,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
+        if (!IsCollisionReactionEnabled) return;
+
+        // Soft collision.
+        if (selfPart.MaterialInstance.State == WorldMaterialState.Liquid
+            || otherPart.MaterialInstance.State == WorldMaterialState.Liquid)
+        {
+            const float SPEED_INCREASE_VALUE = 11.12f;
+            float Multiplier = Math.Max(0f, 1f - (SPEED_INCREASE_VALUE * World!.PassedTimeSeconds));
+            Motion *= Multiplier;
+            AngularMotion *= Multiplier;
+            return;
+        }
+
+        // Hard collision.
         // Multiply by 0.5 so physics are more stable.
         Vector2 MotionAtPoint = GetAngularMotionAtPoint(collisionPoint) * 0.5f + Motion;
         Vector2 EntityBMotionAtPoint = otherEntity.GetAngularMotionAtPoint(collisionPoint) * 0.5f + otherEntity.Motion;
@@ -673,10 +691,5 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             DrawMotion();
             DrawCenterOfMass();
         }
-    }
-
-    internal override void UpdateThreadData()
-    {
-        throw new NotImplementedException();
     }
 }

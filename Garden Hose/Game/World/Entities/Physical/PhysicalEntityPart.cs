@@ -223,7 +223,7 @@ internal abstract class PhysicalEntityPart
     /* Collision. */
     internal virtual CollisionCase[] TestCollisionAgainstEntity(PhysicalEntity entity)
     {
-        if (CollisionBounds == null)
+        if (CollisionBounds == null || MaterialInstance.State == WorldMaterialState.Gas)
         {
             return Array.Empty<CollisionCase>();
         }
@@ -269,17 +269,22 @@ internal abstract class PhysicalEntityPart
     {
         Collision?.Invoke(this, location);
         ApplyForce(location, appliedForce);
+        MaterialInstance.HeatByCollision(appliedForce);
     }
 
     internal virtual void ApplyForce(Vector2 location, float forceAmount)
     {
+        // Sound.
         const float SOUND_FORCE_DOWNSCALE = 0.7f;
         if (forceAmount >= (MaterialInstance.Material.Resistance * SOUND_FORCE_DOWNSCALE))
         {
 
         }
 
-        if (forceAmount >= MaterialInstance.Material.Resistance && !IsInvulnerable)
+        // Damage.
+        if (Entity.IsInvulnerable) return;
+
+        if (forceAmount >= MaterialInstance.Material.Resistance)
         {
             MaterialInstance.CurrentStrength -= forceAmount;
 
@@ -335,6 +340,8 @@ internal abstract class PhysicalEntityPart
                 Link.LinkedPart.ParallelTick();
             }
         }
+
+        MaterialTick();
     }
 
     internal virtual void SequentialTick()
@@ -346,8 +353,6 @@ internal abstract class PhysicalEntityPart
                 Link.LinkedPart.SequentialTick();
             }
         }
-
-        MaterialTick();
     }
 
     /* Drawing. */
@@ -387,9 +392,9 @@ internal abstract class PhysicalEntityPart
 
         foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
         {
-            if (TargetPart.CollisionBounds == null)
+            if (TargetPart.CollisionBounds == null || TargetPart.MaterialInstance.State == WorldMaterialState.Gas)
             {
-                return CollisionCases.ToArray();
+                continue;
             }
 
             (Vector2[] points, Vector2 surfaceNormal)? CollisionData = null;
@@ -551,15 +556,7 @@ internal abstract class PhysicalEntityPart
     protected virtual void MaterialTick()
     {
         MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
-
-        if (MaterialInstance.Temperature > MaterialInstance.Material.BoilingPoint)
-        {
-
-        }
-        else if (MaterialInstance.Temperature > MaterialInstance.Material.MeltingPoint)
-        {
-
-        }
+        MaterialInstance.Update(Entity.World.PassedTimeSeconds);
     }
 
 
