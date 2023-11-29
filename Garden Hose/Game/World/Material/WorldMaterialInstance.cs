@@ -46,6 +46,8 @@ internal sealed class WorldMaterialInstance
     private const float STATE_SOLID = 0f;
     private const float STATE_LIQUID = 1f;
     private const float STATE_GAS = 2f;
+    private const float ARBITRARY_REDUCTION_VALUE = 0.00212f;
+    private float TotalPhaseChangeTempAmount => Material.HeatCapacity * ARBITRARY_REDUCTION_VALUE;
 
 
     // Constructors.
@@ -74,6 +76,8 @@ internal sealed class WorldMaterialInstance
     internal void Update(float time)
     {
         float TemperatureOffset = GetTemperatureOffsetFromLimit();
+        ChangeState(TemperatureOffset);
+
         if (TemperatureOffset < 0f)
         {
             ReduceState(TemperatureOffset);
@@ -98,6 +102,11 @@ internal sealed class WorldMaterialInstance
         return Temperature - MaxTemperature;
     }
 
+    private void ChangeState(float temperatureDiffFromLimit)
+    {
+        while (MathF.Round())
+    }
+
     private void ReduceState(float temperatureUnder)
     {
         if (_stateTransformationValue == STATE_SOLID)
@@ -105,14 +114,31 @@ internal sealed class WorldMaterialInstance
             return;
         }
 
-        
+        // Handle boiling.
+        if (_stateTransformationValue <= STATE_GAS)
+        {
+            float TempAmountToCool = _stateTransformationValue - STATE_SOLID;
+            if (temperatureUnder > TempAmountToCool)
+            {
+                Temperature = Material.MeltingPoint;
+                _stateTransformationValue = STATE_LIQUID;
+            }
+            else
+            {
+                _stateTransformationValue += temperatureUnder / TotalPhaseChangeTempAmount;
+            }
+            temperatureUnder += TempAmountToCool;
+        }
+        if (temperatureUnder >= 0f) return;
+
+        // Handle cooling.
+
+
+        // Handle melting
     }
 
     private void IncreaseState(float temperatureOver)
     {
-        const float ARBITRARY_REDUCTION_VALUE = 0.00212f;
-        float TotalPhaseChangeTempAmount = (Material.HeatCapacity * ARBITRARY_REDUCTION_VALUE);
-
         // Handle melting.
         if (_stateTransformationValue < STATE_LIQUID)
         {
