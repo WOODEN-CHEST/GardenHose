@@ -1,5 +1,4 @@
 ﻿using GardenHose.Game.World.Entities;
-using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
@@ -15,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+// Import everything.
 
 namespace GardenHose.Game.World;
 
@@ -109,7 +109,7 @@ public class GameWorld : IIDProvider
     private bool _isDebugInfoEnabled = false;
 
     /* Threads. */
-    private const int THREAD_COUNT = 8;
+    private const int THREAD_COUNT = 1;
     private readonly AutoResetEvent[] _startFireEvent = new AutoResetEvent[THREAD_COUNT];
     private readonly AutoResetEvent[] _endFireEvent = new AutoResetEvent[THREAD_COUNT];
     private readonly Range[] _threadHandlingRanges =new Range[THREAD_COUNT];
@@ -355,24 +355,18 @@ public class GameWorld : IIDProvider
     {
         foreach (CollisionCase Case in collisionCases)
         {
-            if (Case.PartA.MaterialInstance.State == WorldMaterialState.Solid 
-                && Case.PartB.MaterialInstance.State == WorldMaterialState.Solid)
+            if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
             {
-                if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
-                {
-                    Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
-                }
-                else if (Case.EntityA.IsCollisionReactionEnabled)
-                {
-                    Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
-                }
+                Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
+            }
+            else if (Case.EntityA.IsCollisionReactionEnabled)
+            {
+                Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
             }
 
-            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.BoundA,
-            Case.BoundB, Case.SurfaceNormal, Case.AverageCollisionPoint);
+            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.SurfaceNormal, Case.AverageCollisionPoint);
 
-            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.BoundB,
-            Case.BoundA, Case.SurfaceNormal, Case.AverageCollisionPoint);
+            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.SurfaceNormal, Case.AverageCollisionPoint);
         }
     }
 

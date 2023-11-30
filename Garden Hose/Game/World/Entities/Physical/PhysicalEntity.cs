@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
-using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine.Screen;
 using GardenHose.Game.World.Material;
 
@@ -112,6 +111,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             return CenterPosition;
         }
     }
+
+    internal bool IsAttractable { get; set; } = true;
+
+    internal bool IsConductable { get; set; } = true;
 
 
     /* Parts. */
@@ -303,53 +306,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal virtual void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
-        ICollisionBound selfBound,
-        ICollisionBound otherBound,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
         if (!IsCollisionReactionEnabled) return;
 
-        // Soft collision.
-        if (selfPart.MaterialInstance.State == WorldMaterialState.Liquid
-            || otherPart.MaterialInstance.State == WorldMaterialState.Liquid)
+        if (selfPart.MaterialInstance.State != WorldMaterialState.Solid
+            || otherPart.MaterialInstance.State != WorldMaterialState.Solid)
         {
-            const float SPEED_INCREASE_VALUE = 11.12f;
-            float Multiplier = Math.Max(0f, 1f - (SPEED_INCREASE_VALUE * World!.PassedTimeSeconds));
-            Motion *= Multiplier;
-            AngularMotion *= Multiplier;
-            return;
+            OnSoftCollision(otherEntity);
         }
-
-        // Hard collision.
-        // Multiply by 0.5 so physics are more stable.
-        Vector2 MotionAtPoint = GetAngularMotionAtPoint(collisionPoint) * 0.5f + Motion;
-        Vector2 EntityBMotionAtPoint = otherEntity.GetAngularMotionAtPoint(collisionPoint) * 0.5f + otherEntity.Motion;
-
-        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
-        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
-        // So here I just stole some formula from online and I don't know how it works (Since my calculations give different results)
-        Vector2 Surface = GHMath.PerpVectorClockwise(surfaceNormal);
-        float AlignedYMotion = Vector2.Dot(MotionAtPoint, surfaceNormal);
-        float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
-        float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, surfaceNormal);
-
-        float CombinedBounciness = (selfPart.MaterialInstance.Material.Bounciness
-            + otherPart.MaterialInstance.Material.Bounciness) * 0.5f;
-        float CombinedFrictionCoef = (selfPart.MaterialInstance.Material.Friction
-            + otherPart.MaterialInstance.Material.Friction) * 0.5f;
-
-
-        float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Mass,
-            EntityBAlignedYMotion, otherEntity.Mass, CombinedBounciness);
-
-        Vector2 NewMotion = (surfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
-        Vector2 ForceApplied = Mass * (NewMotion - MotionAtPoint);
-
-
-        // Apply forces.
-        ApplyForce(ForceApplied, collisionPoint, selfPart);
-        selfPart.OnCollision(collisionPoint, ForceApplied.Length());
+        else
+        {
+            OnHardCollision(otherEntity, selfPart, otherPart, surfaceNormal, collisionPoint);
+        }
     }
 
     internal virtual void PushOutOfOtherEntity(ICollisionBound selfBound,
@@ -358,6 +328,12 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart)
     {
+        if (otherPart.MaterialInstance.State != WorldMaterialState.Solid
+            || selfPart.MaterialInstance.State != WorldMaterialState.Solid)
+        {
+            return;
+        }
+
         // Prepare variables.
         Vector2 PushOutDirection = GetPushOutDirection(otherEntity);
         const int StepCount = 8;
@@ -447,22 +423,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Protected methods.
     /* Physics. */
-    protected virtual void SimulatePhysicsPlanet()
-    {
-        float AttractionStrength = (World!.Planet!.Radius / Vector2.Distance(Position, World.Planet.Position))
-            * World.Planet.Attraction * World!.PassedTimeSeconds;
-        AttractionStrength = float.IsFinite(AttractionStrength) ? AttractionStrength : 0f;
-
-        Vector2 AddedMotion = -Vector2.Normalize(Position - World.Planet.Position);
-        AddedMotion.X = float.IsFinite(AddedMotion.X) ? AddedMotion.X : 0f;
-        AddedMotion.Y = float.IsFinite(AddedMotion.Y) ? AddedMotion.Y : 0f;
-
-        AddedMotion *= AttractionStrength;
-
-        Motion += AddedMotion;
-    }
-
-    protected virtual void FinalizeTickPhysicsSimulation()
+    [TickedFunction(false)]
+    protected virtual void StepMotion()
     {
         Vector2 NewPosition = SelfPosition + (Motion * World!.PassedTimeSeconds);
         float NewRotation = SelfRotation + (AngularMotion * World!.PassedTimeSeconds);
@@ -648,6 +610,59 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
+    private void OnSoftCollision(PhysicalEntity otherEntity)
+    {
+        // Theoretically this code can cause strange behavior of objects pushing out of each other,
+        // but practically it is rare. In case of such a bug, search here.
+
+        Vector2 MotionRelativeToOtherEntity = Motion - otherEntity.Motion;
+
+        const float ARBITRARY_SPEED_CHANGE_VALUE = 11.195f;
+        float Multiplier = Math.Max(0f, 1f - (ARBITRARY_SPEED_CHANGE_VALUE * World!.PassedTimeSeconds));
+
+        Vector2 ChangeInRelativeMotion = MotionRelativeToOtherEntity - (MotionRelativeToOtherEntity * Multiplier);
+        Motion -= ChangeInRelativeMotion;
+
+        AngularMotion *= Multiplier;
+    }
+
+    private void OnHardCollision(PhysicalEntity otherEntity,
+        PhysicalEntityPart selfPart,
+        PhysicalEntityPart otherPart,
+        Vector2 surfaceNormal,
+        Vector2 collisionPoint)
+    {
+        // Multiply by 0.5 so physics are more stable.
+        Vector2 MotionAtPoint = GetAngularMotionAtPoint(collisionPoint) * 0.5f + Motion;
+        Vector2 EntityBMotionAtPoint = otherEntity.GetAngularMotionAtPoint(collisionPoint) * 0.5f + otherEntity.Motion;
+
+        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
+        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
+        // So here I just stole some formula from online and I don't know how it works (Since my calculations give different results)
+        Vector2 Surface = GHMath.PerpVectorClockwise(surfaceNormal);
+        float AlignedYMotion = Vector2.Dot(MotionAtPoint, surfaceNormal);
+        float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
+        float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, surfaceNormal);
+
+        float CombinedBounciness = (selfPart.MaterialInstance.Material.Bounciness
+            + otherPart.MaterialInstance.Material.Bounciness) * 0.5f;
+        float CombinedFrictionCoef = (selfPart.MaterialInstance.Material.Friction
+            + otherPart.MaterialInstance.Material.Friction) * 0.5f;
+
+
+        float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Mass,
+            EntityBAlignedYMotion, otherEntity.Mass, CombinedBounciness);
+
+        Vector2 NewMotion = (surfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
+        Vector2 ForceApplied = Mass * (NewMotion - MotionAtPoint);
+
+
+        // Apply forces.
+        ApplyForce(ForceApplied, collisionPoint, selfPart);
+        selfPart.OnCollision(collisionPoint, ForceApplied.Length());
+    }
+
+
     /* Other. */
     private void SetPositionAndRotation(Vector2 position, float rotation)
     {
@@ -661,17 +676,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Inherited methods.
+    [TickedFunction(false)]
     internal override void ParallelTick()
     {
-        if (World!.Planet != null)
-        {
-            SimulatePhysicsPlanet();
-        }
-        FinalizeTickPhysicsSimulation();
-
+        StepMotion();
         MainPart.ParallelTick();
     }
 
+    [TickedFunction(false)]
     internal override void SequentalTick()
     {
         CollisionTick();

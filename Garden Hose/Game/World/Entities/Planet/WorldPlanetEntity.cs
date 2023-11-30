@@ -1,8 +1,6 @@
 ﻿using GardenHose.Game.AssetManager;
-using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
-using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
@@ -14,8 +12,9 @@ namespace GardenHose.Game.World.Entities;
 internal partial class WorldPlanetEntity : PhysicalEntity
 {
     // Static fields.
+    /* Preset planets. */
     public static WorldPlanetEntity TestPlanet => new WorldPlanetEntity(512f, 120f,
-        WorldMaterial.Test, PlanetAtmosphereType.None)
+        WorldMaterial.PlanetTest, PlanetAtmosphereType.None)
     {
         AtmosphereColor = Color.CornflowerBlue,
         AtmosphereOpacity = 0.6f,
@@ -84,10 +83,11 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         AtmosphereType = atmosphereType;
         DrawLayer = DrawLayer.Bottom;
 
-        MainPart = new PlanetPart(Radius, material, this);
+        MainPart = new WorldPlanetPart(Radius, material, this);
 
         IsCollisionReactionEnabled = false;
         IsInvulnerable = true;
+        IsAttractable = false;
     }
 
 
@@ -156,9 +156,15 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         base.Draw();
     }
 
-    internal override void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null) { }
+    internal override void SequentalTick()
+    {
+        base.SequentalTick();
+    }
 
-    internal override void ParallelTick() { }
+    internal override void ParallelTick()
+    {
+
+    }
 
     internal override void OnPartDamage() { }
 

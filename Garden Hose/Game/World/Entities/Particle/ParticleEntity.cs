@@ -1,6 +1,4 @@
 ﻿using GardenHose.Game.AssetManager;
-using GardenHose.Game.World.Entities.Physical;
-using GardenHose.Game.World.Material;
 using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework;
 using System;
@@ -11,57 +9,85 @@ namespace GardenHose.Game.World.Entities;
 internal class ParticleEntity : PhysicalEntity
 {
     // Internal fields.
-    bool IsKilledByPlanets
-    {
-        get => ((ParticlePart)MainPart).IsKilledByPlanets;
-        set
-        {
-            ((ParticlePart)MainPart).IsKilledByPlanets = value;
-        }
-    }
+    bool IsKilledByPlanets { get; set; } = true;
 
     internal float Lifetime { get; set; }
 
     internal float TimeAlive { get; set; } = 0f;
 
+    internal float FadeStatus { get; private set; } = 0f;
+
 
     // Private fields.
     private Func<SpriteAnimation> _animationProvider;
     private Color _particleColorMask;
-    private float _particleScale;
+
+    private float _scaleChangeSpeed;
+
+    private readonly float _fadeInSpeed;
+    private readonly float _fadeOutSpeed;
+    private const float FADED_OUT = 0f;
+    private const float FADED_IN = 1f;
+
+    
 
 
     // Constructors.
-    public ParticleEntity(GameWorld? world, ParticleSettings settings) : base(EntityType.Particle, world)
+    protected ParticleEntity(GameWorld? world, ParticleSettings settings, Vector2 motion, Vector2 position) 
+        : base(EntityType.Particle, world)
     {
         if (settings == null)
         {
             throw new ArgumentNullException(nameof(settings));
         }
 
-        MainPart = new ParticlePart(this, settings);
+        MainPart = new ParticlePart(this, settings.GetScale(), settings.CollisionRadius, settings.Material);
 
-        SelfPosition = settings.Position;
-        Motion = settings.GetMotion();
+        SelfPosition = position;
+        Motion = motion;
         SelfRotation = settings.GetRotation();
         AngularMotion = settings.GetAngularMotion();
-        _particleScale = settings.GetScale();
         _animationProvider = settings.AnimationProvider;
         _particleColorMask = settings.GetColor();
+        _fadeInSpeed = 1f / settings.FadeInTime;
+        _fadeOutSpeed = 1f / settings.FadeOutTime;
+        _scaleChangeSpeed = settings.GetScaleChangePerSecond();
         Lifetime = settings.GetLifetime();
+
+        if (float.IsInfinity(_fadeInSpeed))
+        {
+            FadeStatus = FADED_IN;
+        }
 
         MainPart.SetPositionAndRotation(Position, Rotation);
     }
 
 
     // Internal static methods.
-    internal static ParticleEntity[] CreateParticles(GameWorld world, ParticleSettings settings, PhysicalEntity? sourceEntity = null)
+    internal static ParticleEntity[] CreateParticles(GameWorld world,
+        ParticleSettings settings,
+        Range count,
+        Vector2 position,
+        Vector2 motion,
+        float motionMagnitudeRandomness,
+        float motionDirectionRandomnessAngle,
+        PhysicalEntity? sourceEntity = null)
     {
-        ParticleEntity[] Particles = new ParticleEntity[settings.GetCount()];
+        ParticleEntity[] Particles = new ParticleEntity[Random.Shared.Next(count.Start.Value, count.End.Value + 1)];
+
+        Vector2 MotionNormal = Vector2.Zero;
+        if (motion.LengthSquared() is not 0f or not -0f)
+        {
+            MotionNormal = Vector2.Normalize(motion);
+        }
 
         for (int i = 0; i < Particles.Length; i++)
         {
-            ParticleEntity Particle = new(world, settings);
+            float Rotation = (Random.Shared.NextSingle() - 0.5f) * motionDirectionRandomnessAngle;
+            float MotionMagnitudeMultiplier = 1f + (Random.Shared.NextSingle() - 0.5f) * motionMagnitudeRandomness;
+            Vector2 Motion = Vector2.Transform(MotionNormal, Matrix.CreateRotationZ(Rotation)) * motion.Length() * MotionMagnitudeMultiplier;
+
+            ParticleEntity Particle = new(world, settings, Motion, position);
             world.AddEntity(Particle);
             Particles[i] = Particle;
         }
@@ -79,14 +105,27 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Inherited methods.
+    [TickedFunction(false)]
     internal override void ParallelTick()
     {
         base.ParallelTick();
 
         TimeAlive += World!.PassedTimeSeconds;
-        if (TimeAlive >= Lifetime)
+
+        ((ParticlePart)MainPart).ParticleScale *= 1 + (World!.PassedTimeSeconds * _scaleChangeSpeed);
+
+        if ((FadeStatus < FADED_IN) && (TimeAlive < Lifetime))
         {
-            Delete();
+            FadeStatus = Math.Clamp(FadeStatus + _fadeInSpeed * World!.PassedTimeSeconds, 0f, 1f);
+        }
+        else if (TimeAlive >= Lifetime)
+        {
+            FadeStatus = Math.Clamp(FadeStatus - _fadeOutSpeed * World!.PassedTimeSeconds, 0f, 1f);
+
+            if (FadeStatus <= FADED_OUT)
+            {
+                Delete();
+            }
         }
     }
 
@@ -96,20 +135,18 @@ internal class ParticleEntity : PhysicalEntity
 
         Part.Sprite = new(_animationProvider.Invoke());
         Part.Sprite.Mask = _particleColorMask;
-        Part.Sprite.Scale.Vector = new(_particleScale);
+        Part.Sprite.Scale.Vector = ((ParticlePart)MainPart).ParticleScale;
     }
 
     internal override void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
-        ICollisionBound selfBound,
-        ICollisionBound otherBound,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
         if (IsKilledByPlanets && otherEntity.EntityType == EntityType.Planet)
         {
-            Delete();
+            TimeAlive = Lifetime;
         }
     }
 

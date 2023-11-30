@@ -1,5 +1,4 @@
-﻿using GardenHose.Game.World.Entities.Physical;
-using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.World.Material;
 using GardenHoseEngine.Frame;
 using Microsoft.Xna.Framework;
 using System;
@@ -49,8 +48,6 @@ internal abstract class PhysicalEntityPart
             return TotalMass;
         }
     }
-
-    internal virtual bool IsInvulnerable { get; set; } = false;
 
 
     /* Collision bounds and parts. */
@@ -268,15 +265,11 @@ internal abstract class PhysicalEntityPart
     internal void OnCollision(Vector2 location, float appliedForce)
     {
         Collision?.Invoke(this, location);
-        ApplyForce(location, appliedForce);
         MaterialInstance.HeatByCollision(appliedForce);
-    }
 
-    internal virtual void ApplyForce(Vector2 location, float forceAmount)
-    {
         // Sound.
         const float SOUND_FORCE_DOWNSCALE = 0.7f;
-        if (forceAmount >= (MaterialInstance.Material.Resistance * SOUND_FORCE_DOWNSCALE))
+        if (appliedForce >= (MaterialInstance.Material.Resistance * SOUND_FORCE_DOWNSCALE))
         {
 
         }
@@ -284,9 +277,9 @@ internal abstract class PhysicalEntityPart
         // Damage.
         if (Entity.IsInvulnerable) return;
 
-        if (forceAmount >= MaterialInstance.Material.Resistance)
+        if (appliedForce >= MaterialInstance.Material.Resistance)
         {
-            MaterialInstance.CurrentStrength -= forceAmount;
+            MaterialInstance.CurrentStrength -= appliedForce;
 
             if (MaterialInstance.Stage == WorldMaterialStage.Destroyed)
             {
@@ -303,7 +296,7 @@ internal abstract class PhysicalEntityPart
             }
         }
 
-        if ((ParentLink != null) && (forceAmount >= ParentLink.LinkStrength))
+        if ((ParentLink != null) && (appliedForce >= ParentLink.LinkStrength))
         {
             OnPartBreakOff();
         }
@@ -329,6 +322,7 @@ internal abstract class PhysicalEntityPart
     }
 
     /* Game flow. */
+    [TickedFunction(false)]
     internal virtual void ParallelTick()
     {
         SelfRotation += AngularMotion * Entity.World!.PassedTimeSeconds;
@@ -341,9 +335,11 @@ internal abstract class PhysicalEntityPart
             }
         }
 
-        MaterialTick();
+        MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
+        MaterialInstance.Update(Entity.World.PassedTimeSeconds, !Entity.IsInvulnerable);
     }
 
+    [TickedFunction(false)]
     internal virtual void SequentialTick()
     {
         if (SubPartLinks != null)
@@ -352,6 +348,11 @@ internal abstract class PhysicalEntityPart
             {
                 Link.LinkedPart.SequentialTick();
             }
+        }
+
+        if (MaterialInstance.Material.Attraction > 0f)
+        {
+            AttractEntities();
         }
     }
 
@@ -552,18 +553,40 @@ internal abstract class PhysicalEntityPart
     }
 
 
-    /* Physics. */
-    protected virtual void MaterialTick()
-    {
-        MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
-        MaterialInstance.Update(Entity.World.PassedTimeSeconds);
-    }
-
-
     /* Parts. */
     protected abstract void OnPartDamage();
 
     protected abstract void OnPartDestroy();
 
     protected abstract void OnPartBreakOff();
+
+
+    /* Physics. */
+    [TickedFunction(false)]
+    protected void AttractEntities()
+    {
+        foreach (PhysicalEntity WorldEntity in Entity!.World!.PhysicalEntities)
+        {
+            if (WorldEntity == Entity) continue;
+
+            if (!WorldEntity.IsAttractable) continue;
+
+            const float ARBITRARY_ATTRACTION_INCREASE = 1000f;
+            float AttractionStrength = (MaterialInstance.Material.Attraction * ARBITRARY_ATTRACTION_INCREASE
+                / Vector2.Distance(Position, WorldEntity.Position)) * Entity.World!.PassedTimeSeconds;
+
+            if (float.IsNaN(AttractionStrength) || !float.IsFinite(AttractionStrength))
+            {
+                AttractionStrength = 0f;
+            }
+
+            Vector2 AddedMotion = Vector2.Normalize(Position - WorldEntity.Position);
+            AddedMotion.X = (float.IsFinite(AddedMotion.X) || !float.IsNaN(AddedMotion.X)) ? AddedMotion.X : 0f;
+            AddedMotion.Y = (float.IsFinite(AddedMotion.Y) || !float.IsNaN(AddedMotion.Y)) ? AddedMotion.Y : 0f;
+
+            AddedMotion *= AttractionStrength;
+
+            WorldEntity.Motion += AddedMotion;
+        }
+    }
 }

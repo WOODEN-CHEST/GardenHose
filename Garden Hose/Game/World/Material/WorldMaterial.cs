@@ -23,6 +23,22 @@ internal class WorldMaterial
         Attraction = 0f
     };
 
+    internal static WorldMaterial PlanetTest { get; } = new()
+    {
+        Density = 0.1f,
+        Strength = 80_000f,
+        Resistance = 3000f,
+        HeatCapacity = 10_000f,
+        HeatTransferRate = 0.8f,
+        MeltingPoint = 400f,
+        BoilingPoint = 800f,
+        Friction = 0.85f,
+        Bounciness = 0.4f,
+        Magnetism = 0f,
+        Conductivity = 0f,
+        Attraction = 50f
+    };
+
     internal static WorldMaterial Void { get; } = new() // Random values go!
     {
         Density = 0.000005f,

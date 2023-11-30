@@ -84,8 +84,10 @@ internal sealed class WorldMaterialInstance
         Temperature += force / Material.HeatCapacity * ARBITRARY_REDUCTION_VALUE * Material.HeatTransferRate;
     }
 
-    internal void Update(float time)
+    internal void Update(float time, bool isDamageEnabled)
     {
+        if (!isDamageEnabled) return;
+
         const float MELTING_DAMAGE = 5f;
         const float BOILING_DAMAGE = 3000;
         const float ARBITRARY_REDUCTION_VALUE = 0.00212f;

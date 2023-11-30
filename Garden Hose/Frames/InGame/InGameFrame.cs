@@ -59,7 +59,7 @@ internal class InGameFrame : GameFrame
             StartingEntities = new Entity[]
             {
                 new TestEntity() { Position = new Vector2(0f, 700f) },
-
+                new TestEntity(){ Position = new Vector2(0f, -700f), Motion = new Vector2(300f, 0f) }
             },
             Background = new(BackgroundImage.Default)
             {

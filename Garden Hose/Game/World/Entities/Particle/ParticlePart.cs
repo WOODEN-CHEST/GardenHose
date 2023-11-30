@@ -1,4 +1,5 @@
-﻿using GardenHoseEngine.Frame.Item;
+﻿using GardenHose.Game.World.Material;
+using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 
 
@@ -10,8 +11,6 @@ internal class ParticlePart : PhysicalEntityPart
     // Internal fields.
     internal SpriteItem Sprite { get; set; }
 
-    internal bool IsKilledByPlanets { get; set; } = true;
-
     internal float Lifetime { get; set; } = 4f;
 
     internal float RandomAdditionalLifetime { get; set; } = 2f;
@@ -20,24 +19,24 @@ internal class ParticlePart : PhysicalEntityPart
 
 
     // Constructors.
-    public ParticlePart(ParticleEntity entity, ParticleSettings settings) : base(settings.Material, entity)
+    public ParticlePart(ParticleEntity entity, float scale, float radius, WorldMaterial material) : base(material, entity)
     {
-        ParticleScale = new(settings.GetScale());
+        ParticleScale = new(scale);
 
-        if (settings.CollisionRadius > 0)
+        if (radius > 0)
         {
-            CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
+            CollisionBounds = new ICollisionBound[] { new BallCollisionBound(radius) };
         }
     }
 
 
     // Inherited methods.
-    internal override void ApplyForce(Vector2 location, float forceAmount) { }
-
     internal override void Draw()
     {
         Sprite.Scale.Vector = ParticleScale * Entity.World!.Zoom;
         Sprite.Position.Vector = Entity.World.ToViewportPosition(Position);
+        Sprite.Opacity = ((ParticleEntity)Entity).FadeStatus;
+        Sprite.Rotation = CombinedRotation;
         Sprite.Draw();
 
         base.Draw();

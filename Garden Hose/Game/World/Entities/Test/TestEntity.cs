@@ -2,11 +2,7 @@
 using GardenHose.Game.AssetManager;
 using GardenHose.Game.World.Entities.Test;
 using GardenHose.Game.World.Material;
-using GardenHoseEngine.Frame;
-using GardenHoseEngine.Frame.Item.Basic;
 using Microsoft.Xna.Framework;
-using NAudio.CoreAudioApi;
-using System;
 
 namespace GardenHose.Game.World.Entities;
 

@@ -15,39 +15,35 @@ internal class ParticleSettings
     // Internal fields.
     internal WorldMaterial Material { get; set; }
 
-    internal int CountMin { get; set; }
+    internal float LifetimeMin { get; set; } = 4f;
 
-    internal int CountMax { get; set; }
+    internal float LifetimeMax { get; set; } = 6f;
 
-    internal float Lifetime { get; set; } = 4f;
+    internal float ScaleMin { get; set; } = 0.9f;
 
-    internal float RandomLifetimeBonus { get; set; } = 2f;
+    internal float ScaleMax { get; set; } = 1.1f;
 
-    internal float Scale { get; set; } = 0.9f;
+    internal float ScaleChangePerSecondMin { get; set; } = 0f;
 
-    internal float RandomScaleBonus { get; set; } = 0.2f;
+    internal float ScaleChangePerSecondMax { get; set; } = 0f;
 
     internal float CollisionRadius { get; set; } = 2.5f;
 
-    internal float Rotation { get; set; } = 0f;
+    internal float RotationMin { get; set; } = 0f;
 
-    internal float RandomRotationBonus { get; set; } = MathHelper.TwoPi;
+    internal float RotationMax { get; set; } = MathHelper.TwoPi;
 
-    internal float AngularMotion { get; set; } = 0f;
+    internal float AngularMotionMin { get; set; } = 0f;
 
-    internal float RandomAngularMotionBonus { get; set; } = 0f;
+    internal float AngularMotionMax { get; set; } = 0f;
 
-    internal FloatColor ColorMask { get; set; } = FloatColor.White;
+    internal float FadeOutTime = 1f;
 
-    internal FloatColor RandomColorMaskBonus { get; set; } = FloatColor.White;
+    internal float FadeInTime = 0f;
 
-    internal Vector2 Position { get; set; } = Vector2.Zero;
+    internal FloatColor ColorMaskMin { get; set; } = FloatColor.White;
 
-    internal Vector2 Motion { get; set; } = Vector2.UnitX;
-
-    internal float RandomMotionBonus { get; set; } = 0.5f;
-
-    internal float MotionDirectionRandomness { get; set; } = MathF.PI / 6f;
+    internal FloatColor ColorMaskMax { get; set; } = FloatColor.White;
 
     internal Func<SpriteAnimation> AnimationProvider { get; init; }
 
@@ -63,44 +59,31 @@ internal class ParticleSettings
     // Internal fields.
     internal Color GetColor()
     {
-        FloatColor ResultColor = ColorMask;
-        ResultColor.R += RandomColorMaskBonus.R * Random.Shared.NextSingle();
-        ResultColor.G += RandomColorMaskBonus.R * Random.Shared.NextSingle();
-        ResultColor.B += RandomColorMaskBonus.R * Random.Shared.NextSingle();
-        ResultColor.A += RandomColorMaskBonus.R * Random.Shared.NextSingle();
-        return (Color)ResultColor;
+        return FloatColor.InterpolateRGBA(ColorMaskMin, ColorMaskMax, Random.Shared.NextSingle());
     }
 
     internal float GetLifetime()
     {
-        return Lifetime + (Random.Shared.NextSingle() * RandomLifetimeBonus);
+        return GHMath.LinearInterp(LifetimeMin, LifetimeMax, Random.Shared.NextSingle());
     }
 
     internal float GetScale()
     {
-        return Scale + (Random.Shared.NextSingle() * RandomScaleBonus);
+        return GHMath.LinearInterp(ScaleMin, ScaleMax, Random.Shared.NextSingle());
     }
 
     internal float GetRotation()
     {
-        return Rotation + (Random.Shared.NextSingle() * RandomRotationBonus);
+        return GHMath.LinearInterp(RotationMin, RotationMax, Random.Shared.NextSingle());
     }
 
     internal float GetAngularMotion()
     {
-        return AngularMotion + (Random.Shared.NextSingle() * RandomAngularMotionBonus);
+        return GHMath.LinearInterp(AngularMotionMin, AngularMotionMax, Random.Shared.NextSingle());
     }
 
-    internal Vector2 GetMotion()
+    internal float GetScaleChangePerSecond()
     {
-        float ResultingLength = Motion.Length() + (RandomMotionBonus * Random.Shared.NextSingle());
-
-        Vector2 MotionUnit = Vector2.Normalize(Motion);
-        float RandomRotation = (Random.Shared.NextSingle() * MotionDirectionRandomness) - (MotionDirectionRandomness / 2f);
-        MotionUnit = Vector2.Transform(MotionUnit, Matrix.CreateRotationZ(RandomRotation));
-
-        return MotionUnit * ResultingLength;
+        return GHMath.LinearInterp(ScaleChangePerSecondMin, ScaleChangePerSecondMax, Random.Shared.NextSingle());
     }
-
-    internal int GetCount() => Random.Shared.Next(CountMin, CountMax + 1);
 }

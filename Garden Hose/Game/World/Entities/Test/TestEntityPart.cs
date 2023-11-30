@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.World.Material;
+using Microsoft.Xna.Framework;
 using System;
 
 namespace GardenHose.Game.World.Entities.Test;
@@ -12,20 +13,22 @@ internal class TestEntityPart : PhysicalEntityPart
     {
         _damageParticleSettings = new(WorldMaterial.Test, () => Entity!.World!.Game.AssetManager.ParticleTest)
         {
-            CountMin = 4,
-            CountMax = 8,
+            LifetimeMin = 6f,
+            LifetimeMax = 8f,
 
-            Lifetime = 6f,
-            RandomLifetimeBonus = 3f,
+            ScaleMin = 0.2f,
+            ScaleMax = 0.4f,
 
-            Motion = Entity.Motion,
-            RandomMotionBonus = 20f,
-            MotionDirectionRandomness = MathF.PI / 4f,
-            Position = Position,
-            Scale = 0.3f,
-            RandomScaleBonus = 0.125f,
+            CollisionRadius = 6f,
 
-            CollisionRadius = 6f
+            FadeInTime = 0.25f,
+            FadeOutTime = 1f,
+
+            ScaleChangePerSecondMin = 0.06f,
+            ScaleChangePerSecondMax = 0.1f,
+
+            AngularMotionMin = -1f,
+            AngularMotionMax = 1f
         };
     }
 
@@ -43,24 +46,14 @@ internal class TestEntityPart : PhysicalEntityPart
         }
 
         ParentLink!.ParentPart.UnlinkPart(this);
-
-        _damageParticleSettings.Position = Position;
-        _damageParticleSettings.Motion = Entity.Motion;
-
-        _damageParticleSettings.CountMin = 6;
-        _damageParticleSettings.CountMax = 16;
-
-        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
+        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings,
+            new Range(8, 16), Position, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
     }
 
     protected override void OnPartDamage()
     {
-        _damageParticleSettings.Position = Position;
-        _damageParticleSettings.Motion = Entity.Motion;
-        _damageParticleSettings.CountMin = 2;
-        _damageParticleSettings.CountMax = 5;
-
-        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings, Entity);
+        ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings,
+            new Range(1, 1), Position, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
     }
 
     protected override void OnPartBreakOff()
