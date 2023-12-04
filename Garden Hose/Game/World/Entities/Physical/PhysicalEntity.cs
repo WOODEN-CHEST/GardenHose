@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using GardenHoseEngine.Frame.Item;
@@ -6,8 +7,11 @@ using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHoseEngine.Screen;
 using GardenHose.Game.World.Material;
+using GardenHose.Game.World.Entities.Physical.Events;
+using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical.Collision;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical;
 
 
 internal abstract class PhysicalEntity : Entity, IDrawableItem
@@ -151,12 +155,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             {
                 EntityParts.Add(part);
 
-                if (part.SubPartLinks != null)
+                foreach (PartLink Link in part.SubPartLinks)
                 {
-                    foreach (PartLink Link in part.SubPartLinks)
-                    {
-                        GetSubParts(Link.LinkedPart);
-                    }
+                    GetSubParts(Link.LinkedPart);
                 }
             }
 
@@ -178,13 +179,17 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Events. */
-    internal event EventHandler<Vector2>? Collision;
+    internal event EventHandler<CollisionEventArgs>? Collision;
 
     internal event EventHandler? CollisionBoundChange;
 
-    internal event EventHandler? ParentChange;
+    internal event EventHandler? PartChange;
 
-    internal event EventHandler? SubPartChange;
+    internal event EventHandler<PartDamageEventArgs>? PartDamage;
+
+    internal event EventHandler<PartDamageEventArgs>? PartDesotry;
+
+    internal event EventHandler<PartDamageEventArgs>? PartBreakOff;
 
 
     // Protected fields.
@@ -228,7 +233,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal Methods.
     /* Physics. */
-    internal virtual void ApplyForce(Vector2 force, Vector2 location, PhysicalEntityPart? part = null)
+    internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
         // Linear.
         Vector2 LinearAcceleration = force / Mass;
@@ -314,7 +319,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         if (selfPart.MaterialInstance.State != WorldMaterialState.Solid
             || otherPart.MaterialInstance.State != WorldMaterialState.Solid)
         {
-            OnSoftCollision(otherEntity);
+            OnSoftCollision(otherEntity, collisionPoint);
         }
         else
         {
@@ -402,6 +407,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         _cachedMass = null;
         CreateBoundingBox();
+        CollisionBoundChange?.Invoke(this, EventArgs.Empty);
     }
 
     internal virtual void OnPartChange()
@@ -409,6 +415,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         _cachedParts = null;
         _cachedMass = null;
         CreateBoundingBox();
+        PartChange?.Invoke(this, EventArgs.Empty);
     }
 
     internal virtual void OnPartLinkDistanceChange()
@@ -416,9 +423,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         CreateBoundingBox();
     }
 
-    internal abstract void OnPartDamage();
+    internal virtual void OnPartDamage(PartDamageEventArgs args)
+    {
+        PartDamage?.Invoke(this, args);
+    }
 
-    internal abstract void OnPartDestroy();
+    internal virtual void OnPartDestroy(PartDamageEventArgs args)
+    {
+        PartDesotry?.Invoke(this, args);
+    }
+
+    internal virtual void OnPartBreakOff(PartDamageEventArgs args)
+    {
+        PartBreakOff?.Invoke(this, args);
+    }
 
 
     // Protected methods.
@@ -610,7 +628,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    private void OnSoftCollision(PhysicalEntity otherEntity)
+    private void OnSoftCollision(PhysicalEntity otherEntity, Vector2 collisionPoint)
     {
         // Theoretically this code can cause strange behavior of objects pushing out of each other,
         // but practically it is rare. In case of such a bug, search here.
@@ -624,6 +642,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Motion -= ChangeInRelativeMotion;
 
         AngularMotion *= Multiplier;
+
+        Collision?.Invoke(this, new(collisionPoint, 0f));
     }
 
     private void OnHardCollision(PhysicalEntity otherEntity,
@@ -658,8 +678,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
         // Apply forces.
-        ApplyForce(ForceApplied, collisionPoint, selfPart);
+        ApplyForce(ForceApplied, collisionPoint);
         selfPart.OnCollision(collisionPoint, ForceApplied.Length());
+        Collision?.Invoke(this, new(collisionPoint, ForceApplied.Length()));
     }
 
 
@@ -676,6 +697,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     // Inherited methods.
+    internal override void Load(GHGameAssetManager assetManager)
+    {
+        foreach (PhysicalEntityPart Part in Parts)
+        {
+            Part.Load(assetManager);
+        }
+    }
+
     [TickedFunction(false)]
     internal override void ParallelTick()
     {
@@ -684,7 +713,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     [TickedFunction(false)]
-    internal override void SequentalTick()
+    internal override void SequentialTick()
     {
         CollisionTick();
         MainPart.SequentialTick();

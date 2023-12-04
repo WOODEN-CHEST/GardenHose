@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Runtime.InteropServices.Marshalling;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical.Collision;
 
 
 internal struct RectangleCollisionBound : ICollisionBound

@@ -1,10 +1,12 @@
 ﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Events;
 using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework;
 using System;
 
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Particle;
 
 internal class ParticleEntity : PhysicalEntity
 {
@@ -19,7 +21,6 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Private fields.
-    private Func<SpriteAnimation> _animationProvider;
     private Color _particleColorMask;
 
     private float _scaleChangeSpeed;
@@ -41,13 +42,12 @@ internal class ParticleEntity : PhysicalEntity
             throw new ArgumentNullException(nameof(settings));
         }
 
-        MainPart = new ParticlePart(this, settings.GetScale(), settings.CollisionRadius, settings.Material);
+        MainPart = new ParticlePart(this, settings);
 
         SelfPosition = position;
         Motion = motion;
         SelfRotation = settings.GetRotation();
         AngularMotion = settings.GetAngularMotion();
-        _animationProvider = settings.AnimationProvider;
         _particleColorMask = settings.GetColor();
         _fadeInSpeed = 1f / settings.FadeInTime;
         _fadeOutSpeed = 1f / settings.FadeOutTime;
@@ -129,28 +129,20 @@ internal class ParticleEntity : PhysicalEntity
         }
     }
 
-    internal override void Load(GHGameAssetManager assetManager)
-    {
-        ParticlePart Part = (ParticlePart)MainPart;
-
-        Part.Sprite = new(_animationProvider.Invoke());
-        Part.Sprite.Mask = _particleColorMask;
-        Part.Sprite.Scale.Vector = ((ParticlePart)MainPart).ParticleScale;
-    }
-
     internal override void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
-        if (IsKilledByPlanets && otherEntity.EntityType == EntityType.Planet)
+        if (IsKilledByPlanets && (otherEntity.EntityType == EntityType.Planet) && (TimeAlive < Lifetime))
         {
             TimeAlive = Lifetime;
+            FadeStatus = FADED_IN;
         }
     }
 
-    internal override void OnPartDamage() { }
+    internal override void OnPartDamage(PartDamageEventArgs args) { }
 
-    internal override void OnPartDestroy() { }
+    internal override void OnPartDestroy(PartDamageEventArgs args) { }
 }

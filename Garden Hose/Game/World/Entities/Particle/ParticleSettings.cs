@@ -8,51 +8,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Particle;
 
 internal class ParticleSettings
 {
     // Internal fields.
-    internal WorldMaterial Material { get; set; }
+    internal WorldMaterial Material { get; init; }
 
-    internal float LifetimeMin { get; set; } = 4f;
+    internal float LifetimeMin { get; init; } = 4f;
 
-    internal float LifetimeMax { get; set; } = 6f;
+    internal float LifetimeMax { get; init; } = 6f;
 
-    internal float ScaleMin { get; set; } = 0.9f;
+    internal float ScaleMin { get; init; } = 0.9f;
 
-    internal float ScaleMax { get; set; } = 1.1f;
+    internal float ScaleMax { get; init; } = 1.1f;
 
-    internal float ScaleChangePerSecondMin { get; set; } = 0f;
+    internal float ScaleChangePerSecondMin { get; init; } = 0f;
 
-    internal float ScaleChangePerSecondMax { get; set; } = 0f;
+    internal float ScaleChangePerSecondMax { get; init; } = 0f;
 
-    internal float CollisionRadius { get; set; } = 2.5f;
+    internal float CollisionRadius { get; init; } = 2.5f;
 
-    internal float RotationMin { get; set; } = 0f;
+    internal float RotationMin { get; init; } = 0f;
 
-    internal float RotationMax { get; set; } = MathHelper.TwoPi;
+    internal float RotationMax { get; init; } = MathHelper.TwoPi;
 
-    internal float AngularMotionMin { get; set; } = 0f;
+    internal float AngularMotionMin { get; init; } = 0f;
 
-    internal float AngularMotionMax { get; set; } = 0f;
+    internal float AngularMotionMax { get; init; } = 0f;
 
-    internal float FadeOutTime = 1f;
+    internal float FadeOutTime { get; init; } = 1f;
 
-    internal float FadeInTime = 0f;
+    internal float FadeInTime { get; init;} = 0f;
 
-    internal FloatColor ColorMaskMin { get; set; } = FloatColor.White;
+    internal FloatColor ColorMaskMin { get; init; } = FloatColor.White;
 
-    internal FloatColor ColorMaskMax { get; set; } = FloatColor.White;
+    internal FloatColor ColorMaskMax { get; init; } = FloatColor.White;
 
-    internal Func<SpriteAnimation> AnimationProvider { get; init; }
+    internal string AnimationName { get; init; }
 
     
     // Constructors.
-    internal ParticleSettings(WorldMaterial material, Func<SpriteAnimation> animationProvider)
+    internal ParticleSettings(WorldMaterial material, string animationName)
     {
         Material = material ?? throw new ArgumentNullException(nameof(material));
-        AnimationProvider = animationProvider ?? throw new ArgumentNullException(nameof(animationProvider));
+        AnimationName = animationName ?? throw new ArgumentNullException(nameof(animationName));
     }
 
 

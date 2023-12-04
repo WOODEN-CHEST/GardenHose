@@ -35,6 +35,8 @@ public class SpriteItem : ColoredItem
         ActiveAnimation = animation.CreateInstance();
     }
 
+    public SpriteEffects Effects { get; set; } = SpriteEffects.None;
+
 
     // Inherited methods.
     public override void Draw()
@@ -49,7 +51,7 @@ public class SpriteItem : ColoredItem
             Rotation,
             ActiveAnimation.GetFrame().Origin,
             Display.ToRealScale(Scale),
-            SpriteEffects.None,
+            Effects,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }
 }

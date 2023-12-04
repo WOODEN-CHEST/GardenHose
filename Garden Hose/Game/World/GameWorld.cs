@@ -1,4 +1,7 @@
 ﻿using GardenHose.Game.World.Entities;
+using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
@@ -68,9 +71,12 @@ public class GameWorld : IIDProvider
         set
         {
             _zoom = value;
+            InverseZoom = 1f / value;
             CameraCenter = _cameraCenter; // Forces object visual position update.
         }
     }
+
+    internal float InverseZoom { get; private set; } = 1f;
 
 
     /* Simulation. */
@@ -185,7 +191,7 @@ public class GameWorld : IIDProvider
         {
             if (WorldEntity.IsTicked)
             {
-                WorldEntity.SequentalTick();
+                WorldEntity.SequentialTick();
             }
         }
 

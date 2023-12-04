@@ -2,7 +2,7 @@
 using System;
 
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical.Collision;
 
 
 internal record class CollisionCase

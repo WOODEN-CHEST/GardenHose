@@ -57,13 +57,13 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
     // Internal methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _smallStarAnim = assetManager.BackgroundStarSmall.CreateInstance();
-        _mediumStarAnim = assetManager.BackgroundStarMedium.CreateInstance();
-        _bigStarAnim = assetManager.BackgroundStarBig.CreateInstance();
+        _smallStarAnim = assetManager.GetAnimation("background_star_small")!.CreateInstance();
+        _mediumStarAnim = assetManager.GetAnimation("background_star_medium")!.CreateInstance();
+        _bigStarAnim = assetManager.GetAnimation("background_star_big")!.CreateInstance();
 
         _background = Image switch
         {
-            BackgroundImage.Default => new(assetManager.BackgroundDefault),
+            BackgroundImage.Default => new(assetManager.GetAnimation("background_default")!),
             _ => throw new EnumValueException(nameof(Image), nameof(BackgroundImage),
                 Image.ToString(), (int)Image)
         };

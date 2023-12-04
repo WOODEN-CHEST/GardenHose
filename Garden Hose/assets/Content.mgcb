@@ -189,7 +189,7 @@
 /processorParam:TextureFormat=Color
 /build:textures/game/planets/atmosphere/default.png
 
-#begin textures/game/planets/clouds/clouds1.png
+#begin textures/game/planets/layers/clouds1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -199,9 +199,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/clouds/clouds1.png
+/build:textures/game/planets/layers/clouds1.png
 
-#begin textures/game/planets/clouds/clouds2.png
+#begin textures/game/planets/layers/clouds2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -211,9 +211,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/clouds/clouds2.png
+/build:textures/game/planets/layers/clouds2.png
 
-#begin textures/game/planets/clouds/clouds3.png
+#begin textures/game/planets/layers/clouds3.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -223,9 +223,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/clouds/clouds3.png
+/build:textures/game/planets/layers/clouds3.png
 
-#begin textures/game/planets/clouds/clouds4.png
+#begin textures/game/planets/layers/clouds4.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -235,9 +235,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/clouds/clouds4.png
+/build:textures/game/planets/layers/clouds4.png
 
-#begin textures/game/planets/clouds/clouds5.png
+#begin textures/game/planets/layers/clouds5.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -247,9 +247,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/clouds/clouds5.png
+/build:textures/game/planets/layers/clouds5.png
 
-#begin textures/game/planets/overlays/gas_1_overlay_1.png
+#begin textures/game/planets/layers/gasoverlay1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -259,9 +259,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/overlays/gas_1_overlay_1.png
+/build:textures/game/planets/layers/gasoverlay1.png
 
-#begin textures/game/planets/overlays/gas_1_overlay_2.png
+#begin textures/game/planets/layers/gasoverlay2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -271,21 +271,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/overlays/gas_1_overlay_2.png
+/build:textures/game/planets/layers/gasoverlay2.png
 
-#begin textures/game/planets/surface/gas_1.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:textures/game/planets/surface/gas_1.png
-
-#begin textures/game/planets/surface/rock1_land.png
+#begin textures/game/planets/layers/gassurface1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -295,9 +283,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/surface/rock1_land.png
+/build:textures/game/planets/layers/gassurface1.png
 
-#begin textures/game/planets/surface/water.png
+#begin textures/game/planets/layers/rocksurface1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -307,7 +295,19 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:textures/game/planets/surface/water.png
+/build:textures/game/planets/layers/rocksurface1.png
+
+#begin textures/game/planets/layers/watersurface.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/planets/layers/watersurface.png
 
 #begin textures/game/ships/probe/base.png
 /importer:TextureImporter

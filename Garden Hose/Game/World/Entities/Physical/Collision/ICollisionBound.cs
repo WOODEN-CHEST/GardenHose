@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical.Collision;
 
 
 internal interface ICollisionBound

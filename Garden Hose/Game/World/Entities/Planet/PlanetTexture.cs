@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Planet;
 
 
 internal class PlanetTexture
@@ -23,6 +23,28 @@ internal class PlanetTexture
     internal SpriteItem Item { get; private set; }
 
     internal Vector2 TextureScaling { get; private set; }
+
+
+    // Private static fields.
+    private readonly static Dictionary<PlanetTextureType, string> _textureEntries = new();
+
+
+    // Static constructors.
+    static PlanetTexture()
+    {
+        _textureEntries.Add(PlanetTextureType.Gas1Surface, "planet_layer_gassurface1");
+        _textureEntries.Add(PlanetTextureType.Gas1Overlay1, "planet_layer_gasoverlay1");
+        _textureEntries.Add(PlanetTextureType.Gas1Overlay2, "planet_layer_gasoverlay2");
+
+        _textureEntries.Add(PlanetTextureType.RockSurface1, "planet_layer_rocksurface1");
+        _textureEntries.Add(PlanetTextureType.WaterSurface1, "planet_layer_watersurface1");
+
+        _textureEntries.Add(PlanetTextureType.Clouds1, "planet_layer_clouds1");
+        _textureEntries.Add(PlanetTextureType.Clouds2, "planet_layer_clouds2");
+        _textureEntries.Add(PlanetTextureType.Clouds3, "planet_layer_clouds3");
+        _textureEntries.Add(PlanetTextureType.Clouds4, "planet_layer_clouds4");
+        _textureEntries.Add(PlanetTextureType.Clouds5, "planet_layer_clouds5");
+    }
 
 
     // Constructors.
@@ -40,25 +62,7 @@ internal class PlanetTexture
     // Internal methods.
     internal void Load(GHGameAssetManager assetManager, float planetDiameter)
     {
-        Item = new(Type switch
-        {
-            PlanetTextureType.Gas1Surface => assetManager.PlanetGas1Surface,
-            PlanetTextureType.Gas1Overlay1 => assetManager.PlanetGas1Overlay1,
-            PlanetTextureType.Gas1Overlay2 => assetManager.PlanetGas1Overlay2,
-
-            PlanetTextureType.Rock1Land => assetManager.PlanetRock1Land,
-            PlanetTextureType.Water => assetManager.PlanetWater,
-
-            PlanetTextureType.Clouds1 => assetManager.PlanetClouds1,
-            PlanetTextureType.Clouds2 => assetManager.PlanetClouds2,
-            PlanetTextureType.Clouds3 => assetManager.PlanetClouds3,
-            PlanetTextureType.Clouds4 => assetManager.PlanetClouds4,
-            PlanetTextureType.Clouds5 => assetManager.PlanetClouds5,
-
-            _ => throw new EnumValueException(nameof(Type), nameof(PlanetTextureType),
-                Type.ToString(), (int)Type)
-        });
-        
+        Item = new(assetManager.GetAnimation(_textureEntries[Type])!);
         TextureScaling = new(planetDiameter / Item.TextureSize.X, planetDiameter / Item.TextureSize.Y);
     }
 

@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.World.Entities;
+using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.World.Material;
 using System;
 

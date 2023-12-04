@@ -1,9 +1,10 @@
 ﻿using GardenHoseEngine;
+using GardenHoseEngine.Audio;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-
 
 namespace GardenHose.Game.AssetManager;
 
@@ -11,121 +12,148 @@ namespace GardenHose.Game.AssetManager;
 internal class GHGameAssetManager
 {
     // Internal fields.
-    /* Planets. */
-    internal SpriteAnimation PlanetAtmosphereDefault
-    {
-        get => _planetAtmosphereDefault ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/atmosphere/default");
-    }
-
-    internal SpriteAnimation PlanetGas1Surface
-    {
-        get => _planetGas1Surface ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/surface/gas_1");
-    }
-
-    internal SpriteAnimation PlanetGas1Overlay1
-    {
-        get => _planetGas1Overlay1 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/overlays/gas_1_overlay_1");
-    }
-    internal SpriteAnimation PlanetGas1Overlay2
-    {
-        get => _planetGas1Overlay2 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/overlays/gas_1_overlay_2");
-    }
-
-    internal SpriteAnimation PlanetRock1Land
-    {
-        get => _planetRock1Land ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/surface/rock1_land");
-    }
-
-    internal SpriteAnimation PlanetWater
-    {
-        get => _planetWater ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/surface/water");
-    }
-
-    internal SpriteAnimation PlanetClouds1
-    {
-        get => _planetClouds1 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds1");
-    }
-
-    internal SpriteAnimation PlanetClouds2
-    {
-        get => _planetClouds2 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds2");
-    }
-
-    internal SpriteAnimation PlanetClouds3
-    {
-        get => _planetClouds3 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds3");
-    }
-
-    internal SpriteAnimation PlanetClouds4
-    {
-        get => _planetClouds4 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds4");
-    }
-
-    internal SpriteAnimation PlanetClouds5
-    {
-        get => _planetClouds5 ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/planets/clouds/clouds5");
-    }
-
-    /* Particles. */
-    internal SpriteAnimation ParticleTest
-    {
-        get => _particleTest ??= new SpriteAnimation(4f, _parentFrame, Origin.Center, 
-            "game/particles/test/0", "game/particles/test/1", "game/particles/test/2", "game/particles/test/3",
-            "game/particles/test/4", "game/particles/test/5", "game/particles/test/6", "game/particles/test/7",
-            "game/particles/test/8", "game/particles/test/9");
-    }
-
-
-    /* Background. */
-    internal SpriteAnimation BackgroundDefault
-    {
-        get => _backgroundDefault ??= new SpriteAnimation(0f, _parentFrame, Origin.TopLeft, "game/backgrounds/default");
-    }
-    internal SpriteAnimation BackgroundStarSmall
-    {
-        get => _backgroundStarSmall ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/small");
-    }
-
-    internal SpriteAnimation BackgroundStarMedium
-    {
-        get => _backgroundStarMedium ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/medium");
-    }
-
-    internal SpriteAnimation BackgroundStarBig
-    {
-        get => _backgroundStarBig ??= new SpriteAnimation(0f, _parentFrame, Origin.Center, "game/stars/big");
-    }
-
 
     // Private fields.
     private IGameFrame _parentFrame;
 
-    /* Planets. */
-    private SpriteAnimation? _planetAtmosphereDefault;
-    private SpriteAnimation? _planetGas1Surface;
-    private SpriteAnimation? _planetGas1Overlay1;
-    private SpriteAnimation? _planetGas1Overlay2;
-    private SpriteAnimation? _planetRock1Land;
-    private SpriteAnimation? _planetWater;
-    private SpriteAnimation? _planetClouds1;
-    private SpriteAnimation? _planetClouds2;
-    private SpriteAnimation? _planetClouds3;
-    private SpriteAnimation? _planetClouds4;
-    private SpriteAnimation? _planetClouds5;
-
-    /* Particles. */
-    private SpriteAnimation? _particleTest;
-
-    /* Background. */
-    private SpriteAnimation? _backgroundDefault;
-    private SpriteAnimation? _backgroundStarSmall;
-    private SpriteAnimation? _backgroundStarMedium;
-    private SpriteAnimation? _backgroundStarBig;
+    private Dictionary<string, (SpriteAnimation? Animation, Func<SpriteAnimation> LoadFunction)> _animations = new();
+    private Dictionary<string, (Sound? Sound, Func<Sound> LoadFunction)> _sounds = new();
 
 
     // Constructors.
     internal GHGameAssetManager(IGameFrame parentFrame)
     {
         _parentFrame = parentFrame ?? throw new ArgumentNullException(nameof(parentFrame));
+        CreateAssetEntries();
+    }
+
+
+    // Internal methods.
+    internal SpriteAnimation? GetAnimation(string name)
+    {
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
+
+        if (!_animations.TryGetValue(name, out var Value))
+        {
+            return null;
+        }
+
+        if (Value.Animation == null)
+        {
+            Value.Animation = Value.LoadFunction.Invoke();
+            _animations[name] = Value;
+        }
+
+        return Value.Animation;
+    }
+
+    internal Sound? GetSound(string name)
+    {
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
+
+        if (!_sounds.TryGetValue(name, out var Value))
+        {
+            return null;
+        }
+
+        if (Value.Sound == null)
+        {
+            Value.Sound = Value.LoadFunction.Invoke();
+            _sounds[name] = Value;
+        }
+
+        return Value.Sound;
+    }
+
+
+    // Private methods.
+    private void CreateAssetEntries()
+    {
+        CreateAnimationEntries();
+        CreateSoundEntries();
+    }
+
+    private void CreateAnimationEntries()
+    {
+        /* Planet. */
+        _animations.Add("planet_atmosphere_default", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/atmosphere/default")));
+
+        _animations.Add("planet_layer_gassurface1", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/gassurface1")));
+
+        _animations.Add("planet_layer_gasoverlay1", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/gasoverlay1")));
+
+        _animations.Add("planet_layer_gasoverlay2", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/gasoverlay2")));
+
+        _animations.Add("planet_layer_rocksurface1", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/rocksurface1")));
+
+        _animations.Add("planet_layer_watersurface1", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/watersurface")));
+
+        _animations.Add("planet_layer_clouds1", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/clouds1")));
+
+        _animations.Add("planet_layer_clouds2", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/clouds2")));
+
+        _animations.Add("planet_layer_clouds3", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/clouds3")));
+
+        _animations.Add("planet_layer_clouds4", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/clouds4")));
+
+        _animations.Add("planet_layer_clouds5", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/planets/layers/clouds5")));  
+
+
+        /* Particles. */
+        _animations.Add("particle_test", (null, () => new SpriteAnimation(
+            4f, _parentFrame, Origin.Center, "game/particles/test/0", "game/particles/test/1", "game/particles/test/2", 
+            "game/particles/test/3","game/particles/test/4", "game/particles/test/5", "game/particles/test/6", 
+            "game/particles/test/7", "game/particles/test/8", "game/particles/test/9")));
+
+
+        /* Background. */
+        _animations.Add("background_default", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.TopLeft, "game/backgrounds/default")));
+
+        _animations.Add("background_star_small", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/stars/small")));
+
+        _animations.Add("background_star_medium", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/stars/medium")));
+
+        _animations.Add("background_star_big", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/stars/big")));
+
+
+        /* Ships. */
+        /* Probe. */
+        _animations.Add("ship_probe_base", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/ships/probe/base")));
+
+        _animations.Add("ship_probe_head", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/ships/probe/head")));
+
+        _animations.Add("ship_probe_mainthruster", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/ships/probe/main_thruster")));
+
+        _animations.Add("ship_probe_sidethruster", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/ships/probe/side_thruster")));
+    }
+
+    private void CreateSoundEntries()
+    {
+
     }
 }

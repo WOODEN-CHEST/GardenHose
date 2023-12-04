@@ -1,4 +1,6 @@
 ﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Events;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
@@ -6,7 +8,7 @@ using Microsoft.Xna.Framework;
 using System;
 
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Planet;
 
 
 internal partial class WorldPlanetEntity : PhysicalEntity
@@ -23,8 +25,8 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         SurfaceColor = new(161, 155, 130),
         Textures = new PlanetTexture[]
         {
-            new PlanetTexture(PlanetTextureType.Water, new Color(22, 28, 102)),
-            new PlanetTexture(PlanetTextureType.Rock1Land, new Color(110, 140, 83)),
+            new PlanetTexture(PlanetTextureType.WaterSurface1, new Color(22, 28, 102)),
+            new PlanetTexture(PlanetTextureType.RockSurface1, new Color(110, 140, 83)),
             new PlanetTexture(PlanetTextureType.Clouds4, Color.White),
         }
     };
@@ -94,6 +96,8 @@ internal partial class WorldPlanetEntity : PhysicalEntity
     // Internal methods.
     internal override void Load(GHGameAssetManager assetManager)
     {
+        base.Load(assetManager);
+
         foreach (PlanetTexture Overlay in Textures)
         {
             Overlay.Load(assetManager, Radius * 2f);
@@ -102,7 +106,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         _atmosphere = AtmosphereType switch
         {
             PlanetAtmosphereType.None => null,
-            PlanetAtmosphereType.Default => new(assetManager.PlanetAtmosphereDefault),
+            PlanetAtmosphereType.Default => new(assetManager.GetAnimation("planet_atmosphere_default")!),
 
             _ => throw new EnumValueException(nameof(AtmosphereType), nameof(PlanetAtmosphereType),
                 AtmosphereType.ToString(), (int)AtmosphereType)
@@ -156,9 +160,9 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         base.Draw();
     }
 
-    internal override void SequentalTick()
+    internal override void SequentialTick()
     {
-        base.SequentalTick();
+        base.SequentialTick();
     }
 
     internal override void ParallelTick()
@@ -166,7 +170,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
 
     }
 
-    internal override void OnPartDamage() { }
+    internal override void OnPartDamage(PartDamageEventArgs args) { }
 
-    internal override void OnPartDestroy() { }
+    internal override void OnPartDestroy(PartDamageEventArgs args) { }
 }

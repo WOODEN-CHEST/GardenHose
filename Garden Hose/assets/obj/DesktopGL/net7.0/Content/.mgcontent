@@ -21,16 +21,16 @@
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/particles/test/8.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/particles/test/9.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/atmosphere/default.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/clouds/clouds1.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/clouds/clouds2.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/clouds/clouds3.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/clouds/clouds4.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/clouds/clouds5.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/overlays/gas_1_overlay_1.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/overlays/gas_1_overlay_2.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/surface/gas_1.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/surface/rock1_land.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/surface/water.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/clouds1.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/clouds2.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/clouds3.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/clouds4.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/clouds5.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/gasoverlay1.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/gasoverlay2.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/gassurface1.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/rocksurface1.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/planets/layers/watersurface.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/base.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/head.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/main_thruster.png</File>

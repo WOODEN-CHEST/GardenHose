@@ -1,4 +1,6 @@
-﻿using GardenHoseEngine.Audio;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Particle;
+using GardenHoseEngine.Audio;
 
 
 namespace GardenHose.Game.World.Material;
@@ -84,22 +86,42 @@ internal class WorldMaterial
 
 
     /* Sound. */
-    internal Sound? TapSound { get; set; }
+    internal Sound? TapSound { get; private set; }
 
-    internal Sound? LightHitSound { get; set; }
+    internal Sound? LightHitSound { get; private set; }
 
-    internal Sound? HitSound { get; set; }
+    internal Sound? HitSound { get; private set; }
 
-    internal Sound? HeavyHitSound { get; set; }
+    internal Sound? HeavyHitSound { get; private set; }
 
-    internal Sound? SlightlyDamagedSound { get; set; }
+    internal Sound? SlightlyDamagedSound { get; private set; }
 
-    internal Sound? DamagedSound { get; set; }
+    internal Sound? DamagedSound { get; private set; }
 
-    internal Sound? HeavilyDamagedSound { get; set; }
+    internal Sound? HeavilyDamagedSound { get; private set; }
 
-    internal Sound? DestroyedSound { get; set; }
+    internal Sound? DestroyedSound { get; private set; }
 
+
+    internal string? TapSoundName { get; init; }
+
+    internal string? LightHitSoundName { get; init; }
+
+    internal string? HitSoundName { get; init; }
+
+    internal string? HeavyHitSoundName { get; init; }
+
+    internal string? SlightDamageSoundName { get; init; }
+
+    internal string? DamagedSoundName { get; init; }
+
+    internal string? HeavilyDamagedSoundName { get; init; }
+
+    internal string? DestroyedSoundName { get; init; }
+
+
+    /* Particles. */
+    internal ParticleSettings? DamageParticles { get; set; }
 
 
     // Constructors.
@@ -108,4 +130,46 @@ internal class WorldMaterial
 
     // Methods.
     internal WorldMaterialInstance CreateInstance() => new WorldMaterialInstance(this);
+
+    internal void Load(GHGameAssetManager assetManager)
+    {
+        if (TapSoundName != null)
+        {
+            TapSound = assetManager.GetSound(TapSoundName);
+        }
+        if (LightHitSoundName != null)
+        {
+            LightHitSound = assetManager.GetSound(LightHitSoundName);
+        }
+        if (HitSoundName != null)
+        {
+            HitSound = assetManager.GetSound(HitSoundName);
+        }
+        if (HeavyHitSoundName != null)
+        {
+            HeavyHitSound = assetManager.GetSound(HeavyHitSoundName);
+        }
+
+        if (SlightDamageSoundName != null)
+        {
+            SlightlyDamagedSound = assetManager.GetSound(SlightDamageSoundName);
+        }
+        if (DamagedSoundName != null)
+        {
+            DamagedSound = assetManager.GetSound(DamagedSoundName);
+        }
+        if (HeavilyDamagedSoundName  != null)
+        {
+            HeavyHitSound = assetManager.GetSound(HeavilyDamagedSoundName);
+        }
+        if (DestroyedSoundName != null)
+        {
+            DestroyedSound = assetManager.GetSound(DestroyedSoundName);
+        }
+
+        if (DamageParticles != null)
+        {
+            assetManager.GetAnimation(DamageParticles.AnimationName);
+        }
+    }
 }

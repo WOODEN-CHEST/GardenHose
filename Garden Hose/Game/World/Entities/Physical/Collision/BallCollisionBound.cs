@@ -3,7 +3,7 @@ using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical.Collision;
 
 internal struct BallCollisionBound : ICollisionBound
 {
@@ -20,9 +20,12 @@ internal struct BallCollisionBound : ICollisionBound
     // Constructors.
     public BallCollisionBound() : this(0f) { }
 
-    public BallCollisionBound(float radius)
+    public BallCollisionBound(float radius) : this(radius, Vector2.Zero) { }
+
+    public BallCollisionBound(float radius, Vector2 offset)
     {
         Radius = radius;
+        Offset = offset;
     }
 
 

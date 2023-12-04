@@ -36,7 +36,7 @@ internal abstract class Entity
 
 
     // Internal methods.
-    internal abstract void SequentalTick();
+    internal abstract void SequentialTick();
 
     internal abstract void ParallelTick();
 

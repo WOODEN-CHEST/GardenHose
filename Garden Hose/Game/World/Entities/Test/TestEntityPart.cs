@@ -1,4 +1,8 @@
-﻿using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Particle;
+using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Material;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -11,7 +15,7 @@ internal class TestEntityPart : PhysicalEntityPart
     internal TestEntityPart(ICollisionBound[] bounds, WorldMaterial material, TestEntity entity) 
         : base(bounds, material, entity)
     {
-        _damageParticleSettings = new(WorldMaterial.Test, () => Entity!.World!.Game.AssetManager.ParticleTest)
+        _damageParticleSettings = new(WorldMaterial.Test, "particle_test")
         {
             LifetimeMin = 6f,
             LifetimeMax = 8f,
@@ -37,7 +41,7 @@ internal class TestEntityPart : PhysicalEntityPart
     ParticleSettings _damageParticleSettings;
 
     // Inherited methods.
-    protected override void OnPartDestroy()
+    protected override void OnPartDestroy(Vector2 collisionLocation, float forceAmount)
     {
         if (IsMainPart)
         {
@@ -47,17 +51,22 @@ internal class TestEntityPart : PhysicalEntityPart
 
         ParentLink!.ParentPart.UnlinkPart(this);
         ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings,
-            new Range(8, 16), Position, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
+            new Range(8, 16), collisionLocation, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
     }
 
-    protected override void OnPartDamage()
+    protected override void OnPartDamage(Vector2 collisionLocation, float forceAmount)
     {
         ParticleEntity.CreateParticles(Entity.World!, _damageParticleSettings,
-            new Range(1, 1), Position, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
+            new Range(4, 8), collisionLocation, Entity.Motion, 0.2f, MathHelper.PiOver4, Entity);
     }
 
-    protected override void OnPartBreakOff()
+    protected override void OnPartBreakOff(Vector2 collisionLocation, float forceAmount)
     {
 
+    }
+
+    internal override void Load(GHGameAssetManager assetManager)
+    {
+        assetManager.GetAnimation(_damageParticleSettings.AnimationName);
     }
 }

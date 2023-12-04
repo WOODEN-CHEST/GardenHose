@@ -7,5 +7,7 @@ public enum EntityType
     Planet,
     Marker,
     Test,
-    Particle
+    Particle,
+    Stray,
+    Probe
 }

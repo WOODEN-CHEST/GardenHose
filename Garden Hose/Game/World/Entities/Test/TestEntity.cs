@@ -1,10 +1,11 @@
-﻿using GardenHose;
-using GardenHose.Game.AssetManager;
-using GardenHose.Game.World.Entities.Test;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Physical.Events;
 using GardenHose.Game.World.Material;
 using Microsoft.Xna.Framework;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Test;
 
 
 internal class TestEntity : PhysicalEntity
@@ -64,7 +65,7 @@ internal class TestEntity : PhysicalEntity
 
     }
 
-    internal override void OnPartDamage() { }
+    internal override void OnPartDamage(PartDamageEventArgs args) { }
 
-    internal override void OnPartDestroy() { }
+    internal override void OnPartDestroy(PartDamageEventArgs args) { }
 }

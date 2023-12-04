@@ -1,4 +1,6 @@
-﻿using GardenHoseEngine.IO;
+﻿using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Ship.System;
+using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -11,17 +13,17 @@ namespace GardenHose.Game.World.Entities.Ship;
 internal abstract class SpaceshipEntity : PhysicalEntity
 {
     // Fields.
-    internal SpaceshipController Controller
+    internal SpaceshipPilot Controller
     {
-        get => _controller;
+        get => _pilot;
         set
         {
-            if (value == _controller) return;
+            if (value == _pilot) return;
 
-            _controller = value;
+            _pilot = value;
             DisableInputListeners();
 
-            if (_controller == SpaceshipController.Player)
+            if (_pilot == SpaceshipPilot.Player)
             {
                 EnableInputListeners();
                 return;
@@ -30,22 +32,19 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         }
     }
 
+    internal abstract ISpaceshipSystem ShipSystem { get; init; }
+
 
     // Protected fields.
     protected readonly List<IInputListener> InputListeners = new();
 
 
     // Private fields.
-    private SpaceshipController _controller = SpaceshipController.None;
+    private SpaceshipPilot _pilot = SpaceshipPilot.None;
 
 
     // Constructors.
     internal SpaceshipEntity(EntityType type, GameWorld? world) : base(type, world) { }
-
-
-    // Internal methods.
-
-
 
     // Protected methods.
     protected virtual void EnableInputListeners()
@@ -64,26 +63,41 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         }
     }
 
-    protected abstract void AITick();
+    protected abstract void AIParallelTick();
 
-    protected abstract void PlayerTick();
+    protected abstract void PlayerParallelTick();
 
-    protected abstract void TryToNavigateToLocation(Vector2 location);
+    protected abstract void AISequentialTick();
+
+    protected abstract void PlayerSequentialTick();
 
 
     // Inherited methods.
-    internal override void Tick()
+    internal override void ParallelTick()
     {
-        if (Controller == SpaceshipController.Player)
-        {
-            PlayerTick();
-            TryToNavigateToLocation(World!.ToViewportPosition(UserInput.MouseState.Current.Position.ToVector2()));
-        }
-        else if (Controller == SpaceshipController.AI)
-        {
-            AITick();
-        }
+        base.ParallelTick();
 
-        base.Tick();
+        if (Controller == SpaceshipPilot.Player)
+        {
+            PlayerParallelTick();
+        }
+        else if (Controller == SpaceshipPilot.AI)
+        {
+            AIParallelTick();
+        }
+    }
+
+    internal override void SequentialTick()
+    {
+        base.SequentialTick();
+
+        if (Controller == SpaceshipPilot.Player)
+        {
+            PlayerSequentialTick();
+        }
+        else if (Controller == SpaceshipPilot.AI)
+        {
+            AIParallelTick();
+        }
     }
 }

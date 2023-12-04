@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical.Collision;
 
 internal struct Circle
 {
@@ -24,7 +24,7 @@ internal struct Circle
 
 
     // Internal static methods.
-    internal static Vector2[] GetIntersections(Circle circle, Ray ray)
+    internal static Vector2[] GetIntersections(Circle circle, EquationRay ray)
     {
         // Edge case if testing against vertical ray.
         if (float.IsInfinity(ray.YStep))
@@ -98,7 +98,7 @@ internal struct Circle
             - (circleB.XNumber * circleB.XNumber)
             -(circleB.YNumber * circleB.YNumber);
 
-        Ray IntersectionRay = new(CValue / YMult, XMult / YMult);
+        EquationRay IntersectionRay = new(CValue / YMult, XMult / YMult);
 
         return GetIntersections(circleA, IntersectionRay);
     }

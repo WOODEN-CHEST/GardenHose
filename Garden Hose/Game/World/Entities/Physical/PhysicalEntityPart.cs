@@ -1,11 +1,17 @@
-﻿using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Particle;
+using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Physical.Events;
+using GardenHose.Game.World.Entities.Stray;
+using GardenHose.Game.World.Material;
+using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 
 
-namespace GardenHose.Game.World.Entities;
+namespace GardenHose.Game.World.Entities.Physical;
 
 
 internal abstract class PhysicalEntityPart
@@ -70,7 +76,7 @@ internal abstract class PhysicalEntityPart
 
     internal bool IsMainPart => ParentLink == null;
 
-    internal virtual PartLink[]? SubPartLinks { get; private set; } = null;
+    internal virtual PartLink[] SubPartLinks { get; private set; } = Array.Empty<PartLink>();
 
     internal virtual PartLink? ParentLink
     {
@@ -94,7 +100,7 @@ internal abstract class PhysicalEntityPart
 
 
     /* Events. */
-    internal event EventHandler<Vector2>? Collision;
+    internal event EventHandler<CollisionEventArgs>? Collision;
 
     internal event EventHandler<ICollisionBound[]?>? CollisionBoundChange;
 
@@ -102,9 +108,15 @@ internal abstract class PhysicalEntityPart
 
     internal event EventHandler<PartLink[]?>? SubPartChange;
 
-    internal event EventHandler<PhysicalEntityPart>? PartDamage;
+    internal event EventHandler<PartDamageEventArgs>? PartDamage;
 
-    internal event EventHandler<PhysicalEntityPart>? PartBreak;
+    internal event EventHandler<PartDamageEventArgs>? PartDestroy;
+
+    internal event EventHandler<PartDamageEventArgs>? PartBreakOff;
+
+
+    // Protected fields.
+    protected readonly List<PhysicalEntityPartSprite> Sprites = new();
 
 
     // Private fields.
@@ -133,10 +145,18 @@ internal abstract class PhysicalEntityPart
         MaterialInstance = material;
     }
 
-    
-
 
     // Internal methods.
+    internal virtual void Load(GHGameAssetManager assetManager)
+    {
+        MaterialInstance.Material.Load(assetManager);
+
+        foreach (PhysicalEntityPartSprite Sprite in Sprites)
+        {
+            Sprite.Load(assetManager);
+        }
+    }
+
     /* Parts. */
     internal virtual void LinkPart(PhysicalEntityPart part, Vector2 distance)
     {
@@ -156,7 +176,7 @@ internal abstract class PhysicalEntityPart
         }
 
 
-        var NewPartLinks = SubPartLinks == null ? new PartLink[1] : new PartLink[SubPartLinks.Length + 1];
+        var NewPartLinks = new PartLink[SubPartLinks.Length + 1];
         SubPartLinks?.CopyTo(NewPartLinks, 0);
 
         PartLink Link = new PartLink(this, part, Entity, distance, strength);
@@ -181,7 +201,7 @@ internal abstract class PhysicalEntityPart
 
     internal virtual void UnlinkPart(PhysicalEntityPart part)
     {
-        if (SubPartLinks == null)
+        if (SubPartLinks.Length == 0)
         {
             return;
         }
@@ -264,8 +284,8 @@ internal abstract class PhysicalEntityPart
 
     internal void OnCollision(Vector2 location, float appliedForce)
     {
-        Collision?.Invoke(this, location);
         MaterialInstance.HeatByCollision(appliedForce);
+        PartDamageEventArgs Args = new(this, location, appliedForce);
 
         // Sound.
         const float SOUND_FORCE_DOWNSCALE = 0.7f;
@@ -275,31 +295,31 @@ internal abstract class PhysicalEntityPart
         }
 
         // Damage.
-        if (Entity.IsInvulnerable) return;
-
-        if (appliedForce >= MaterialInstance.Material.Resistance)
+        if ((appliedForce >= MaterialInstance.Material.Resistance) && !Entity.IsInvulnerable)
         {
             MaterialInstance.CurrentStrength -= appliedForce;
 
             if (MaterialInstance.Stage == WorldMaterialStage.Destroyed)
             {
-                Entity.OnPartDestroy();
-                PartBreak?.Invoke(this, this);
-                OnPartDestroy();
-                return;
+                OnPartDestroy(location, appliedForce);
+                Entity.OnPartDestroy(Args);
+                PartDestroy?.Invoke(this, Args);
             }
             else
             {
-                Entity.OnPartDamage();
-                PartDamage?.Invoke(this, this);
-                OnPartDamage();
+                OnPartDamage(location, appliedForce);
+                Entity.OnPartDamage(Args);
+                PartDamage?.Invoke(this, Args);
             }
         }
 
-        if ((ParentLink != null) && (appliedForce >= ParentLink.LinkStrength))
+        if ((ParentLink != null) && (appliedForce >= ParentLink.LinkStrength) && !Entity.IsInvulnerable)
         {
-            OnPartBreakOff();
+            OnPartBreakOff(location, appliedForce);
+            PartBreakOff?.Invoke(this, Args);
         }
+
+        Collision?.Invoke(this, new(location, appliedForce));
     }
 
     /* Properties. */
@@ -307,11 +327,6 @@ internal abstract class PhysicalEntityPart
     {
         Position = position;
         CombinedRotation = SelfRotation + rotation;
-
-        if (SubPartLinks == null)
-        {
-            return;
-        }
 
         foreach (PartLink Link in SubPartLinks)
         {
@@ -359,14 +374,14 @@ internal abstract class PhysicalEntityPart
     /* Drawing. */
     internal virtual void Draw()
     {
-        if (SubPartLinks == null)
-        {
-            return;
-        }
-
         foreach (PartLink Link in SubPartLinks)
         {
             Link.LinkedPart.Draw();
+        }
+
+        foreach (PhysicalEntityPartSprite Sprite in Sprites)
+        {
+            Sprite.Draw(Entity.World!, Position, CombinedRotation);
         }
     }
 
@@ -453,7 +468,7 @@ internal abstract class PhysicalEntityPart
             new Edge(VerticesRect2[2], VerticesRect2[3]),
             new Edge(VerticesRect2[3], VerticesRect2[0])
         };
-        Ray[] rect2Rays = new Ray[]
+        EquationRay[] rect2Rays = new EquationRay[]
         {
             new(rect2Edges[0]),
             new(rect2Edges[1]),
@@ -466,11 +481,11 @@ internal abstract class PhysicalEntityPart
         for (int EdgeIndex1 = 0; EdgeIndex1 < VerticesRect1.Length; EdgeIndex1++)
         {
             Edge PrimaryEdge = new Edge(VerticesRect1[EdgeIndex1], VerticesRect1[(EdgeIndex1 + 1) % VerticesRect1.Length]);
-            Ray PrimaryEdgeRay = new Ray(PrimaryEdge);
+            EquationRay PrimaryEdgeRay = new EquationRay(PrimaryEdge);
 
             for (int EdgeIndex2 = 0; EdgeIndex2 < rect2Rays.Length; EdgeIndex2++)
             {
-                Vector2? CollisionPoint = Ray.GetIntersection(PrimaryEdgeRay, rect2Rays[EdgeIndex2]);
+                Vector2? CollisionPoint = EquationRay.GetIntersection(PrimaryEdgeRay, rect2Rays[EdgeIndex2]);
 
                 if  (CollisionPoint != null 
                     && PrimaryEdge.IsPointInEdgeArea(CollisionPoint.Value)
@@ -508,7 +523,7 @@ internal abstract class PhysicalEntityPart
         for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
         {
             Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
-            Ray EdgeRay = new(Edge);
+            EquationRay EdgeRay = new(Edge);
 
             Vector2[] Points = Circle.GetIntersections(BallCircle, EdgeRay);
             if (Points.Length != 0)
@@ -554,11 +569,69 @@ internal abstract class PhysicalEntityPart
 
 
     /* Parts. */
-    protected abstract void OnPartDamage();
+    protected void OnPartDamage(Vector2 collisionLocation, float forceApplied)
+    {
+        CreateDamageParticles(collisionLocation, forceApplied);
+    }
 
-    protected abstract void OnPartDestroy();
+    protected void OnPartDestroy(Vector2 collisionLocation, float forceApplied)
+    {
+        CreateDamageParticles(collisionLocation, forceApplied);
 
-    protected abstract void OnPartBreakOff();
+        if (!IsMainPart)
+        {
+            ParentLink!.ParentPart.UnlinkPart(this);
+            return;
+        }
+
+        foreach (PartLink Link in SubPartLinks)
+        {
+            StrayEntity Stray = new(Entity.World,
+                Link.ParentPart,
+                Entity.Position,
+                Entity.Motion,
+                Entity.Rotation);
+            Stray.AddCollisionIgnorable(Entity);
+
+            Entity.World!.AddEntity(Stray);
+        }
+    }
+
+    protected void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
+    {
+        CreateDamageParticles(collisionLocation, forceApplied);
+
+        StrayEntity Stray = new(Entity.World,
+                this,
+                Entity.Position,
+                Entity.Motion,
+                Entity.Rotation);
+        Stray.AddCollisionIgnorable(Entity);
+        Entity.World!.AddEntity(Stray);
+    }
+
+    protected void CreateDamageParticles(Vector2 collisionLocation, float forceApplied)
+    {
+        if (MaterialInstance.Material.DamageParticles == null)
+        {
+            return;
+        }
+
+        const int MAX_PARTICLES = 20;
+        const float FORCE_DIVIDER = 7500f;
+        const float MOTION_MAGNITUDE_RANDOMNESS = 0.5f;
+        const float PARTICLE_SPREAD = MathF.PI / 1.75f;
+        int ParticleCount = Math.Min(MAX_PARTICLES, (int)(forceApplied / FORCE_DIVIDER));
+
+        ParticleEntity.CreateParticles(Entity.World!,
+            MaterialInstance.Material.DamageParticles,
+            new Range(ParticleCount / 2, ParticleCount),
+            collisionLocation,
+            Entity.Motion,
+            MOTION_MAGNITUDE_RANDOMNESS,
+            PARTICLE_SPREAD,
+            Entity);
+    }
 
 
     /* Physics. */

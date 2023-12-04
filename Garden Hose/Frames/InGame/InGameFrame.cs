@@ -8,6 +8,10 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using GardenHose.Game.Background;
 using System.Collections.Generic;
+using GardenHose.Game.World.Entities.Probe;
+using GardenHose.Game.World.Entities.Planet;
+using GardenHose.Game.World.Entities.Test;
+using GardenHose.Game.World.Entities.Physical;
 
 namespace GardenHose.Frames.InGame;
 
@@ -58,8 +62,8 @@ internal class InGameFrame : GameFrame
             //StartingEntities = Entities.ToArray(),
             StartingEntities = new Entity[]
             {
-                new TestEntity() { Position = new Vector2(0f, 700f) },
-                new TestEntity(){ Position = new Vector2(0f, -700f), Motion = new Vector2(300f, 0f) }
+                //new TestEntity(){ Position = new Vector2(0f, -700f), Motion = new Vector2(300f, 0f) },
+                new ProbeEntity() { Position = new Vector2(0f, 650f), Rotation = MathF.PI }
             },
             Background = new(BackgroundImage.Default)
             {
@@ -100,7 +104,7 @@ internal class InGameFrame : GameFrame
         UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
             (sender, args) => {
                 Game.World.GetEntity<PhysicalEntity>(2uL)!.Position = 
-                Game.World.ToWorldPosition(UserInput.MouseState.Current.Position.ToVector2());
+                Game.World.ToWorldPosition(UserInput.VirtualMousePosition.Current);
             },
             MouseButton.Left));
 
