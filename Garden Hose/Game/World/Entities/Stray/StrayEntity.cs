@@ -13,9 +13,8 @@ internal class StrayEntity : PhysicalEntity
         float entityRotation)
         : base(EntityType.Stray, world)
     {
-        SelfPosition = entityPosition;
-        SelfRotation = entityRotation;
         Motion = entityMotion;
-        MainPart = strayPart ?? throw new ArgumentNullException(nameof(strayPart));  
+        MainPart = strayPart ?? throw new ArgumentNullException(nameof(strayPart));
+        SetPositionAndRotation(entityPosition, entityRotation);
     }
 }

@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
-
+/* Class servers as a way to specify a part's sprites and their properties without having to have the sprites loaded. */
 internal class PhysicalEntityPartSprite
 {
     // Internal fields.
@@ -17,7 +17,7 @@ internal class PhysicalEntityPartSprite
     internal SpriteItem Sprite
     {
         get => _sprite ?? throw new InvalidOperationException("Cannot access asset since hasn't been loaded yet.");
-        set => _sprite = value ?? throw new ArgumentNullException(nameof(value));
+        private set => _sprite = value;
     }
 
     internal Vector2 Offset { get; set; } = Vector2.Zero;
@@ -30,7 +30,7 @@ internal class PhysicalEntityPartSprite
     {
         get
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 return Sprite.Mask;
             }
@@ -39,7 +39,7 @@ internal class PhysicalEntityPartSprite
         }
         set
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 Sprite.Mask = value;
             }
@@ -54,7 +54,7 @@ internal class PhysicalEntityPartSprite
     {
         get
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 return Sprite.Opacity;
             }
@@ -63,7 +63,7 @@ internal class PhysicalEntityPartSprite
         }
         set
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 Sprite.Opacity = value;
             }
@@ -78,7 +78,7 @@ internal class PhysicalEntityPartSprite
     {
         get
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 return Sprite.Brightness;
             }
@@ -87,7 +87,7 @@ internal class PhysicalEntityPartSprite
         }
         set
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 Sprite.Brightness = value;
             }
@@ -98,11 +98,11 @@ internal class PhysicalEntityPartSprite
         }
     }
 
-    internal SpriteEffect Effect 
+    internal SpriteEffects Effects 
     {
         get
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 return Sprite.Effects;
             }
@@ -111,7 +111,7 @@ internal class PhysicalEntityPartSprite
         }
         set
         {
-            if (Sprite != null)
+            if (_sprite != null)
             {
                 Sprite.Effects = value;
             }
@@ -128,7 +128,7 @@ internal class PhysicalEntityPartSprite
     // Private fields.
     private SpriteItem _sprite;
 
-    private SpriteEffect _effects = SpriteEffects.None;
+    private SpriteEffects _effects = SpriteEffects.None;
     private float _brightness = 1f;
     private float _opacity = 1f;
     private Color _colorMask = Color.White;
@@ -160,7 +160,7 @@ internal class PhysicalEntityPartSprite
 
     internal void Load(GHGameAssetManager assetManager)
     {
-        if (Sprite != null)
+        if (_sprite != null)
         {
             return;
         }

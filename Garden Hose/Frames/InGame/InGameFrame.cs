@@ -10,7 +10,6 @@ using GardenHose.Game.Background;
 using System.Collections.Generic;
 using GardenHose.Game.World.Entities.Probe;
 using GardenHose.Game.World.Entities.Planet;
-using GardenHose.Game.World.Entities.Test;
 using GardenHose.Game.World.Entities.Physical;
 
 namespace GardenHose.Frames.InGame;

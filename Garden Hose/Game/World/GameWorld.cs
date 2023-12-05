@@ -161,6 +161,8 @@ public class GameWorld : IIDProvider
             _endFireEvent[i] = new(false);
             Task.Factory.StartNew(() => WorldThreadTask(ThreadID, _threadCanellationSource.Token), TaskCreationOptions.LongRunning);
         }
+
+        AddNewEntities();
     }
 
     internal void End()
@@ -175,17 +177,6 @@ public class GameWorld : IIDProvider
 
     internal void Tick()
     {
-        // Create and remove entities.
-        if (_entitiesCreated.Count > 0)
-        {
-            AddNewEntities();
-        }
-        
-        if (_entitiesRemoved.Count > 0)
-        {
-            RemoveOldEntities();
-        }
-
         // Tick entities (Sequential).
         foreach (Entity WorldEntity in _livingEntities)
         {
@@ -211,6 +202,10 @@ public class GameWorld : IIDProvider
             HandleEntityCollisionCases(CaseCollection);
         }
         _collisionCases.Clear();
+
+        // Create and remove entities.
+        AddNewEntities();
+        RemoveOldEntities();
     }
 
     /* Entities. */
@@ -333,7 +328,6 @@ public class GameWorld : IIDProvider
         {
             Planet = settings.Planet;
             Planet.World = this;
-            Planet.Load(Game.AssetManager);
             AddEntity(Planet);
         }
 
@@ -378,6 +372,11 @@ public class GameWorld : IIDProvider
 
     private void AddNewEntities()
     {
+        if (_entitiesCreated.Count == 0)
+        {
+            return;
+        }
+
         foreach (Entity WorldEntity in _entitiesCreated)
         {
             _livingEntities.Add(WorldEntity);
@@ -396,6 +395,11 @@ public class GameWorld : IIDProvider
 
     private void RemoveOldEntities()
     {
+        if (_entitiesRemoved.Count == 0)
+        {
+            return;
+        }
+
         foreach (Entity WorldEntity in _entitiesRemoved)
         {
             _livingEntities.Remove(WorldEntity);

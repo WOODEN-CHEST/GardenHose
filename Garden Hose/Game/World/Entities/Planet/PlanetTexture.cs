@@ -15,13 +15,13 @@ namespace GardenHose.Game.World.Entities.Planet;
 internal class PlanetTexture
 {
     // Internal fields.
-    internal Color Color { get; set; }
+    internal Color Color { get; set; } = Color.White;
 
-    internal float Opacity { get; set; }
+    internal float Opacity { get; set; } = 1f;
 
     internal PlanetTextureType Type { get; init; }
 
-    float Scale { get; set; }
+    float Scale { get; set; } = 1f;
 
 
     // Private fields.
@@ -54,6 +54,7 @@ internal class PlanetTexture
         Type = type;
         Color = color;
         Opacity = opacity;
+        Scale = scale;
     }
 
 

@@ -14,7 +14,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
 {
     // Static fields.
     /* Preset planets. */
-    public static WorldPlanetEntity TestPlanet => new WorldPlanetEntity(512f,
+    public static WorldPlanetEntity TestPlanet => new WorldPlanetEntity(500f,
         WorldMaterial.PlanetTest,
         new PlanetTexture[]
         {
@@ -68,7 +68,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
 
         foreach (PhysicalEntityPartSprite Sprite in MainPart.PartSprites)
         {
-            Sprite.Scale = new Vector2(Radius) / Sprite.Sprite.TextureSize * Sprite.Scale;
+            Sprite.Scale = new Vector2(Radius) / (Sprite.Sprite.TextureSize / 2f) * Sprite.Scale;
         }
     }
 
@@ -81,5 +81,10 @@ internal partial class WorldPlanetEntity : PhysicalEntity
     internal override void ParallelTick()
     {
 
+    }
+
+    public override void Draw()
+    {
+        base.Draw();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Material;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +14,9 @@ internal class ThrusterPart : PhysicalEntityPart
 {
     // Internal fields.
     /* Thrusters. */
-    internal bool IsThrusterOn { get; set; }
+    internal bool IsThrusterOn { get; set; } = true;
 
-    internal float _targetThrusterThrottle
+    internal float TargetThrusterThrottle
     {
         get => _targetThrusterThrottle;
         set
@@ -45,15 +47,27 @@ internal class ThrusterPart : PhysicalEntityPart
         get => _fuel;
         set
         {
-            _fuel = Math.Clamp(value, 0f, MaxFuel)
+            _fuel = Math.Clamp(value, 0f, MaxFuel);
         }
     }
 
-    internal float MaxFuel { get; set; } = DEFALT_FUEL;
+    internal float MaxFuel
+    {
+        get => _maxFuel;
+        set
+        {
+            _maxFuel = value;
+            _fuel = Math.Clamp(value, 0f, MaxFuel);
+        }
+    }
 
     internal float FuelEfficiency { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
 
     internal bool IsFuelUsed { get; set; } = false;
+
+    internal float PotentialFuelTime => MaxFuel / (FuelEfficiency * ThrusterPower);
+
+    internal float EstimatedFuelTimeLeft => Fuel / (FuelEfficiency * ThrusterPower);
 
 
     /* Events. */
@@ -64,12 +78,16 @@ internal class ThrusterPart : PhysicalEntityPart
     private float _currentThrusterThrottle = 0f;
     private float _targetThrusterThrottle = 0f;
     private float _fuel = DEFALT_FUEL;
+    private float _maxFuel = DEFALT_FUEL;
 
     private const float DEFALT_FUEL = 20_000_000f;
 
 
     // Constructors.
-    internal ThrusterPart(WorldMaterial material, PhysicalEntity entity) : base(material, entity) { }
+    internal ThrusterPart(ICollisionBound[]? bounds, WorldMaterial material, PhysicalEntity entity)
+        : base(bounds, material, entity) { }
+
+    internal ThrusterPart(WorldMaterial material, PhysicalEntity entity) : this(null, material, entity) { }
 
 
     // Internal methods.
@@ -112,10 +130,10 @@ internal class ThrusterPart : PhysicalEntityPart
 
 
     // Inherited methods.
-    [TickedFunction[false]]
+    [TickedFunction(false)]
     internal override void ParallelTick()
     {
-        base.ParralelTick();
+        base.ParallelTick();
         ThrusterTick();
     }
 }

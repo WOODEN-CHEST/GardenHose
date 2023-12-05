@@ -475,6 +475,19 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         World!.AddPhysicalEntityToWorldPart(this);
     }
 
+
+    /* Other. */
+    protected void SetPositionAndRotation(Vector2 position, float rotation)
+    {
+        SelfPosition = position;
+        SelfPosition.X = float.IsNaN(SelfPosition.X) ? 0f : Math.Clamp(SelfPosition.X, MIN_POSITION, MAX_POSITION);
+        SelfPosition.Y = float.IsNaN(SelfPosition.Y) ? 0f : Math.Clamp(SelfPosition.Y, MIN_POSITION, MAX_POSITION);
+        SelfRotation = Math.Clamp(rotation, float.MinValue, float.MaxValue);
+
+        _mainpart?.SetPositionAndRotation(SelfPosition, SelfRotation);
+    }
+
+
     // Private methods.
     /* Drawing */
     private void DrawHitboxes()
@@ -682,18 +695,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         ApplyForce(ForceApplied, collisionPoint);
         selfPart.OnCollision(collisionPoint, ForceApplied.Length());
         Collision?.Invoke(this, new(collisionPoint, ForceApplied.Length()));
-    }
-
-
-    /* Other. */
-    private void SetPositionAndRotation(Vector2 position, float rotation)
-    {
-        SelfPosition = position;
-        SelfPosition.X = float.IsNaN(SelfPosition.X) ? 0f : Math.Clamp(SelfPosition.X, MIN_POSITION, MAX_POSITION);
-        SelfPosition.Y = float.IsNaN(SelfPosition.Y) ? 0f : Math.Clamp(SelfPosition.Y, MIN_POSITION, MAX_POSITION);
-        SelfRotation = Math.Clamp(rotation, float.MinValue, float.MaxValue);
-
-        _mainpart?.SetPositionAndRotation(SelfPosition, SelfRotation);
     }
 
 

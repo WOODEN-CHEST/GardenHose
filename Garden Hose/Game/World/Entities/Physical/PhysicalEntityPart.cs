@@ -215,6 +215,7 @@ internal class PhysicalEntityPart
             if (Link.LinkedPart == part)
             {
                 Links.Remove(Link);
+                part.ParentLink = null;
                 break;
             }
         }
@@ -609,14 +610,15 @@ internal class PhysicalEntityPart
         foreach (PartLink Link in SubPartLinks)
         {
             StrayEntity Stray = new(Entity.World,
-                Link.ParentPart,
-                Entity.Position,
+                Link.LinkedPart,
+                Link.LinkedPart.Position,
                 Entity.Motion,
                 Entity.Rotation);
-            Stray.AddCollisionIgnorable(Entity);
 
             Entity.World!.AddEntity(Stray);
         }
+
+        Entity.Delete();
     }
 
     protected void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
