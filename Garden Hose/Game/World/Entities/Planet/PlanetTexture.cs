@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
@@ -20,12 +21,10 @@ internal class PlanetTexture
 
     internal PlanetTextureType Type { get; init; }
 
-    internal SpriteItem Item { get; private set; }
-
-    internal Vector2 TextureScaling { get; private set; }
+    float Scale { get; set; }
 
 
-    // Private static fields.
+    // Private fields.
     private readonly static Dictionary<PlanetTextureType, string> _textureEntries = new();
 
 
@@ -44,14 +43,13 @@ internal class PlanetTexture
         _textureEntries.Add(PlanetTextureType.Clouds3, "planet_layer_clouds3");
         _textureEntries.Add(PlanetTextureType.Clouds4, "planet_layer_clouds4");
         _textureEntries.Add(PlanetTextureType.Clouds5, "planet_layer_clouds5");
+
+        _textureEntries.Add(PlanetTextureType.DefaultAtmosphere, "planet_atmosphere_default");
     }
 
 
     // Constructors.
-    internal PlanetTexture(PlanetTextureType type, Color color)
-        : this(type, color, 1f) { }
-       
-    internal PlanetTexture(PlanetTextureType type, Color color, float opacity)
+    internal PlanetTexture(PlanetTextureType type, Color color, float opacity, float scale = 1f)
     {
         Type = type;
         Color = color;
@@ -59,19 +57,14 @@ internal class PlanetTexture
     }
 
 
-    // Internal methods.
-    internal void Load(GHGameAssetManager assetManager, float planetDiameter)
+    // Operators.
+    public static implicit operator PhysicalEntityPartSprite(PlanetTexture texture)
     {
-        Item = new(assetManager.GetAnimation(_textureEntries[Type])!);
-        TextureScaling = new(planetDiameter / Item.TextureSize.X, planetDiameter / Item.TextureSize.Y);
-    }
-
-    internal void Draw(Vector2 position, GameWorld world)
-    {
-        Item.Position.Vector = world.ToViewportPosition(position);
-        Item.Scale.Vector = TextureScaling * world.Zoom;
-        Item.Mask = Color;
-        Item.Opacity = Opacity;
-        Item.Draw();
+        return new PhysicalEntityPartSprite(_textureEntries[texture.Type])
+        {
+            ColorMask = texture.Color,
+            Opacity = texture.Opacity,
+            Scale = new Vector2(texture.Scale)
+        };
     }
 }

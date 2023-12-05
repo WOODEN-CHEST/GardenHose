@@ -17,5 +17,6 @@ internal enum PlanetTextureType
     Clouds2,
     Clouds3,
     Clouds4,
-    Clouds5
+    Clouds5,
+    DefaultAtmosphere
 }

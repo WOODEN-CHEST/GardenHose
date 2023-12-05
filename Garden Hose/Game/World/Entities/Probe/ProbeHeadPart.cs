@@ -29,23 +29,8 @@ internal class ProbeHeadPart : PhysicalEntityPart
 
 
     // Inherited methods.
-    protected override void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDamage(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDestroy(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
     internal override void Load(GHGameAssetManager assetManager)
     {
-        Sprites.Add(new(assetManager.GetAnimation("ship_probe_head")!) { Scale = ProbeMainPart.SpriteScale });
+        AddSprite(new(assetManager.GetAnimation("ship_probe_head")!) { Scale = ProbeMainPart.SpriteScale });
     }
 }

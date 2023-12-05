@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
-internal class ProbeSideThrusterPart : PhysicalEntityPart, IThrusterPart
+internal class ProbeSideThrusterPart : PhysicalEntityPart, ThrusterPart
 {
     // Internal static fields.
     internal static Vector2 HitboxSize { get; } = new(11f, 17f);
@@ -57,21 +57,6 @@ internal class ProbeSideThrusterPart : PhysicalEntityPart, IThrusterPart
 
 
     // Inherited methods.
-    protected override void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDamage(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDestroy(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
 
     // Private methods.
     [TickedFunction(false)]

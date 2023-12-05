@@ -1,8 +1,11 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Physical.Events;
 using GardenHose.Game.World.Entities.Ship;
 using GardenHose.Game.World.Entities.Ship.System;
+using GardenHose.Game.World.Material;
 using GardenHoseEngine;
+using Microsoft.Xna.Framework;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
@@ -14,12 +17,23 @@ internal class ProbeEntity : SpaceshipEntity
     internal const float SPRITE_SCALING = 0.217f;
 
 
+    //  Private static fields.
+    /* Hit-box */
+    private static Vector2 BodyHitboxSize = new(30f, 28f);
+    private static Vector2 HeadHitboxSize = new(BodyHitboxSize.X, 15f);
+    private static Vector2 SideThrusterHitboxSize = new(11f, 17f);
+    private static Vector2 MainThrusterHitboxSize = new(BodyHitboxSize.X - 1f, 20f);
+
+    /* Sprite. */
+    private static Vector2 SpriteScale = new(0.2f);
+
+
     // Private fields.
     /* Parts. */
-    private ProbeHeadPart? _headPart;
-    private ProbeSideThrusterPart? _leftThrusterPart;
-    private ProbeSideThrusterPart? _rightThrusterPart;
-    private ProbeMainThrusterPart? _mainThrusterPart;
+    private PhysicalEntityPart? _headPart;
+    private PhysicalEntityPart? _leftThrusterPart;
+    private PhysicalEntityPart? _rightThrusterPart;
+    private PhysicalEntityPart? _mainThrusterPart;
 
     /* System. */
     private ProbeSystem _system;
@@ -69,14 +83,24 @@ internal class ProbeEntity : SpaceshipEntity
 
     }
 
-    internal override void OnPartDamage(PartDamageEventArgs args)
-    {
 
+    // Private static methods.
+    private static PhysicalEntityPart CreateBodyPart(PhysicalEntity entity)
+    {
+        PhysicalEntityPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(BodyHitboxSize)},
+            WorldMaterial.Test,
+            entity);
+
+        return Part;
     }
 
-    internal override void OnPartDestroy(PartDamageEventArgs args)
+    private static PhysicalEntityPart CreateHeadPart(PhysicalEntity entity)
     {
+        PhysicalEntityPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(HeadHitboxSize) },
+            WorldMaterial.Test,
+            entity);
 
+        return Part;
     }
 
 

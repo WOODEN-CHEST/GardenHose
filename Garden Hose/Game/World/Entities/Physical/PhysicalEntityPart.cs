@@ -14,7 +14,7 @@ using System.Collections.Generic;
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal abstract class PhysicalEntityPart
+internal class PhysicalEntityPart
 {
     // Fields.
     internal virtual PhysicalEntity Entity { get; init; }
@@ -98,6 +98,8 @@ internal abstract class PhysicalEntityPart
     /* Material. */
     internal virtual WorldMaterialInstance MaterialInstance { get; set; }
 
+    /* Drawing. */
+    internal PhysicalEntityPartSprite[] PartSprites => Sprites.ToArray();
 
     /* Events. */
     internal event EventHandler<CollisionEventArgs>? Collision;
@@ -217,7 +219,7 @@ internal abstract class PhysicalEntityPart
             }
         }
 
-        SubPartLinks = Links.Count == 0 ? null : Links.ToArray();
+        SubPartLinks = Links.ToArray();
 
         Entity.OnPartChange();
         SubPartChange?.Invoke(this, SubPartLinks);
@@ -381,6 +383,7 @@ internal abstract class PhysicalEntityPart
 
         foreach (PhysicalEntityPartSprite Sprite in Sprites)
         {
+            Sprite.Sprite.Update();
             Sprite.Draw(Entity.World!, Position, CombinedRotation);
         }
     }
@@ -398,6 +401,25 @@ internal abstract class PhysicalEntityPart
         }
     }
 
+    internal void AddSprite(PhysicalEntityPartSprite sprite)
+    {
+        if (sprite == null)
+        {
+            throw new ArgumentNullException(nameof(sprite));
+        }
+
+        Sprites.Add(sprite);
+    }
+
+    internal void RemoveSprite(PhysicalEntityPartSprite sprite)
+    {
+        if (sprite == null)
+        {
+            throw new ArgumentNullException(nameof(sprite));
+        }
+
+        Sprites.Remove(sprite);
+    }
 
     // Protected methods.
     /* Collision. */

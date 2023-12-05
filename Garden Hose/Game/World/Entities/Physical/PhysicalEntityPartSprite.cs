@@ -2,6 +2,7 @@
 using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
@@ -43,11 +44,18 @@ internal class PhysicalEntityPartSprite
         set => Sprite.Brightness = value;
     }
 
+    internal SpriteEffect Effect
+
     internal string AssetName { get; private init; }
 
 
     // Private fields.
     private SpriteItem _sprite;
+
+    private SpriteEffect _effect;
+    private float _brightness;
+    private float _opacity;
+    private Color _colorMask;
     
 
     // Constructors.

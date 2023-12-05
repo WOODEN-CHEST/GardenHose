@@ -9,8 +9,7 @@ namespace GardenHose.Game.World.Entities.Probe;
 internal class ProbeMainPart : PhysicalEntityPart
 {
     // Internal static fields.
-    internal static Vector2 HitboxSize = new(30f, 28f);
-    internal static Vector2 SpriteScale = new(0.2f);
+    
 
 
     // Internal fields.
@@ -26,21 +25,6 @@ internal class ProbeMainPart : PhysicalEntityPart
 
 
     // Inherited methods.
-    protected override void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDamage(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDestroy(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
     internal override void Load(GHGameAssetManager assetManager)
     {
         Sprites.Add(new(assetManager.GetAnimation("ship_probe_base")!) { Scale = SpriteScale });

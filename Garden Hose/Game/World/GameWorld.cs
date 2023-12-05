@@ -588,7 +588,7 @@ public class GameWorld : IIDProvider
         }
         catch (OverflowException)
         {
-            throw new Exception("Ran out of entity IDs");
+            throw new Exception("Ran out of entity IDs, cannot safely continue game.");
         }
     }
 }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
-internal class ProbeMainThrusterPart : PhysicalEntityPart, IThrusterPart
+internal class ProbeMainThrusterPart : PhysicalEntityPart, ThrusterPart
 {
     // Fields.
     public bool IsThrusterOn { get; set; } = true;
@@ -47,21 +47,6 @@ internal class ProbeMainThrusterPart : PhysicalEntityPart, IThrusterPart
 
 
     // Inherited methods.
-    protected override void OnPartBreakOff(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDamage(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
-    protected override void OnPartDestroy(Vector2 collisionLocation, float forceApplied)
-    {
-
-    }
-
     internal override void Load(GHGameAssetManager assetManager)
     {
         Sprites.Add(new(assetManager.GetAnimation("ship_probe_mainthruster")!) { Scale = ProbeMainPart.SpriteScale });

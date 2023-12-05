@@ -12,8 +12,6 @@ namespace GardenHose.Game.World.Entities.Particle;
 internal class ParticlePart : PhysicalEntityPart
 {
     // Internal fields.
-    internal SpriteItem Sprite { get; set; }
-
     internal float Lifetime { get; set; } = 4f;
 
     internal float RandomAdditionalLifetime { get; set; } = 2f;
@@ -36,6 +34,12 @@ internal class ParticlePart : PhysicalEntityPart
         {
             CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
         }
+
+        AddSprite(new(settings.AnimationName) 
+        { 
+            ColorMask = settings.GetColor(), 
+            Scale = ParticleScale
+        });
     }
 
 
@@ -43,26 +47,8 @@ internal class ParticlePart : PhysicalEntityPart
     [TickedFunction(false)]
     internal override void Draw()
     {
-        Sprite.Scale.Vector = ParticleScale * Entity.World!.Zoom;
-        Sprite.Position.Vector = Entity.World.ToViewportPosition(Position);
-        Sprite.Opacity = ((ParticleEntity)Entity).FadeStatus;
-        Sprite.Rotation = CombinedRotation;
-        Sprite.Draw();
-
+        Sprites[0].Opacity = ((ParticleEntity)Entity).FadeStatus;
+        Sprites[0].Scale = ParticleScale;
         base.Draw();
-    }
-
-    [TickedFunction(false)]
-    internal override void ParallelTick()
-    {
-        base.ParallelTick();
-        Sprite.ActiveAnimation.Update();
-    }
-
-    internal override void Load(GHGameAssetManager assetManager)
-    {
-        Sprite = new(assetManager.GetAnimation(_settings.AnimationName)!);
-        Sprite.Mask = _settings.GetColor();
-        Sprite.Scale.Vector = ParticleScale;
     }
 }

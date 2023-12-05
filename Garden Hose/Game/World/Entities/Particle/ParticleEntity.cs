@@ -21,16 +21,12 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Private fields.
-    private Color _particleColorMask;
-
     private float _scaleChangeSpeed;
 
     private readonly float _fadeInSpeed;
     private readonly float _fadeOutSpeed;
     private const float FADED_OUT = 0f;
     private const float FADED_IN = 1f;
-
-    
 
 
     // Constructors.
@@ -48,7 +44,6 @@ internal class ParticleEntity : PhysicalEntity
         Motion = motion;
         SelfRotation = settings.GetRotation();
         AngularMotion = settings.GetAngularMotion();
-        _particleColorMask = settings.GetColor();
         _fadeInSpeed = 1f / settings.FadeInTime;
         _fadeOutSpeed = 1f / settings.FadeOutTime;
         _scaleChangeSpeed = settings.GetScaleChangePerSecond();
@@ -59,6 +54,7 @@ internal class ParticleEntity : PhysicalEntity
             FadeStatus = FADED_IN;
         }
 
+        IsInvulnerable = true;
         MainPart.SetPositionAndRotation(Position, Rotation);
     }
 
@@ -141,8 +137,4 @@ internal class ParticleEntity : PhysicalEntity
             FadeStatus = FADED_IN;
         }
     }
-
-    internal override void OnPartDamage(PartDamageEventArgs args) { }
-
-    internal override void OnPartDestroy(PartDamageEventArgs args) { }
 }

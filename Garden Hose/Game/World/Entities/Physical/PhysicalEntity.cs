@@ -1,5 +1,4 @@
 ﻿using System;
-using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using GardenHoseEngine.Frame.Item;
@@ -27,9 +26,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Collision. */
-    internal bool IsCollisionEnabled { get; set; } = true;
+    internal bool IsCollisionEnabled { get; set; } = true; // Whether collision testing is even done.
 
-    internal bool IsCollisionReactionEnabled { get; set; } = true;
+    internal bool IsCollisionReactionEnabled { get; set; } = true; // Whether the object reacts to collisions.
 
     internal float BoundingLength { get; private set; }
 
@@ -176,6 +175,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
 
     internal bool IsDebugInfoDrawn { get; set; } = false;
+
+    
 
 
     /* Events. */
