@@ -16,6 +16,14 @@ internal class ProbeEntity : SpaceshipEntity
 
     internal const float SPRITE_SCALING = 0.217f;
 
+    internal PhysicalEntityPart? HeadPart { get; private set; }
+
+    internal ThrusterPart? LeftThrusterPart { get; private set; }
+
+    internal ThrusterPart? RightThrusterPart { get; private set; }
+
+    internal ThrusterPart? MainThrusterPart { get; private set; }
+
 
     //  Private static fields.
     /* Hit-box */
@@ -30,10 +38,7 @@ internal class ProbeEntity : SpaceshipEntity
 
     // Private fields.
     /* Parts. */
-    private PhysicalEntityPart? _headPart;
-    private ThrusterPart? _leftThrusterPart;
-    private ThrusterPart? _rightThrusterPart;
-    private ThrusterPart? _mainThrusterPart;
+    
 
     /* System. */
     private ProbeSystem _system;
@@ -48,18 +53,20 @@ internal class ProbeEntity : SpaceshipEntity
 
         PhysicalEntityPart BasePart = CreateBodyPart(this);
 
-        _headPart = CreateHeadPart(this);
-        _leftThrusterPart = CreateSideThrusterPart(this, false);
-        _rightThrusterPart = CreateSideThrusterPart(this, true);
-        _mainThrusterPart = CreateMainThrusterPart(this);
+        HeadPart = CreateHeadPart(this);
+        LeftThrusterPart = CreateSideThrusterPart(this, false);
+        RightThrusterPart = CreateSideThrusterPart(this, true);
+        MainThrusterPart = CreateMainThrusterPart(this);
 
         // A lot of magic numbers here are just offsets which were not calculated but just eyed until it looked right.
-        BasePart.LinkPart(_headPart, new(0f, (-s_bodyHitboxSize.Y * 0.5f) - (s_headHitboxSize.Y * 0.5f) + 1.25f), 10_000f);
-        BasePart.LinkPart(_rightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 10_000f);
-        BasePart.LinkPart(_leftThrusterPart, -_rightThrusterPart.ParentLink!.LinkDistance, 10_000f);
-        BasePart.LinkPart(_mainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 10_000f);
+        BasePart.LinkPart(HeadPart, new(0f, (-s_bodyHitboxSize.Y * 0.5f) - (s_headHitboxSize.Y * 0.5f) + 1.25f), 30_000f);
+        BasePart.LinkPart(RightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 30_000);
+        BasePart.LinkPart(LeftThrusterPart, -RightThrusterPart.ParentLink!.LinkDistance, 30_000f);
+        BasePart.LinkPart(MainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 30_000);
 
         MainPart = BasePart;
+        IsInvulnerable = false;
+        Pilot = SpaceshipPilot.Player;
     }
 
     
@@ -111,7 +118,7 @@ internal class ProbeEntity : SpaceshipEntity
         const float THRUSTER_POWER = 7993f;
         const float THRUSTER_FUEL = 10_000_000f;
         const float THRUSTER_FUEL_EFFICIENCY = 3.16f;
-        const float THRUSTER_CHANGE_SPEED = 7993f;
+        const float THRUSTER_CHANGE_SPEED = 9.8f;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_sideThrusterHitboxSize) },
             WorldMaterial.Test, entity)
@@ -135,10 +142,10 @@ internal class ProbeEntity : SpaceshipEntity
 
     private static ThrusterPart CreateMainThrusterPart(PhysicalEntity entity)
     {
-        const float THRUSTER_POWER = 7993f;
+        const float THRUSTER_POWER = 18412;
         const float THRUSTER_FUEL = 20_000_000f;
         const float THRUSTER_FUEL_EFFICIENCY = 2.51f;
-        const float THRUSTER_CHANGE_SPEED = 17342;
+        const float THRUSTER_CHANGE_SPEED = 5.8f;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_mainThrusterHitboxSize) },
             WorldMaterial.Test, entity)
@@ -158,4 +165,14 @@ internal class ProbeEntity : SpaceshipEntity
 
 
     // Inherited methods.
+    internal override void SequentialTick()
+    {
+        base.SequentialTick();
+        _system.SequentialTick(Pilot == SpaceshipPilot.Player);
+    }
+    internal override void ParallelTick()
+    {
+        base.ParallelTick();
+        _system.ParallelTick(Pilot == SpaceshipPilot.Player);
+    }
 }

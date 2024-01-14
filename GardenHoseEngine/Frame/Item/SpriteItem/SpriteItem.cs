@@ -19,6 +19,8 @@ public class SpriteItem : ColoredItem
 
     public virtual Vector2 TextureSize => new(ActiveAnimation.GetFrame().Texture.Width, ActiveAnimation.GetFrame().Texture.Height);
 
+    public virtual Vector2? TargetTextureSize { get; set; } = null;
+
 
     // Private fields.
     private AnimationInstance _activeAnimation;
@@ -43,6 +45,8 @@ public class SpriteItem : ColoredItem
     {
         if (!_ShouldDraw) return;
 
+        Vector2 SpriteSize = TargetTextureSize == null ? Scale : (TargetTextureSize.Value / TextureSize * Scale);
+
         GameFrameManager.SpriteBatch.Draw(
             ActiveAnimation.GetFrame().Texture,
             Display.ToRealPosition(Position),
@@ -50,7 +54,7 @@ public class SpriteItem : ColoredItem
             CombinedMask,
             Rotation,
             ActiveAnimation.GetFrame().Origin,
-            Display.ToRealScale(Scale),
+            Display.ToRealScale(SpriteSize),
             Effects,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

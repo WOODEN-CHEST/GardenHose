@@ -76,7 +76,6 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\logo_tiny.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\geeich.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\fonts\geeich_large.xnb
-D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\test\ball.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\narrow\glow.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\narrow\panel.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\ui\buttons\connector\square\glow.xnb
@@ -124,3 +123,9 @@ D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garde
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\layers\gassurface1.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\layers\rocksurface1.xnb
 D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\planets\layers\watersurface.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\roll_panel.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\roll_panel_indicator.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\thruster_panel.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\thruster_panel_button_f.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\thruster_panel_button_m.xnb
+D:\Workstations\Programming\Projects\Garden Hose C# Recreation\Garden Hose\Garden Hose\bin\Debug\net7.0\assets\textures\game\ships\probe\thruster_panel_button_s.xnb

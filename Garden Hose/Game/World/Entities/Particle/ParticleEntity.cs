@@ -128,6 +128,10 @@ internal class ParticleEntity : PhysicalEntity
     internal override void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
+        Vector2 selfMotion,
+        Vector2 otherMotion,
+        Vector2 selfRotationalMotionAtPoint,
+        Vector2 otherRotationalMotionAtPoint,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {

@@ -1,4 +1,5 @@
-﻿using GardenHose.Game.World.Entities.Physical;
+﻿using GardenHose.Game.AssetManager;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
@@ -13,7 +14,7 @@ namespace GardenHose.Game.World.Entities.Ship;
 internal abstract class SpaceshipEntity : PhysicalEntity
 {
     // Fields.
-    internal SpaceshipPilot Controller
+    internal SpaceshipPilot Pilot
     {
         get => _pilot;
         set
@@ -21,48 +22,23 @@ internal abstract class SpaceshipEntity : PhysicalEntity
             if (value == _pilot) return;
 
             _pilot = value;
-            DisableInputListeners();
-
-            if (_pilot == SpaceshipPilot.Player)
-            {
-                EnableInputListeners();
-                return;
-            }
-            DisableInputListeners();
+            ShipSystem.OnPilotChange(_pilot);
         }
     }
 
     internal abstract ISpaceshipSystem ShipSystem { get; init; }
 
 
-    // Protected fields.
-    protected readonly List<IInputListener> InputListeners = new();
-
-
     // Private fields.
     private SpaceshipPilot _pilot = SpaceshipPilot.None;
+    private bool _isInputListened = false;
 
 
     // Constructors.
     internal SpaceshipEntity(EntityType type, GameWorld? world) : base(type, world) { }
 
+
     // Protected methods.
-    protected virtual void EnableInputListeners()
-    {
-        foreach (IInputListener Listener in InputListeners)
-        {
-            UserInput.AddListener(Listener);
-        }
-    }
-
-    protected virtual void DisableInputListeners()
-    {
-        foreach (IInputListener Listener in InputListeners)
-        {
-            Listener.StopListening();
-        }
-    }
-
     protected abstract void AIParallelTick();
 
     protected abstract void PlayerParallelTick();
@@ -77,11 +53,11 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     {
         base.ParallelTick();
 
-        if (Controller == SpaceshipPilot.Player)
+        if (Pilot == SpaceshipPilot.Player)
         {
             PlayerParallelTick();
         }
-        else if (Controller == SpaceshipPilot.AI)
+        else if (Pilot == SpaceshipPilot.AI)
         {
             AIParallelTick();
         }
@@ -91,13 +67,19 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     {
         base.SequentialTick();
 
-        if (Controller == SpaceshipPilot.Player)
+        if (Pilot == SpaceshipPilot.Player)
         {
             PlayerSequentialTick();
         }
-        else if (Controller == SpaceshipPilot.AI)
+        else if (Pilot == SpaceshipPilot.AI)
         {
             AIParallelTick();
         }
+    }
+
+    internal override void Load(GHGameAssetManager assetManager)
+    {
+        base.Load(assetManager);
+        ShipSystem.Load(assetManager);
     }
 }

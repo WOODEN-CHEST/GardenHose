@@ -93,6 +93,8 @@ internal class ThrusterPart : PhysicalEntityPart
     // Internal methods.
     internal void Refuel() => Fuel = MaxFuel;
 
+    internal void SetTargetThrottle(float throttle) => TargetThrusterThrottle = throttle;
+
 
     // Protected methods.
     [TickedFunction(false)]

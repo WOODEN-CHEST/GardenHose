@@ -1,4 +1,5 @@
-﻿using GardenHoseEngine.Frame.Item;
+﻿using GardenHose.Game.AssetManager;
+using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 
 namespace GardenHose.Game.World.Entities.Ship.System;
@@ -16,8 +17,12 @@ internal interface ISpaceshipSystem : IDrawableItem
     public void NavigateToPosition(Vector2 position);
 
     [TickedFunction(false)]
-    public void ParallelTick();
+    public void ParallelTick(bool isPlayerTick);
 
     [TickedFunction(false)]
-    public void SequentialTick();
+    public void SequentialTick(bool isPlayerTick);
+
+    public void Load(GHGameAssetManager assetManager);
+
+    public void OnPilotChange(SpaceshipPilot newPilot); 
 }

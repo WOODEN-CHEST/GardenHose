@@ -345,6 +345,30 @@
 /processorParam:TextureFormat=Color
 /build:textures/game/ships/probe/main_thruster.png
 
+#begin textures/game/ships/probe/roll_panel_indicator.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/roll_panel_indicator.png
+
+#begin textures/game/ships/probe/roll_panel.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/roll_panel.png
+
 #begin textures/game/ships/probe/side_thruster.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -356,6 +380,54 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:textures/game/ships/probe/side_thruster.png
+
+#begin textures/game/ships/probe/thruster_panel_button_f.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/thruster_panel_button_f.png
+
+#begin textures/game/ships/probe/thruster_panel_button_m.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/thruster_panel_button_m.png
+
+#begin textures/game/ships/probe/thruster_panel_button_s.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/thruster_panel_button_s.png
+
+#begin textures/game/ships/probe/thruster_panel.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=False
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:textures/game/ships/probe/thruster_panel.png
 
 #begin textures/game/stars/big.png
 /importer:TextureImporter
@@ -392,18 +464,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:textures/game/stars/small.png
-
-#begin textures/test/ball.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:textures/test/ball.png
 
 #begin textures/ui/buttons/connector/connector.png
 /importer:TextureImporter

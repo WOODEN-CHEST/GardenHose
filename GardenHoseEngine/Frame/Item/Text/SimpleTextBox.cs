@@ -181,7 +181,14 @@ public class SimpleTextBox : ColoredItem
             RealText = Text;
         }
 
-        FormattedText = string.Join('\n', FormatTextBySize(Text));
+        if ((MaxSize.X == float.PositiveInfinity) && (MaxSize.Y == float.PositiveInfinity))
+        {
+            FormattedText = RealText;
+        }
+        else
+        {
+            FormattedText = string.Join('\n', FormatTextBySize(Text));
+        }
         RealPixelSize = Font.MeasureString(FormattedText);
 
         UpdateVectorOrigin();
@@ -289,7 +296,7 @@ public class SimpleTextBox : ColoredItem
 
     private void UpdateVectorOrigin()
     {
-        Vector2 TextSize = Font.MeasureString(FormattedText);
+        Vector2 TextSize = RealPixelSize;
 
         _vectorOrigin.X = ((int)_origin % 3) switch
         {

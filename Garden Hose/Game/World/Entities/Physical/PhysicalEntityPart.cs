@@ -17,7 +17,7 @@ namespace GardenHose.Game.World.Entities.Physical;
 internal class PhysicalEntityPart
 {
     // Fields.
-    internal virtual PhysicalEntity Entity { get; init; }
+    internal virtual PhysicalEntity Entity { get; set; }
 
 
     /* Part properties. */
@@ -179,7 +179,7 @@ internal class PhysicalEntityPart
 
 
         var NewPartLinks = new PartLink[SubPartLinks.Length + 1];
-        SubPartLinks?.CopyTo(NewPartLinks, 0);
+        SubPartLinks.CopyTo(NewPartLinks, 0);
 
         PartLink Link = new PartLink(this, part, Entity, distance, strength);
         NewPartLinks[^1] = Link;
@@ -345,12 +345,9 @@ internal class PhysicalEntityPart
     {
         SelfRotation += AngularMotion * Entity.World!.PassedTimeSeconds;
 
-        if (SubPartLinks != null)
+        foreach (PartLink Link in SubPartLinks)
         {
-            foreach (PartLink Link in SubPartLinks)
-            {
-                Link.LinkedPart.ParallelTick();
-            }
+            Link.LinkedPart.ParallelTick();
         }
 
         MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
@@ -458,18 +455,15 @@ internal class PhysicalEntityPart
                 }
 
                 // Build case.
-                CollisionCase Case = new()
-                {
-                    EntityA = Entity,
-                    EntityB = targetEntity,
-                    PartA = this,
-                    PartB = TargetPart,
-                    BoundA = selfBound,
-                    BoundB = TargetBound,
-                    CollisionPoints = CollisionData.Value.points,
-                    SurfaceNormal = CollisionData.Value.surfaceNormal
-                };
-
+                CollisionCase Case = new(
+                    Entity,
+                    targetEntity,
+                    this,
+                    TargetPart,
+                    selfBound,
+                    TargetBound,
+                    CollisionData.Value.surfaceNormal,
+                    CollisionData.Value.points);
                 CollisionCases.Add(Case);
             }
         }
@@ -535,7 +529,7 @@ internal class PhysicalEntityPart
     {
         // Prepare variables.
         List<Vector2> CollisionPoints = new();
-        Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, CombinedRotation);
+        Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, rectSourcePart.CombinedRotation);
 
         Vector2 RectPosition = rectSourcePart.Position + rect.Offset;
         Vector2 BallPosition = ballSourcePart.Position + ball.Offset;
@@ -625,13 +619,14 @@ internal class PhysicalEntityPart
     {
         CreateDamageParticles(collisionLocation, forceApplied);
 
+        ParentLink!.ParentPart.UnlinkPart(this);
         StrayEntity Stray = new(Entity.World,
                 this,
-                Entity.Position,
+                Position,
                 Entity.Motion,
                 Entity.Rotation);
         Stray.AddCollisionIgnorable(Entity);
-        Entity.World!.AddEntity(Stray);
+        Entity.World!.AddEntity(Stray); 
     }
 
     protected void CreateDamageParticles(Vector2 collisionLocation, float forceApplied)

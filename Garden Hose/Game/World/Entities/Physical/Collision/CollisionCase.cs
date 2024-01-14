@@ -24,6 +24,14 @@ internal record class CollisionCase
 
     internal Vector2 BoundBPosition => PartB.Position + BoundB.Offset;
 
+    internal Vector2 EntityAMotion { get; init; }
+
+    internal Vector2 EntityBMotion { get; init; }
+
+    internal Vector2 EntityARotationalMotionAtPoint { get; init; }
+
+    internal Vector2 EntityBRotationalMotionAtPoint { get; init; }
+
     internal Vector2[] CollisionPoints { get; init; }
 
     internal Vector2 AverageCollisionPoint
@@ -41,20 +49,38 @@ internal record class CollisionCase
         }
     }
 
-    internal Vector2 SurfaceNormal
+    internal Vector2 SurfaceNormal { get; init; }
+
+
+    // Constructors.
+    internal CollisionCase(PhysicalEntity entityA,
+        PhysicalEntity entityB,
+        PhysicalEntityPart partA,
+        PhysicalEntityPart partB,
+        ICollisionBound boundA,
+        ICollisionBound boundB,
+        Vector2 surfaceNormal,
+        Vector2[] collisionPoints)
     {
-        get => _surfaceNormal;
-        init
+        EntityA = entityA ?? throw new ArgumentNullException(nameof(entityA));
+        EntityB = entityB ?? throw new ArgumentNullException(nameof(entityB));
+        PartA = partA ?? throw new ArgumentNullException(nameof(partA));
+        PartB = partB ?? throw new ArgumentNullException(nameof(partB));
+        BoundA = boundA;
+        BoundB = boundB;
+
+        SurfaceNormal = surfaceNormal;
+        if (!float.IsFinite(SurfaceNormal.LengthSquared()))
         {
-            _surfaceNormal = value;
-            if (!float.IsFinite(_surfaceNormal.LengthSquared()))
-            {
-                _surfaceNormal = Vector2.One;
-            }
+            SurfaceNormal = Vector2.One;
         }
+
+        CollisionPoints = collisionPoints ?? throw new ArgumentNullException(nameof(collisionPoints));
+
+        EntityAMotion = EntityA.Motion;
+        EntityBMotion = EntityB.Motion;
+
+        EntityARotationalMotionAtPoint = EntityA.GetAngularMotionAtPoint(AverageCollisionPoint);
+        EntityBRotationalMotionAtPoint = EntityB.GetAngularMotionAtPoint(AverageCollisionPoint);
     }
-
-
-    // Private fields.
-    private Vector2 _surfaceNormal;
 }

@@ -56,19 +56,32 @@ public class SpriteButton : IDrawableItem, ITimeUpdatable
 
 
     // Constructors.
-    public SpriteButton(AnimationInstance animationInstance, params IButtonComponent[] buttonComponents)
+    public SpriteButton(AnimationInstance animationInstance, IButtonComponent[] buttonComponents)
     {
         Button = new(buttonComponents);
         Sprite = new(animationInstance);
     }
 
-    public SpriteButton(SpriteAnimation animation, params IButtonComponent[] buttonComponents)
+    public SpriteButton(SpriteAnimation animation, IButtonComponent[] buttonComponents)
         : this(animation.CreateInstance(), buttonComponents) { }
 
     public SpriteButton(Button button, SpriteItem item)
     {
         Button = button ?? throw new ArgumentNullException(nameof(button));
         Sprite = item ?? throw new ArgumentNullException(nameof(item));
+    }
+
+    public SpriteButton(AnimationInstance animationInstance)
+    {
+        Sprite = new(animationInstance);
+        Button = new(new IButtonComponent[] { new RectangleButtonComponent(Sprite.TextureSize) });
+    }
+
+    public SpriteButton(AnimationInstance animationInstance, Vector2 targetSize)
+    {
+        Sprite = new(animationInstance);
+        Sprite.TargetTextureSize = targetSize;
+        Button = new(new IButtonComponent[] { new RectangleButtonComponent(targetSize) });
     }
 
 

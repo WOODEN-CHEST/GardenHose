@@ -27,7 +27,8 @@ internal struct Circle
     internal static Vector2[] GetIntersections(Circle circle, EquationRay ray)
     {
         // Edge case if testing against vertical ray.
-        if (float.IsInfinity(ray.YStep))
+        const float MAX_ACCEPTABLE_RAY_STEP = 500_000;
+        if (Math.Abs(ray.YStep) > MAX_ACCEPTABLE_RAY_STEP)
         {
             float CircleXMin = -circle.XNumber - MathF.Sqrt(circle.RSquared);
             float CircleXMax = -circle.XNumber + MathF.Sqrt(circle.RSquared);
@@ -41,7 +42,6 @@ internal struct Circle
                 return new Vector2[] { new Vector2(ray.OriginX, -circle.YNumber)};
             }
 
-            float CircleRadius = MathF.Sqrt(circle.RSquared);
             float Distance = (ray.OriginX + circle.XNumber);
             float YValue = MathF.Sqrt(circle.RSquared - (Distance * Distance));
 
@@ -79,8 +79,6 @@ internal struct Circle
         float X2 = (-B + Discriminant) / TwoA;
 
         return new Vector2[] { new Vector2(X1, ray.GetValueAtX(X1)), new Vector2(X2, ray.GetValueAtX(X2)) };
-    
-    
     }
 
     internal static Vector2[] GetIntersections(Circle circleA , Circle circleB)

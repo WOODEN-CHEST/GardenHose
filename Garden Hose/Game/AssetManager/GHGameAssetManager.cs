@@ -150,6 +150,19 @@ internal class GHGameAssetManager
 
         _animations.Add("ship_probe_sidethruster", (null, () => new SpriteAnimation(
             0f, _parentFrame, Origin.Center, "game/ships/probe/side_thruster")));
+
+        _animations.Add("ship_probe_rollpanel", (null, () => new SpriteAnimation(
+            0f, _parentFrame, Origin.Center, "game/ships/probe/roll_panel")));
+
+        _animations.Add("ship_probe_rollpanelindicator", (null, () => new SpriteAnimation(
+           0f, _parentFrame, Origin.Center, "game/ships/probe/roll_panel_indicator")));
+
+        _animations.Add("ship_probe_thrusterpanel", (null, () => new SpriteAnimation(
+           0f, _parentFrame, Origin.Center, "game/ships/probe/thruster_panel")));
+
+        _animations.Add("ship_probe_thrusterpanelbutton", (null, () => new SpriteAnimation(
+           0f, _parentFrame, Origin.Center, "game/ships/probe/thruster_panel_button_m",
+           "game/ships/probe/thruster_panel_button_s", "game/ships/probe/thruster_panel_button_f")));
     }
 
     private void CreateSoundEntries()

@@ -34,11 +34,16 @@
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/base.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/head.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/main_thruster.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/roll_panel_indicator.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/roll_panel.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/side_thruster.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/thruster_panel_button_f.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/thruster_panel_button_m.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/thruster_panel_button_s.png</File>
+    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/ships/probe/thruster_panel.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/big.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/medium.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/game/stars/small.png</File>
-    <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/test/ball.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/connector.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/narrow/glow.png</File>
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/buttons/connector/narrow/panel.png</File>
@@ -63,6 +68,11 @@
     <File>D:/Workstations/Programming/Projects/Garden Hose C# Recreation/Garden Hose/Garden Hose/assets/textures/ui/title/title_background.png</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />

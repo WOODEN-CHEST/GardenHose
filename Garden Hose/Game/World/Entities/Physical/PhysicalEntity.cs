@@ -246,6 +246,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         float AppliedTorque = Vector2.Dot(force, LeverArmNormal) * DistanceFromCenter;
         float MomentOfInertia = Vector2.DistanceSquared(Position, location) * Mass;
         float AngularAcceleration = AppliedTorque / MomentOfInertia;
+        if (float.IsNaN(AngularAcceleration))
+        {
+            AngularAcceleration = 0f;
+        }
 
         // Apply.
         Motion += LinearAcceleration;
@@ -312,6 +316,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal virtual void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
+        Vector2 selfMotion,
+        Vector2 otherMotion,
+        Vector2 selfRotationalMotionAtPoint,
+        Vector2 otherRotationalMotionAtPoint,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
@@ -320,11 +328,19 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         if (selfPart.MaterialInstance.State != WorldMaterialState.Solid
             || otherPart.MaterialInstance.State != WorldMaterialState.Solid)
         {
-            OnSoftCollision(otherEntity, collisionPoint);
+            OnSoftCollision(otherEntity, collisionPoint, selfMotion, otherMotion);
         }
         else
         {
-            OnHardCollision(otherEntity, selfPart, otherPart, surfaceNormal, collisionPoint);
+            OnHardCollision(otherEntity, 
+                selfPart, 
+                otherPart,
+                selfMotion,
+                otherMotion,
+                selfRotationalMotionAtPoint,
+                otherRotationalMotionAtPoint,
+                surfaceNormal,
+                collisionPoint);
         }
     }
 
@@ -342,33 +358,31 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
         // Prepare variables.
         Vector2 PushOutDirection = GetPushOutDirection(otherEntity);
-        const int StepCount = 8;
-        float StepDistance = 10f;
+        const int STEP_COUNT = 10;
+        float STEP_DISTANCE = 10f;
 
-        // First step.
-        SelfPosition += StepDistance * PushOutDirection;
-
-        // Consequent steps.
-        Vector2 ClosestPushOutPosition = Position;
-        bool IsColliding = false;
-
-        for (int Step = 0; Step < StepCount; Step++)
+        // Push out of other entity.
+        do
         {
-            StepDistance *= 0.5f;
-            Position += IsColliding ? (PushOutDirection * StepDistance) : (-PushOutDirection * StepDistance);
+            Position += PushOutDirection * STEP_DISTANCE;
+        }
+        while (selfPart.TestBoundAgainstBound(selfBound, otherbound, otherPart) != null);
 
-            var CollisionData = selfPart.TestBoundAgainstBound(
-                selfBound, otherbound, otherPart);
-            IsColliding = CollisionData != null;
+        // Push closer as much as possible.
+        for (int Step = 0; Step < STEP_COUNT; Step++)
+        {
+            Vector2 PreviousPosition = Position;
+            STEP_DISTANCE /= 2f;
 
-            if (!IsColliding)
+            Position -= PushOutDirection * STEP_DISTANCE;
+
+            if (selfPart.TestBoundAgainstBound(selfBound, otherbound, otherPart) != null)
             {
-                ClosestPushOutPosition = Position;
+                SelfPosition = PreviousPosition;
             }
         }
 
-        // Update position.
-        Position = ClosestPushOutPosition;
+        Position = SelfPosition;
     }
 
     internal void AddCollisionIgnorable(PhysicalEntity entity)
@@ -453,7 +467,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     /* Collision. */
     protected virtual Vector2 GetPushOutDirection(PhysicalEntity otherEntity)
     {
-        // Try self motion.
         Vector2 Direction = Position - otherEntity.Position;
 
         if (Direction.Length() is 0f or -0f)
@@ -466,6 +479,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     protected float CalculateSpeedOnAxis(float v1, float m1, float v2, float m2, float cor)
     {
+        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
+        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
+        // So here I just stole some formula from the Internet and I don't know how it works (Since my calculations give different results)
         return (m1 * v1 + m2 * v2 + m2*(v2 - v1)) / (m1 + m2) * cor;
     }
 
@@ -642,12 +658,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         }
     }
 
-    private void OnSoftCollision(PhysicalEntity otherEntity, Vector2 collisionPoint)
+    private void OnSoftCollision(PhysicalEntity otherEntity, Vector2 collisionPoint, Vector2 selfMotion, Vector2 otherMotion)
     {
         // Theoretically this code can cause strange behavior of objects pushing out of each other,
         // but practically it is rare. In case of such a bug, search here.
 
-        Vector2 MotionRelativeToOtherEntity = Motion - otherEntity.Motion;
+        // Soft collisions do not damage entity parts.
+
+        Vector2 MotionRelativeToOtherEntity = selfMotion - otherMotion;
 
         const float ARBITRARY_SPEED_CHANGE_VALUE = 11.195f;
         float Multiplier = Math.Max(0f, 1f - (ARBITRARY_SPEED_CHANGE_VALUE * World!.PassedTimeSeconds));
@@ -663,16 +681,16 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     private void OnHardCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
         PhysicalEntityPart otherPart,
+        Vector2 selfMotion,
+        Vector2 otherMotion,
+        Vector2 selfRotationalMotionAtPoint,
+        Vector2 otherRotationalMotionAtPoint,
         Vector2 surfaceNormal,
         Vector2 collisionPoint)
     {
-        // Multiply by 0.5 so physics are more stable.
-        Vector2 MotionAtPoint = GetAngularMotionAtPoint(collisionPoint) * 0.5f + Motion;
-        Vector2 EntityBMotionAtPoint = otherEntity.GetAngularMotionAtPoint(collisionPoint) * 0.5f + otherEntity.Motion;
+        Vector2 MotionAtPoint = selfMotion + selfRotationalMotionAtPoint;
+        Vector2 EntityBMotionAtPoint = otherMotion + otherRotationalMotionAtPoint;
 
-        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
-        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
-        // So here I just stole some formula from online and I don't know how it works (Since my calculations give different results)
         Vector2 Surface = GHMath.PerpVectorClockwise(surfaceNormal);
         float AlignedYMotion = Vector2.Dot(MotionAtPoint, surfaceNormal);
         float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
@@ -682,7 +700,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             + otherPart.MaterialInstance.Material.Bounciness) * 0.5f;
         float CombinedFrictionCoef = (selfPart.MaterialInstance.Material.Friction
             + otherPart.MaterialInstance.Material.Friction) * 0.5f;
-
 
         float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Mass,
             EntityBAlignedYMotion, otherEntity.Mass, CombinedBounciness);

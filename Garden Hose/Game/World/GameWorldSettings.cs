@@ -1,5 +1,6 @@
 ﻿using GardenHose.Game.World.Entities;
 using GardenHose.Game.World.Entities.Planet;
+using GardenHose.Game.World.Entities.Ship;
 using GardenHose.Game.World.Material;
 using System;
 
@@ -17,6 +18,8 @@ internal class GameWorldSettings
     internal required GameBackground Background { get; init; }
 
     internal required WorldMaterial AmbientMaterial { get; init; }
+
+    internal required SpaceshipEntity PlayerShip { get; init; }
 
 
     // Constructors.

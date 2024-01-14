@@ -3,6 +3,7 @@ using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.World.Material;
+using GardenHose.Game.World.Player;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Logging;
@@ -49,7 +50,9 @@ public class GameWorld : IIDProvider
 
     internal ReadOnlySpan<Entity> EntitiesRemoved => CollectionsMarshal.AsSpan(_entitiesRemoved);
 
-    
+
+    /* Player. */
+    internal WorldPlayer Player { get; private set; }
 
 
     /* Camera. */
@@ -115,7 +118,12 @@ public class GameWorld : IIDProvider
     private bool _isDebugInfoEnabled = false;
 
     /* Threads. */
+#if DEBUG
     private const int THREAD_COUNT = 1;
+#else
+    private const int THREAD_COUNT = 8;
+#endif
+
     private readonly AutoResetEvent[] _startFireEvent = new AutoResetEvent[THREAD_COUNT];
     private readonly AutoResetEvent[] _endFireEvent = new AutoResetEvent[THREAD_COUNT];
     private readonly Range[] _threadHandlingRanges =new Range[THREAD_COUNT];
@@ -145,7 +153,7 @@ public class GameWorld : IIDProvider
                 _worldParts[i, j] = new();
             }
         }
-
+        
         ReadStartupSettings(settings);
     }
 
@@ -336,6 +344,9 @@ public class GameWorld : IIDProvider
         AmbientMaterial.Temperature = 0.03f;
 
         // Entities.
+        AddEntity(settings.PlayerShip);
+        Player = new(settings.PlayerShip);
+
         foreach (var Entity in settings.StartingEntities)
         {
             AddEntity(Entity);
@@ -364,9 +375,25 @@ public class GameWorld : IIDProvider
                 Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
             }
 
-            Case.EntityA.OnCollision(Case.EntityB, Case.PartA, Case.PartB, Case.SurfaceNormal, Case.AverageCollisionPoint);
+            Case.EntityA.OnCollision(Case.EntityB,
+                Case.PartA,
+                Case.PartB,
+                Case.EntityA.Motion,
+                Case.EntityB.Motion,
+                Case.EntityARotationalMotionAtPoint,
+                Case.EntityBRotationalMotionAtPoint,
+                Case.SurfaceNormal,
+                Case.AverageCollisionPoint);
 
-            Case.EntityB.OnCollision(Case.EntityA, Case.PartB, Case.PartA, Case.SurfaceNormal, Case.AverageCollisionPoint);
+            Case.EntityB.OnCollision(Case.EntityA,
+                Case.PartB,
+                Case.PartA,
+                Case.EntityB.Motion,
+                Case.EntityA.Motion,
+                Case.EntityBRotationalMotionAtPoint,
+                Case.EntityARotationalMotionAtPoint,
+                Case.SurfaceNormal,
+                Case.AverageCollisionPoint);
         }
     }
 
@@ -436,7 +463,7 @@ public class GameWorld : IIDProvider
 #else
             if (!Event.WaitOne(10_000))
             {
-                throw new Exception("Thread took too long to respond, aborting simulation.");
+                throw new Exception("World thread took too long to respond, aborting simulation.");
             }
 #endif
         }
