@@ -199,6 +199,8 @@ public class GameWorld : IIDProvider
         FireAllThreads();
         WaitForAllThreads();
 
+        Player.Tick();
+
         // Test collision for physical entities.        
         DivideWorldPartsAmongThreads();
         FireAllThreads();
@@ -345,7 +347,7 @@ public class GameWorld : IIDProvider
 
         // Entities.
         AddEntity(settings.PlayerShip);
-        Player = new(settings.PlayerShip);
+        Player = new(this, settings.PlayerShip);
 
         foreach (var Entity in settings.StartingEntities)
         {

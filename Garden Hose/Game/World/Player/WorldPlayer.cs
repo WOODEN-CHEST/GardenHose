@@ -12,10 +12,10 @@ namespace GardenHose.Game.World.Player;
 internal class WorldPlayer
 {
     // Internal fields.
-    bool IsAlive { get; set; } = true;
+    internal bool IsAlive { get; private set; } = true;
 
     [MemberNotNull(nameof(_playerShip))]
-    internal SpaceshipEntity PlayerShip
+    internal SpaceshipEntity SpaceShip
     {
         get => _playerShip;
         set
@@ -37,7 +37,11 @@ internal class WorldPlayer
         }
     }
 
-    internal ISpaceshipSystem ShipSystem => PlayerShip.ShipSystem;
+    internal ISpaceshipSystem ShipSystem => SpaceShip.ShipSystem;
+
+    internal PlayerCamera Camera { get; private init; }
+
+    internal GameWorld World { get; private init; }
 
 
     // Private fields.
@@ -45,8 +49,25 @@ internal class WorldPlayer
 
 
     // Constructors.
-    internal WorldPlayer(SpaceshipEntity playerShip)
+    internal WorldPlayer(GameWorld world, SpaceshipEntity playerShip)
     {
-        PlayerShip = playerShip;
+        SpaceShip = playerShip;
+        World = world ?? throw new ArgumentNullException(nameof(world));
+        Camera = new(this); 
+    }
+
+
+    // Internal methods.
+    [TickedFunction(false)]
+    internal void Tick()
+    {
+        Camera.Tick();
+    }
+
+
+    // Private fields.
+    private void OnPlayerShipDeleteEvent(object? sender, EventArgs args)
+    {
+        IsAlive = false;
     }
 }

@@ -57,26 +57,6 @@ internal class InGameFrame : GameFrame
     {
         base.OnStart();
         Game.OnStart();
-
-        UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.OnClick,
-            (sender, args) => {
-                _startPosition = UserInput.VirtualMousePosition.Current;
-                _currentCameraCenter = Game.World.CameraCenter;
-            },
-            MouseButton.Right));
-
-        UserInput.AddListener(MouseListenerCreator.SingleButton(this, true, MouseCondition.WhileDown,
-            (sender, args) =>
-            {
-                Game.World.CameraCenter = _currentCameraCenter
-                - (UserInput.VirtualMousePosition.Current - _startPosition) * (1f / Game.World.Zoom);
-            }, MouseButton.Right));
-
-        UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Up,
-            (sender, args) => Game.World.Zoom *= 1.2f));
-
-        UserInput.AddListener(MouseListenerCreator.Scroll(this, true, ScrollDirection.Down,
-            (sender, args) => Game.World.Zoom /= 1.2f));
     }
 
     public override void Update()
