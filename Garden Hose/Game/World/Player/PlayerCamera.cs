@@ -58,7 +58,7 @@ internal class PlayerCamera
         Vector2 FacingOffset = Vector2.Transform(-Vector2.UnitY, Matrix.CreateRotationZ(GamePlayer.SpaceShip.Rotation))
             * ROTATION_OFFSET_AMOUNT * GamePlayer.World.InverseZoom;
 
-        TargetPosition = GamePlayer.SpaceShip.Position + MouseOffset + MotionOffset + FacingOffset;
+        TargetPosition = GamePlayer.SpaceShip.Position + MouseOffset + FacingOffset;
         GamePlayer.World.CameraCenter += (TargetPosition - GamePlayer.World.CameraCenter) * 
             Math.Min(GamePlayer.World.PassedTimeSeconds * CAMERA_MOVEMENT_SPEED, 1f);
 

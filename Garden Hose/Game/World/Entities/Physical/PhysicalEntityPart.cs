@@ -657,28 +657,30 @@ internal class PhysicalEntityPart
     [TickedFunction(false)]
     protected void AttractEntities()
     {
-        foreach (PhysicalEntity WorldEntity in Entity!.World!.PhysicalEntities)
+        foreach (Entity WorldEntity in Entity!.World!.Entities)
         {
-            if (WorldEntity == Entity) continue;
+            if ((WorldEntity == Entity) || (!WorldEntity.IsPhysical)) continue;
 
-            if (!WorldEntity.IsAttractable) continue;
+            PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
+
+            if (!PhysicalWorldEntity.IsAttractable) continue;
 
             const float ARBITRARY_ATTRACTION_INCREASE = 1000f;
             float AttractionStrength = (MaterialInstance.Material.Attraction * ARBITRARY_ATTRACTION_INCREASE
-                / Vector2.Distance(Position, WorldEntity.Position)) * Entity.World!.PassedTimeSeconds;
+                / Vector2.Distance(Position, PhysicalWorldEntity.Position)) * Entity.World!.PassedTimeSeconds;
 
             if (float.IsNaN(AttractionStrength) || !float.IsFinite(AttractionStrength))
             {
                 AttractionStrength = 0f;
             }
 
-            Vector2 AddedMotion = Vector2.Normalize(Position - WorldEntity.Position);
+            Vector2 AddedMotion = Vector2.Normalize(Position - PhysicalWorldEntity.Position);
             AddedMotion.X = (float.IsFinite(AddedMotion.X) || !float.IsNaN(AddedMotion.X)) ? AddedMotion.X : 0f;
             AddedMotion.Y = (float.IsFinite(AddedMotion.Y) || !float.IsNaN(AddedMotion.Y)) ? AddedMotion.Y : 0f;
 
             AddedMotion *= AttractionStrength;
 
-            WorldEntity.Motion += AddedMotion;
+            PhysicalWorldEntity.Motion += AddedMotion;
         }
     }
 }

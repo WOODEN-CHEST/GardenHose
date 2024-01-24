@@ -59,8 +59,6 @@ internal class GHGame
 
     internal bool IsRunning { get; private set; }
 
-    internal bool IsRunningSlowly { get; private set; } = false;
-
     internal float UpdateTime { get; private set; } = 0f;
 
     internal GameBackground Background { get; private init; }
@@ -81,7 +79,7 @@ internal class GHGame
     private bool _isPaused = false;
 
     private float _simulationSpeed = 1f;
-    private float _passedTimeSeconds = 0f;
+    private readonly GHGameTime _gameTime = new();
     private const float MAXIMUM_PASSED_TIME_SECONDS = 1f / 20;
     private const float MINIMUM_PASSED_TIME_SECONDS = 1f / 400f;
 
@@ -145,24 +143,15 @@ internal class GHGame
         Background.Update();
 
         /* Tick dependent things. */
-        _passedTimeSeconds += GameFrameManager.PassedTimeSeconds;
+        ProgramTime Time = new();
+        Time.PassedTimeSeconds = GameFrameManager.PassedTimeSeconds;
 
-        if (_passedTimeSeconds < MINIMUM_PASSED_TIME_SECONDS)
+        if (!_gameTime.Update(Time))
         {
             return;
         }
 
-        IsRunningSlowly = _passedTimeSeconds > MAXIMUM_PASSED_TIME_SECONDS;
-        if (IsRunningSlowly)
-        {
-            _passedTimeSeconds = MAXIMUM_PASSED_TIME_SECONDS;
-        }
-        _passedTimeSeconds *= SimulationSpeed;
-
-        World.PassedTimeSeconds = _passedTimeSeconds;
-
-        World.Tick();
-        _passedTimeSeconds = 0f;
+        World.Tick(_gameTime);
     }
 
     // Inherited methods.

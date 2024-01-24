@@ -119,6 +119,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     internal bool IsConductable { get; set; } = true;
 
+    /* Other. */
+    internal bool IsCommonMathCalculated { get; set; } = true;
+
+    internal CommonEntityMath CommonMath { get; private init;  }
+
 
     /* Parts. */
     internal virtual PhysicalEntityPart MainPart
@@ -229,6 +234,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         Rotation = rotation;
         Position = position;
+
+        CommonMath = new(this);
     }
 
 
@@ -727,6 +734,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     [TickedFunction(false)]
     internal override void ParallelTick()
     {
+        if (IsCommonMathCalculated)
+        {
+            CommonMath.Calculate();
+        }
+        
         StepMotion();
         MainPart.ParallelTick();
     }

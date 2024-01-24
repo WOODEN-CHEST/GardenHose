@@ -36,9 +36,7 @@ internal abstract class Entity
 
 
     // Internal methods.
-    internal abstract void SequentialTick();
-
-    internal abstract void ParallelTick();
+    internal abstract void Tick(GHGameTime gameTime);
 
     internal abstract void Load(GHGameAssetManager assetManager);
 
