@@ -112,24 +112,24 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
         _options.Position.Stop();
         _exit.Position.Stop();
 
-        _play.Position.SetKeyFrames(new KeyFrameBuilder(
+        _play.Position.SetKeyFrames(new Vector2KeyFrameBuilder(
             new(xStart, Y_LOCATION_BUTTON_PLAY), InterpolationMethod.EaseOut)
             .AddKeyFrame(new(xEnd, Y_LOCATION_BUTTON_PLAY), 0.4f));
         _play.Position.Start();
 
-        _editor.Position.SetKeyFrames(new KeyFrameBuilder(
+        _editor.Position.SetKeyFrames(new Vector2KeyFrameBuilder(
             new(xStart, Y_LOCATION_BUTTON_EDITOR), InterpolationMethod.EaseOut)
             .AddKeyFrame(0.05f)
             .AddKeyFrame(new(xEnd, Y_LOCATION_BUTTON_EDITOR), 0.4f));
         _editor.Position.Start();
 
-        _options.Position.SetKeyFrames(new KeyFrameBuilder(
+        _options.Position.SetKeyFrames(new Vector2KeyFrameBuilder(
             new(xStart, Y_LOCATION_BUTTON_OPTIONS), InterpolationMethod.EaseOut)
             .AddKeyFrame(0.1f)
             .AddKeyFrame(new(xEnd, Y_LOCATION_BUTTON_OPTIONS), 0.4f));
         _options.Position.Start();
 
-        _exit.Position.SetKeyFrames(new KeyFrameBuilder(
+        _exit.Position.SetKeyFrames(new Vector2KeyFrameBuilder(
             new(xStart, Y_LOCATION_BUTTON_EXIT), InterpolationMethod.EaseOut)
             .AddKeyFrame(0.15f)
             .AddKeyFrame(new(xEnd, Y_LOCATION_BUTTON_EXIT), 0.4f));

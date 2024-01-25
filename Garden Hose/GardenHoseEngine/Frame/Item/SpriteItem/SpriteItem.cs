@@ -47,7 +47,7 @@ public class SpriteItem : ColoredItem
 
         Vector2 SpriteSize = TargetTextureSize == null ? Scale : (TargetTextureSize.Value / TextureSize * Scale);
 
-        GameFrameManager.SpriteBatch.Draw(
+        GameFrameManager.s_spriteBatch.Draw(
             ActiveAnimation.GetFrame().Texture,
             Display.ToRealPosition(Position),
             ActiveAnimation.TextureRegion,

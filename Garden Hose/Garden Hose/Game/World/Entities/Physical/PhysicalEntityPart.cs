@@ -342,35 +342,24 @@ internal class PhysicalEntityPart
 
     /* Game flow. */
     [TickedFunction(false)]
-    internal virtual void ParallelTick()
+    internal virtual void Tick(GHGameTime time)
     {
-        SelfRotation += AngularMotion * Entity.World!.PassedTimeSeconds;
+        SelfRotation += AngularMotion * time.PassedWorldTimeSeconds;
 
         foreach (PartLink Link in SubPartLinks)
         {
-            Link.LinkedPart.ParallelTick();
+            Link.LinkedPart.Tick(time);
         }
 
-        MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, Entity.World.PassedTimeSeconds);
-        MaterialInstance.Update(Entity.World.PassedTimeSeconds, !Entity.IsInvulnerable);
-    }
-
-    [TickedFunction(false)]
-    internal virtual void SequentialTick()
-    {
-        if (SubPartLinks != null)
-        {
-            foreach (PartLink Link in SubPartLinks)
-            {
-                Link.LinkedPart.SequentialTick();
-            }
-        }
+        MaterialInstance.HeatByTouch(Entity.World!.AmbientMaterial, time);
+        MaterialInstance.Update(time, !Entity.IsInvulnerable);
 
         if (MaterialInstance.Material.Attraction > 0f)
         {
-            AttractEntities();
+            AttractEntities(time);
         }
     }
+
 
     /* Drawing. */
     internal virtual void Draw()
@@ -658,7 +647,7 @@ internal class PhysicalEntityPart
 
     /* Physics. */
     [TickedFunction(false)]
-    protected void AttractEntities()
+    protected void AttractEntities(GHGameTime time)
     {
         foreach (Entity WorldEntity in Entity!.World!.Entities)
         {
@@ -670,7 +659,7 @@ internal class PhysicalEntityPart
 
             const float ARBITRARY_ATTRACTION_INCREASE = 1000f;
             float AttractionStrength = (MaterialInstance.Material.Attraction * ARBITRARY_ATTRACTION_INCREASE
-                / Vector2.Distance(Position, PhysicalWorldEntity.Position)) * Entity.World!.PassedTimeSeconds;
+                / Vector2.Distance(Position, PhysicalWorldEntity.Position)) * time.PassedWorldTimeSeconds;
 
             if (float.IsNaN(AttractionStrength) || !float.IsFinite(AttractionStrength))
             {

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GardenHoseEngine.Frame;
 
 namespace GardenHoseEngine;
 
 public interface ITimeUpdatable
 {
-    public void Update();
+    public void Update(ProgramTime time);
 }

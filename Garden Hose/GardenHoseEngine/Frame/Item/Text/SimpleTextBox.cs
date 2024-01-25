@@ -321,7 +321,7 @@ public class SimpleTextBox : ColoredItem
 
         if (IsShadowEnabled)
         {
-            GameFrameManager.SpriteBatch.DrawString(Font,
+            GameFrameManager.s_spriteBatch.DrawString(Font,
             FormattedText,
             Display.ToRealPosition(Position.Vector +
             new Vector2(Font.LineSpacing, Font.LineSpacing) * ShadowOffset * Scale),
@@ -333,7 +333,7 @@ public class SimpleTextBox : ColoredItem
             IDrawableItem.DEFAULT_LAYER_DEPTH);
         }
 
-        GameFrameManager.SpriteBatch.DrawString(Font,
+        GameFrameManager.s_spriteBatch.DrawString(Font,
             FormattedText,
             Display.ToRealPosition(Position),
             CombinedMask,

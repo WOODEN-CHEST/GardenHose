@@ -1,17 +1,15 @@
 ﻿using GardenHoseEngine.Collections;
+using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics.CodeAnalysis;
 
-
 namespace GardenHoseEngine.Frame;
-
 
 public class GameFrame : IGameFrame
 {
     // Fields.
-    [MemberNotNull(nameof(_name))]
     public string Name { get; set; }
 
     public bool IsLoaded { get; internal set; } = false;
@@ -28,9 +26,10 @@ public class GameFrame : IGameFrame
 
     public int LayerCount => _layers.Count;
 
+    public PropertyAnimManager AnimManager { get; } = new();
+
 
     // Private fields.
-    private string _name;
     private readonly List<ILayer> _layers = new();
     private readonly DiscreteTimeList<ITimeUpdatable> _updateableItems = new();
 
@@ -119,9 +118,9 @@ public class GameFrame : IGameFrame
             FrameLayer.Draw();
 
             Display.GraphicsManager.GraphicsDevice.SetRenderTarget(GameFrameManager.FramePixelBuffer);
-            GameFrameManager.SpriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: FrameLayer.Shader);
-            GameFrameManager.SpriteBatch.Draw(GameFrameManager.LayerPixelBuffer, Vector2.Zero, FrameLayer.CombinedMask);
-            GameFrameManager.SpriteBatch.End();
+            GameFrameManager.s_spriteBatch.Begin(blendState: BlendState.NonPremultiplied, effect: FrameLayer.Shader);
+            GameFrameManager.s_spriteBatch.Draw(GameFrameManager.LayerPixelBuffer, Vector2.Zero, FrameLayer.CombinedMask);
+            GameFrameManager.s_spriteBatch.End();
         }
     }
 

@@ -84,7 +84,7 @@ public class Line : ColoredItem
     {
         if (!_ShouldDraw) return;
 
-        GameFrameManager.SpriteBatch .Draw(Display.SinglePixel,
+        GameFrameManager.s_spriteBatch .Draw(Display.SinglePixel,
             Display.ToRealPosition(Position),
             null,
             CombinedMask,

@@ -464,10 +464,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     // Protected methods.
     /* Physics. */
     [TickedFunction(false)]
-    protected virtual void StepMotion()
+    protected virtual void StepMotion(GHGameTime time)
     {
-        Vector2 NewPosition = SelfPosition + (Motion * World!.PassedTimeSeconds);
-        float NewRotation = SelfRotation + (AngularMotion * World!.PassedTimeSeconds);
+        Vector2 NewPosition = SelfPosition + (Motion * time.PassedWorldTimeSeconds);
+        float NewRotation = SelfRotation + (AngularMotion * time.PassedWorldTimeSeconds);
         SetPositionAndRotation(NewPosition, NewRotation);
     }
 

@@ -44,7 +44,7 @@ internal class IntroFrame : GameFrame
         _monogameLogoItem = new(_monogameLogoAnim);
         _monogameLogoItem.Opacity = 0f;
         _monogameLogoItem.Position.Vector = Display.VirtualSize / 2f;
-        _monogameLogoItem.Scale.SetKeyFrames(new KeyFrameBuilder(_logoStartSize)
+        _monogameLogoItem.Scale.SetKeyFrames(new KeyframeCollection(_logoStartSize)
             .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
         _monogameLogoItem.Scale.Start();
         AddItem(_monogameLogoItem);
@@ -55,7 +55,7 @@ internal class IntroFrame : GameFrame
         _logoItem.Opacity = 0f;
         _logoItem.Position.Vector = Display.VirtualSize / 2f;
         _logoItem.Scale.Vector = Vector2.One; ;
-        _logoItem.Scale.SetKeyFrames(new KeyFrameBuilder(_logoStartSize)
+        _logoItem.Scale.SetKeyFrames(new KeyframeCollection(_logoStartSize)
             .AddKeyFrame(LOGO_TIME_SEC)
             .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
         _logoItem.Scale.Start();

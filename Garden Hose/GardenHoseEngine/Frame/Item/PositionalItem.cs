@@ -1,56 +1,28 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using GardenHoseEngine.Screen;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHoseEngine.Frame.Item;
 
-public class PositionalItem : IDrawableItem, ITimeUpdatable
+public class PositionalItem : IDrawableItem
 {
     // Fields.
     public virtual bool IsVisible { get; set; }
 
     public virtual Effect? Shader { get; set; }
 
-    public virtual AnimVector2 Position { get; private init; }
+    public virtual Vector2 Position { get; private init; }
 
-    public virtual AnimVector2 Scale { get; private init; }
+    public virtual float Rotation { get; set; } = 0f;
 
-    public  virtual float Rotation
-    {
-        get => _rotation;
-        set
-        {
-            if (!float.IsFinite(value))
-            {
-                throw new ArgumentException($"Invalid rotation: {value}", nameof(value));
-            }
-
-            _rotation = value;
-        }
-    }
-
-
-    // Private fields.
-    private float _rotation = 0f;
 
 
     // Constructors.
     public PositionalItem()
     {
-        Position = new();
-        Scale = new();
-        Scale.Vector = Vector2.One;
+        Position = Vector2.Zero;
     }
 
 
     // Inherited methods.
-    public virtual void Draw() { }
-
-    public virtual void Update()
-    {
-        Scale.Update();
-        Position.Update();
-    }
+    public virtual void Draw(DrawInfo info) { }
 }

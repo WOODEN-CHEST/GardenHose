@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Animation;
 
-public sealed class AnimationInstance : ITimeUpdatable
+public sealed class AnimationInstance
 {
     // Fields.
     public Rectangle? TextureRegion { get; set; } = null;
@@ -27,11 +27,6 @@ public sealed class AnimationInstance : ITimeUpdatable
         get => _fps;
         set
         {
-            if (!double.IsFinite(value))
-            {
-                throw new ArgumentException($"Invalid animation speed: {value}", nameof(value));
-            }
-
             _fps = value;
             _secondsPerFrame = 1f / _fps;
             FrameStep = value >= 0f ? 1 : -1;
@@ -94,7 +89,7 @@ public sealed class AnimationInstance : ITimeUpdatable
     // Private methods.
     private void UpdateIsAnimating()
     {
-        _isAnimating = !(_fps == 0f || _frameStep == 0 || _animation.MaxFrameIndex == 0);
+        _isAnimating = (_fps != 0f) && (_frameStep != 0) && (_animation.MaxFrameIndex != 0);
     }
 
 
@@ -108,7 +103,7 @@ public sealed class AnimationInstance : ITimeUpdatable
         }
         else
         {
-            FrameIndex = _frameIndex;
+            _frameIndex = Math.Clamp(_frameIndex, 0, Animation.MaxFrameIndex);
             FrameStep = 0;
             UpdateIsAnimating();
         }
@@ -124,17 +119,17 @@ public sealed class AnimationInstance : ITimeUpdatable
         }
         else if (_frameIndex < 0)
         {
-            AnimationWrap(Animation.MaxFrameIndex, FinishLocation.End); ;
+            AnimationWrap(Animation.MaxFrameIndex, FinishLocation.End);
         }
     }
 
 
     // Inherited methods.
-    public void Update()
+    public void Update(ProgramTime time)
     {
         if (!_isAnimating) return;
 
-        _secondsSinceFrameSwitch += GameFrameManager.PassedTimeSeconds;
+        _secondsSinceFrameSwitch += time.PassedTimeSeconds;
         if (_secondsSinceFrameSwitch > _secondsPerFrame)
         {
             _secondsSinceFrameSwitch -= _secondsPerFrame;

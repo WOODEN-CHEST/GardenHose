@@ -1,6 +1,5 @@
-﻿using GardenHoseEngine.Animatable;
-using GardenHoseEngine.Frame;
-using GardenHoseEngine.Frame.Animation;
+﻿using GardenHoseEngine.Frame;
+using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 
 
@@ -48,7 +47,7 @@ public class AnimVector2 : ITimeUpdatable
         }
     }
 
-    public AnimVector2Keyframe[]? Keyframes => _keyframes?.ToArray();
+    public PropertyKeyframe[]? Keyframes => _keyframes?.ToArray();
 
     public event EventHandler<AnimFinishEventArgs>? AnimationFinished;
 
@@ -63,13 +62,13 @@ public class AnimVector2 : ITimeUpdatable
     private int MaxIndex => _keyframes!.Length - 1;
 
     private float _speed = 1f;
-    private AnimVector2Keyframe[]? _keyframes = null;
+    private PropertyKeyframe[]? _keyframes = null;
     private float _time = 0f;
     private int _curIndex = 0;
 
 
     // Constructors.
-    public AnimVector2(Vector2 vector, KeyFrameBuilder? keyframes)
+    public AnimVector2(Vector2 vector, KeyframeCollection? keyframes)
     {
         Vector = vector;
         if (keyframes != null)
@@ -84,7 +83,7 @@ public class AnimVector2 : ITimeUpdatable
 
 
     // Methods.
-    public void SetKeyFrames(KeyFrameBuilder builder)
+    public void SetKeyFrames(KeyframeCollection builder)
     {
         if (IsAnimating)
         {
@@ -103,11 +102,11 @@ public class AnimVector2 : ITimeUpdatable
 
         if (_speed > 0d)
         {
-            SetAnimationData(MIN_INDEX, MIN_TIME, _keyframes![0].Location);
+            SetAnimationData(MIN_INDEX, MIN_TIME, _keyframes![0].Position);
         }
         else
         {
-            SetAnimationData(MaxIndex, Duration, _keyframes![^1].Location);
+            SetAnimationData(MaxIndex, Duration, _keyframes![^1].Position);
         }
 
         IsAnimating = true;
@@ -129,12 +128,12 @@ public class AnimVector2 : ITimeUpdatable
 
         if (_speed > 0d)
         {
-            SetAnimationData(MaxIndex, Duration, _keyframes![^1].Location);
+            SetAnimationData(MaxIndex, Duration, _keyframes![^1].Position);
             AnimationFinished?.Invoke(this, new(FinishLocation.End));
         }
         else
         {
-            SetAnimationData(MIN_INDEX, MIN_TIME, _keyframes![0].Location);
+            SetAnimationData(MIN_INDEX, MIN_TIME, _keyframes![0].Position);
             AnimationFinished?.Invoke(this, new(FinishLocation.Start));
         }
     }
@@ -221,9 +220,9 @@ public class AnimVector2 : ITimeUpdatable
             SyncIndexWithTime();
         }
 
-        Vector = GHMath.Interpolate(_keyframes![_curIndex].InterpMethod,
-            _keyframes[_curIndex - 1].Location,
-            _keyframes[_curIndex].Location,
+        Vector = GHMath.Interpolate(_keyframes![_curIndex].Interpolation,
+            _keyframes[_curIndex - 1].Position,
+            _keyframes[_curIndex].Position,
             (float)((_time - _keyframes[_curIndex - 1].Time) / _keyframes[_curIndex - 1].TimeToNext)
         );
     }

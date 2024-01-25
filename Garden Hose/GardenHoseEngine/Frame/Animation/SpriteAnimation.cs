@@ -5,27 +5,14 @@ namespace GardenHoseEngine.Frame.Animation;
 public sealed partial class SpriteAnimation
 {
     // Fields.
-    public AnimationFrame[] Frames => _frames.ToArray();
+    public ReadOnlySpan<AnimationFrame> Frames => _frames.AsSpan();
 
     public int MaxFrameIndex { get; init; }
 
-    public float DefaultFPS
-    {
-        get => _defaultFPS;
-        set
-        {
-            if (!float.IsFinite(value))
-            {
-                throw new ArgumentException($"Invalid default animation speed: {value}", nameof(value));
-            }
-                
-            _defaultFPS = value;
-        }
-    }
+    public float DefaultFPS { get; set; }
 
 
     // Private fields.
-    private float _defaultFPS;
     private readonly AnimationFrame[] _frames;
 
 
@@ -34,7 +21,10 @@ public sealed partial class SpriteAnimation
     {
         DefaultFPS = fps;
 
-        ArgumentNullException.ThrowIfNull(relativePaths, nameof(relativePaths));
+        if (relativePaths == null)
+        {
+            throw new ArgumentNullException(nameof(relativePaths));
+        }
         if (relativePaths.Length == 0)
         {
             throw new ArgumentException("At least one animation frame is required.", nameof(relativePaths));

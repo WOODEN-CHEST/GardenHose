@@ -16,7 +16,7 @@ internal class PhysicalEntityPartSprite
     [MemberNotNull(nameof(_sprite))]
     internal SpriteItem Sprite
     {
-        get => _sprite ?? throw new InvalidOperationException("Cannot access asset since hasn't been loaded yet.");
+        get => _sprite ?? throw new InvalidOperationException("Cannot access asset since it hasn't been loaded yet.");
         private set => _sprite = value;
     }
 

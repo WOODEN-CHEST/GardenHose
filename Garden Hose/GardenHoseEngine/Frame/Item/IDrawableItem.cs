@@ -15,5 +15,5 @@ public interface IDrawableItem
 
 
     // Methods.
-    public void Draw();
+    public void Draw(DrawInfo drawInfo);
 }

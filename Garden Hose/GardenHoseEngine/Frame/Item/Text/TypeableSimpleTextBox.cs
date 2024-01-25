@@ -431,7 +431,7 @@ public class TypeableSimpleTextBox : SimpleTextBox
             return;
         }
 
-        GameFrameManager.SpriteBatch.Draw(Display.SinglePixel,
+        GameFrameManager.s_spriteBatch.Draw(Display.SinglePixel,
             Display.ToRealPosition(_cursorPositionVisual),
             null,
             CursorColor,

@@ -10,6 +10,7 @@ using GardenHose.Frames.Global;
 using GardenHoseEngine.Screen;
 using GardenHoseEngine;
 using System.Diagnostics;
+using GardenHoseEngine.Frame.Item;
 
 namespace GardenHose.Game;
 
@@ -63,6 +64,8 @@ internal class GHGame
 
     internal GameBackground Background { get; private init; }
 
+    internal GHGameTime GameTime { get; } = new();
+
 
     // Private fields.
     private bool _isDebugTextEnabled = false;
@@ -79,9 +82,7 @@ internal class GHGame
     private bool _isPaused = false;
 
     private float _simulationSpeed = 1f;
-    private readonly GHGameTime _gameTime = new();
-    private const float MAXIMUM_PASSED_TIME_SECONDS = 1f / 20;
-    private const float MINIMUM_PASSED_TIME_SECONDS = 1f / 400f;
+    
 
 
     /* Input listening. */
@@ -146,12 +147,12 @@ internal class GHGame
         ProgramTime Time = new();
         Time.PassedTimeSeconds = GameFrameManager.PassedTimeSeconds;
 
-        if (!_gameTime.Update(Time))
+        if (!GameTime.Update(Time))
         {
             return;
         }
 
-        World.Tick(_gameTime);
+        World.Tick(GameTime);
     }
 
     // Inherited methods.

@@ -8,79 +8,88 @@ namespace GardenHose.Game.World.Entities.Physical.Collision;
 internal record class CollisionCase
 {
     // Fields.
-    internal PhysicalEntity EntityA { get; init; }
+    internal PhysicalEntity SelfEntity { get; init; }
 
-    internal PhysicalEntity EntityB { get; init; }
+    internal PhysicalEntity TargetEntity { get; init; }
 
-    internal PhysicalEntityPart PartA { get; init; }
+    internal PhysicalEntityPart SelfPart { get; init; }
 
-    internal PhysicalEntityPart PartB { get; init; }
+    internal PhysicalEntityPart TargetPart { get; init; }
 
-    internal ICollisionBound BoundA { get; init; }
+    internal ICollisionBound SelfBound { get; init; }
 
-    internal ICollisionBound BoundB { get; init; }
+    internal ICollisionBound TargetBound { get; init; }
 
-    internal Vector2 BoundAPosition => PartA.Position + BoundA.Offset;
+    internal Vector2 SelfBoundPosition => SelfPart.Position + SelfBound.Offset;
 
-    internal Vector2 BoundBPosition => PartB.Position + BoundB.Offset;
+    internal Vector2 TargetBoundPosition => TargetPart.Position + TargetBound.Offset;
 
-    internal Vector2 EntityAMotion { get; init; }
+    internal Vector2 SelfMotion { get; init; }
 
-    internal Vector2 EntityBMotion { get; init; }
+    internal Vector2 TargetMotion { get; init; }
 
-    internal Vector2 EntityARotationalMotionAtPoint { get; init; }
+    internal Vector2 SelfRotationalMotionAtPoint { get; init; }
 
-    internal Vector2 EntityBRotationalMotionAtPoint { get; init; }
+    internal Vector2 TargetRotationalMotionAtPoint { get; init; }
 
     internal Vector2[] CollisionPoints { get; init; }
 
-    internal Vector2 AverageCollisionPoint
-    {
-        get
-        {
-            Vector2 CollisionPoint = Vector2.Zero;
-
-            foreach (Vector2 Point in CollisionPoints)
-            {
-                CollisionPoint += Point;
-            }
-
-            return CollisionPoint / CollisionPoints.Length;
-        }
-    }
+    internal Vector2 AverageCollisionPoint { get; private init; }
 
     internal Vector2 SurfaceNormal { get; init; }
 
 
     // Constructors.
-    internal CollisionCase(PhysicalEntity entityA,
-        PhysicalEntity entityB,
-        PhysicalEntityPart partA,
-        PhysicalEntityPart partB,
-        ICollisionBound boundA,
-        ICollisionBound boundB,
+    internal CollisionCase(PhysicalEntity selfEntity,
+        PhysicalEntity targetEntity,
+        PhysicalEntityPart selfPart,
+        PhysicalEntityPart targetPart,
+        ICollisionBound selfBound,
+        ICollisionBound targetBound,
         Vector2 surfaceNormal,
         Vector2[] collisionPoints)
     {
-        EntityA = entityA ?? throw new ArgumentNullException(nameof(entityA));
-        EntityB = entityB ?? throw new ArgumentNullException(nameof(entityB));
-        PartA = partA ?? throw new ArgumentNullException(nameof(partA));
-        PartB = partB ?? throw new ArgumentNullException(nameof(partB));
-        BoundA = boundA;
-        BoundB = boundB;
+        SelfEntity = selfEntity ?? throw new ArgumentNullException(nameof(selfEntity));
+        TargetEntity = targetEntity ?? throw new ArgumentNullException(nameof(targetEntity));
+        SelfPart = selfPart ?? throw new ArgumentNullException(nameof(selfPart));
+        TargetPart = targetPart ?? throw new ArgumentNullException(nameof(targetPart));
+        SelfBound = selfBound;
+        TargetBound = targetBound;
 
         SurfaceNormal = surfaceNormal;
-        if (!float.IsFinite(SurfaceNormal.LengthSquared()))
+        if (float.IsNaN(surfaceNormal.LengthSquared()) || (surfaceNormal.X + surfaceNormal.Y is 0f or -0f)
+            || (!float.IsFinite(surfaceNormal.LengthSquared())))
         {
-            SurfaceNormal = Vector2.One;
+            SurfaceNormal = -Vector2.UnitY;
         }
 
         CollisionPoints = collisionPoints ?? throw new ArgumentNullException(nameof(collisionPoints));
+        Vector2 CollisionPoint = Vector2.Zero;
+        foreach (Vector2 Point in CollisionPoints)
+        {
+            CollisionPoint += Point;
+        }
+        AverageCollisionPoint = CollisionPoint / CollisionPoints.Length;
 
-        EntityAMotion = EntityA.Motion;
-        EntityBMotion = EntityB.Motion;
+        SelfMotion = SelfEntity.Motion;
+        TargetMotion = TargetEntity.Motion;
 
-        EntityARotationalMotionAtPoint = EntityA.GetAngularMotionAtPoint(AverageCollisionPoint);
-        EntityBRotationalMotionAtPoint = EntityB.GetAngularMotionAtPoint(AverageCollisionPoint);
+        SelfRotationalMotionAtPoint = SelfEntity.GetAngularMotionAtPoint(AverageCollisionPoint);
+        TargetRotationalMotionAtPoint = TargetEntity.GetAngularMotionAtPoint(AverageCollisionPoint);
+    }
+
+
+    // Internal methods.
+    internal CollisionCase GetInvertedCase()
+    {
+        return new CollisionCase(
+            TargetEntity,
+            SelfEntity,
+            TargetPart,
+            SelfPart,
+            TargetBound,
+            SelfBound,
+            SurfaceNormal,
+            CollisionPoints);
     }
 }

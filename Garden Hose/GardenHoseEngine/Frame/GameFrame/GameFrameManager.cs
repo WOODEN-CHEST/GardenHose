@@ -1,13 +1,8 @@
 ﻿using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHoseEngine.Frame;
 
@@ -16,11 +11,9 @@ public static class GameFrameManager
     // Static fields.
     public static IGameFrame ActiveFrame { get; private set; }
 
-    public static IGameFrame GlobalFrame { get; private set; }
-
     public static IGameFrame? NextFrame { get; private set; }
 
-    public static SpriteBatch SpriteBatch { get; private set; }
+    
 
     public static float PassedTimeSeconds { get; private set; } = 0f;
 
@@ -32,7 +25,8 @@ public static class GameFrameManager
 
 
     // Private fields.
-    private static ConcurrentQueue<Action> _actions = new();
+    private static ConcurrentQueue<Action> s_actions = new();
+    private static SpriteBatch s_spriteBatch;
 
 
     // Static methods.
@@ -41,7 +35,7 @@ public static class GameFrameManager
         PassedTimeSeconds = passedTimeSeconds;
         TotalTimeSeconds += PassedTimeSeconds;
 
-        while (_actions.TryDequeue(out Action? ActionToExecute))
+        while (s_actions.TryDequeue(out Action? ActionToExecute))
         {
             ActionToExecute!.Invoke();
         }
@@ -58,9 +52,9 @@ public static class GameFrameManager
         ActiveFrame.Draw();
 
         Display.GraphicsManager.GraphicsDevice.SetRenderTarget(null);
-        SpriteBatch.Begin(blendState: BlendState.NonPremultiplied);
-        SpriteBatch.Draw(FramePixelBuffer, Vector2.Zero, Color.White);
-        SpriteBatch.End();
+        s_spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+        s_spriteBatch.Draw(FramePixelBuffer, Vector2.Zero, Color.White);
+        s_spriteBatch.End();
     }
 
     public static void EnqueueAction(Action action)
@@ -70,12 +64,12 @@ public static class GameFrameManager
             throw new ArgumentNullException(nameof(action));
         }
 
-        _actions.Enqueue(action);
+        s_actions.Enqueue(action);
     }
 
 
     // Internal static methods.
-    internal static void Initialize(IGameFrame activeFrame, IGameFrame globalFrame)
+    internal static void Initialize(IGameFrame activeFrame)
     {
         if (activeFrame== null)
         {
@@ -83,20 +77,15 @@ public static class GameFrameManager
         }
 
         ActiveFrame = activeFrame ?? throw new ArgumentNullException(nameof(activeFrame));
-        GlobalFrame = globalFrame ?? throw new ArgumentNullException(nameof(activeFrame));
-
-        globalFrame.BeginLoad();
-        globalFrame.Load();
-        globalFrame.FinalizeLoad();
 
         activeFrame.BeginLoad();
         activeFrame.Load();
         activeFrame.FinalizeLoad();
 
-        EnqueueAction(() => { globalFrame.OnStart(); activeFrame.OnStart(); });
+        EnqueueAction(() => { activeFrame.OnStart(); });
 
         Display.DisplayChanged += OnDisplayChangedEvent;
-        SpriteBatch = new(Display.GraphicsManager.GraphicsDevice);
+        s_spriteBatch = new(Display.GraphicsManager.GraphicsDevice);
         CreateLayerPixelBuffer();
     }
 
@@ -147,12 +136,12 @@ public static class GameFrameManager
             }
             catch (Exception e)
             {
-                _actions.Enqueue(() => throw new Exception(
+                s_actions.Enqueue(() => throw new Exception(
                     $"Exception during loading of frame \"{nextFrame.Name}\". {e}"));
             }
         });
 
-        _actions.Enqueue(onLoadComplete);
+        s_actions.Enqueue(onLoadComplete);
     }
 
     public static void JumpToNextFrame() => EnqueueAction(() =>
@@ -187,7 +176,7 @@ public static class GameFrameManager
             }
             catch (Exception e)
             {
-                _actions.Enqueue(() => throw new Exception(
+                s_actions.Enqueue(() => throw new Exception(
                     $"Exception unloading old frame \"{OldFrame.Name}\". {e}"));
             }
         });

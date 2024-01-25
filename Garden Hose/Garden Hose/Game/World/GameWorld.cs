@@ -28,9 +28,6 @@ public class GameWorld : IIDProvider
 
     /* World components */
     internal WorldPlanetEntity? Planet { get; private set; }
-
-
-    /* Properties. */
     internal WorldMaterialInstance AmbientMaterial { get; private set; }
 
 
