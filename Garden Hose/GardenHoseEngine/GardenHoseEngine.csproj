@@ -14,11 +14,16 @@
 
   <ItemGroup>
     <Compile Remove="Frame\DynamicFont.cs" />
+    <Compile Remove="Frame\Item\Buttons\IButtonComponent.cs" />
+    <Compile Remove="Frame\Item\Buttons\RectangleButtonComponent.cs" />
+    <Compile Remove="Frame\Item\Buttons\RoundButtonComponent.cs" />
     <Compile Remove="Frame\Item\Text\DynamicFont.cs" />
     <Compile Remove="Frame\Item\Text\DynamicFontScale.cs" />
     <Compile Remove="Frame\Item\Text\FormattedTextComponent.cs" />
+    <Compile Remove="Frame\Item\Text\SimpleTextBox.cs" />
     <Compile Remove="Frame\Item\Text\TextComponent.cs" />
     <Compile Remove="Frame\Item\Text\TextComponentCleaner.cs" />
+    <Compile Remove="Frame\Item\Text\TypeableSimpleTextBox.cs" />
     <Compile Remove="IO\RebindableKeys.cs" />
   </ItemGroup>
 

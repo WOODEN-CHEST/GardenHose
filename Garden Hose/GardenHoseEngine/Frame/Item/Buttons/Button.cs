@@ -65,7 +65,7 @@ public class Button : ITimeUpdatable
         }
 
         if (buttonEvent is ButtonEvent.Hovering or ButtonEvent.NotHovering
-            or ButtonEvent.OnHover or ButtonEvent.OnUnhover)
+            or ButtonEvent.Hover or ButtonEvent.Unhover)
         {
             _eventHandlers[buttonEvent] = (handler, null);
             UpdateShouldUpdated();
@@ -207,8 +207,8 @@ public class Button : ITimeUpdatable
 
     private void UpdateShouldUpdated()
     {
-        _shouldUpdate = _eventHandlers.ContainsKey(ButtonEvent.OnHover)
-            || _eventHandlers.ContainsKey(ButtonEvent.OnUnhover)
+        _shouldUpdate = _eventHandlers.ContainsKey(ButtonEvent.Hover)
+            || _eventHandlers.ContainsKey(ButtonEvent.Unhover)
             || _eventHandlers.ContainsKey(ButtonEvent.Hovering)
             || _eventHandlers.ContainsKey(ButtonEvent.NotHovering);
     }
@@ -223,9 +223,9 @@ public class Button : ITimeUpdatable
 
         if (_isHovered.Current)
         {
-            if (!_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.OnHover))
+            if (!_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.Hover))
             {
-                _eventHandlers[ButtonEvent.OnHover].Handler.Invoke(this, EventArgs.Empty);
+                _eventHandlers[ButtonEvent.Hover].Handler.Invoke(this, EventArgs.Empty);
             }
 
             if (_eventHandlers.ContainsKey(ButtonEvent.Hovering))
@@ -235,9 +235,9 @@ public class Button : ITimeUpdatable
         }
         if (!_isHovered.Current)
         {
-            if (_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.OnUnhover))
+            if (_isHovered.Previous && _eventHandlers.ContainsKey(ButtonEvent.Unhover))
             {
-                _eventHandlers[ButtonEvent.OnUnhover].Handler?.Invoke(this, EventArgs.Empty);
+                _eventHandlers[ButtonEvent.Unhover].Handler?.Invoke(this, EventArgs.Empty);
             }
 
             if (_eventHandlers.ContainsKey(ButtonEvent.NotHovering))

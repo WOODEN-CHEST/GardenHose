@@ -15,8 +15,8 @@ internal class GHGameTime
 
     internal float MinPassedTime { get; private init; } = DEFULT_MIN_PASSED_TIME;
     internal float MaxPassedTime { get; private init; } = DEFULT_MAX_PASSED_TIME;
-    internal ProgramTime RealProgramTime { get; private set; } // The actual program time.
-    internal ProgramTime FakeProgramTime { get; private init; } = new(); // Disguised as program time but stores world time.
+    internal IProgramTime RealProgramTime { get; private set; } // The actual program time.
+    internal IProgramTime FakeProgramTime { get; private init; } = new(); // Disguised as program time but stores world time.
     internal float PassedWorldTimeSeconds { get; set; } = 0f;
     internal float TotalWorldTimeSeconds { get; set; } = 0f;
     internal bool IsRunningSlowly { get; private set; } = false;
@@ -37,7 +37,7 @@ internal class GHGameTime
 
 
     // Internal methods.
-    internal bool Update(ProgramTime programTime)
+    internal bool Update(IProgramTime programTime)
     {
         RealProgramTime = programTime;
         FakeProgramTime.TotalTimeSeconds = 

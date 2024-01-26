@@ -1,4 +1,6 @@
-﻿namespace GardenHoseEngine.Frame.Item;
+﻿using GardenHoseEngine.Frame.Animation;
+
+namespace GardenHoseEngine.Frame.Item;
 
 public class PropertyAnimManager : ITimeUpdatable
 {
@@ -37,7 +39,7 @@ public class PropertyAnimManager : ITimeUpdatable
 
 
     // Inherited methods.
-    public void Update(ProgramTime time)
+    public void Update(IProgramTime time)
     {
         foreach (PropertyAnimation Animation in _animations)
         {

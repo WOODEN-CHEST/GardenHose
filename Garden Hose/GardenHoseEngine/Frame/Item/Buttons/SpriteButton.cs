@@ -9,91 +9,169 @@ using System;
 namespace GardenHoseEngine.Frame.Item.Buttons;
 
 
-public class SpriteButton : IDrawableItem, ITimeUpdatable
+public class SpriteButton : SpriteItem, ITimeUpdatable
 {
     // Fields.
-    public Button Button { get; init; }
+    public ButtonLocationTestType TestType { get; set; } = ButtonLocationTestType.Area;
 
-    public SpriteItem Sprite { get; init; }
-
-    public Vector2 Position
+    public bool IsMouseOverButton
     {
-        get => Sprite.Position;
-        set
+        get
         {
-            Sprite.Position.Vector = value;
-            Button.Position = value;
+            if (TestType == ButtonLocationTestType.Area)
+            {
+                Vector2 Center = SpriteCenter;
+                Vector2 HalfSize = Size * 0.5f;
+
+                Vector2 VectorFromCenterToMouse = UserInput.VirtualMousePosition.Current - Center;
+                Vector2 TransformedMousePosition = UserInput.VirtualMousePosition.Current - VectorFromCenterToMouse
+                    + Vector2.Transform(VectorFromCenterToMouse, Matrix.CreateRotationZ(-Rotation));
+
+                return (TransformedMousePosition.X >= Center.X - HalfSize.X)
+                    && (TransformedMousePosition.X <= Center.X + HalfSize.X)
+                    && (TransformedMousePosition.Y >= Center.Y - HalfSize.Y)
+                    && (TransformedMousePosition.Y <= Center.Y + HalfSize.Y);
+            }
+            return Vector2.Distance(UserInput.VirtualMousePosition.Current, Position + (TextureSize * 0.5f)
+                - ActiveAnimation.GetFrame().Origin) <= Math.Max(Size.X, Size.Y);
         }
     }
 
-    public float Rotation
-    {
-        get => Sprite.Rotation;
-        set => Sprite.Rotation = value;
-    }
 
-    public Vector2 Scale
-    {
-        get => Sprite.Scale;
-        set
-        {
-            Sprite.Scale.Vector = value;
-            Button.Scale = value;
-        }
-    }
 
-    public bool IsVisible
-    {
-        get => Sprite.IsVisible; 
-        set => Sprite.IsVisible = value;
-    }
-
-    public Effect? Shader
-    {
-        get => Sprite.Shader;
-        set => Sprite.Shader = value;
-    }
+    // Private fields.
+    private readonly Dictionary<ButtonEvent, ButtonHandler> _handlers = new();
+    private bool _wasMouseOverButton = false;
 
 
     // Constructors.
-    public SpriteButton(AnimationInstance animationInstance, IButtonComponent[] buttonComponents)
+    public SpriteButton(AnimationInstance animationInstance) : base(animationInstance) { }
+
+    public SpriteButton(AnimationInstance animationInstance, Vector2 size) : base(animationInstance, size) { }
+
+
+
+
+    // Methods.
+    public void SetHandler(ButtonEvent buttonEvent, EventHandler handler)
     {
-        Button = new(buttonComponents);
-        Sprite = new(animationInstance);
+        if (handler == null)
+        {
+            throw new ArgumentNullException(nameof(handler));
+        }
+
+        RemoveHandler(buttonEvent);
+
+        if ((int)buttonEvent < (int)ButtonEvent.Hover)
+        {
+            IInputListener Listener = buttonEvent switch
+            {
+                ButtonEvent.LeftClick
+                or ButtonEvent.MiddleClick
+                or ButtonEvent.RightClick
+                or ButtonEvent.LeftHold
+                or ButtonEvent.MiddleHold
+                or ButtonEvent.RightHold 
+                or ButtonEvent.LeftRelease
+                or ButtonEvent.MiddleRelease
+                or ButtonEvent.RightRelease => GetInputListenerLeftMiddleRight(buttonEvent, handler),
+
+                ButtonEvent.Scroll
+                or ButtonEvent.ScrollDown
+                or ButtonEvent.ScrollUp => GetInputListenerScroll(buttonEvent, handler),
+
+                _ => throw new EnumValueException(nameof(buttonEvent), buttonEvent)
+            };
+
+            _handlers.Add(buttonEvent, new(Listener, handler));
+            return;
+        }
+
+        _handlers.Add(buttonEvent, new(null, handler));
     }
 
-    public SpriteButton(SpriteAnimation animation, IButtonComponent[] buttonComponents)
-        : this(animation.CreateInstance(), buttonComponents) { }
-
-    public SpriteButton(Button button, SpriteItem item)
+    public void RemoveHandler(ButtonEvent buttonEvent)
     {
-        Button = button ?? throw new ArgumentNullException(nameof(button));
-        Sprite = item ?? throw new ArgumentNullException(nameof(item));
+        if (_handlers.TryGetValue(buttonEvent, out ButtonHandler? Handler))
+        {
+            Handler!.StopListening();
+            _handlers.Remove(buttonEvent);
+        }
     }
 
-    public SpriteButton(AnimationInstance animationInstance)
+    public void ClearHandlers(ButtonEvent buttonEvent)
     {
-        Sprite = new(animationInstance);
-        Button = new(new IButtonComponent[] { new RectangleButtonComponent(Sprite.TextureSize) });
+        foreach (ButtonHandler Handler in _handlers.Values)
+        {
+            Handler.StopListening();
+        }
+        _handlers.Clear();
     }
 
-    public SpriteButton(AnimationInstance animationInstance, Vector2 targetSize)
+
+    // Private methods.
+    private IInputListener GetInputListenerLeftMiddleRight(ButtonEvent buttonEvent, EventHandler handler)
     {
-        Sprite = new(animationInstance);
-        Sprite.TargetTextureSize = targetSize;
-        Button = new(new IButtonComponent[] { new RectangleButtonComponent(targetSize) });
+        MouseButton Button = ((int)buttonEvent % 3) switch
+        {
+            0 => MouseButton.Left,
+            1 => MouseButton.Middle,
+            2 => MouseButton.Right
+        };
+
+        MouseCondition Condition = ((int)buttonEvent / 3) switch
+        {
+            0 => MouseCondition.OnClick,
+            1 => MouseCondition.OnRelease,
+            2 => MouseCondition.WhileDown,
+            _ => throw new EnumValueException(nameof(buttonEvent), buttonEvent)
+        };
+
+        return MouseListenerCreator.SingleButton(true, Condition, handler, Button);
     }
 
+    private IInputListener GetInputListenerScroll(ButtonEvent buttonEvent, EventHandler handler)
+    {
+        ScrollDirection Direction = ((int)buttonEvent % 3) switch
+        {
+            0 => ScrollDirection.Up,
+            1 => ScrollDirection.Down,
+            2 => ScrollDirection.Any
+        };
+
+        return MouseListenerCreator.Scroll(true, Direction, handler);
+    }
 
     // Inherited methods.
-    public void Draw()
+    public void Update(IProgramTime time)
     {
-        Sprite.Draw();
-    }
+        bool IsCurrentMouseOverButton = IsMouseOverButton;
+        ButtonHandler? Handler;
 
-    public void Update()
-    {
-        Button.Update();
-        Sprite.Update();
+        if (IsCurrentMouseOverButton)
+        {
+            if (!_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Hover, out Handler))
+            {
+                Handler?.InvokeEvent(this);
+            }
+            if (_handlers.TryGetValue(ButtonEvent.Hovering, out Handler))
+            {
+                Handler?.InvokeEvent(this);
+            }
+        }
+        else
+        {
+            if (_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Unhover, out Handler))
+            {
+                Handler?.InvokeEvent(this);
+            }
+            if (_handlers.TryGetValue(ButtonEvent.NotHovering, out Handler))
+            {
+                Handler?.InvokeEvent(this);
+            }
+        }
+
+
+        _wasMouseOverButton = IsCurrentMouseOverButton;
     }
 }

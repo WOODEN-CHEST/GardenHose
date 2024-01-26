@@ -11,4 +11,6 @@ public interface IInputListener
     public void Listen(bool windowFocused);
 
     public void StopListening();
+
+    public void StartListening();
 }

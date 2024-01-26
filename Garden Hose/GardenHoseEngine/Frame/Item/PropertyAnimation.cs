@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GardenHoseEngine.Frame.Animation;
 
 namespace GardenHoseEngine.Frame.Item;
 
@@ -25,7 +26,7 @@ public class PropertyAnimation : ITimeUpdatable
         Item = item ?? throw new ArgumentNullException(nameof(item));
     }
 
-    public void Update(ProgramTime time)
+    public void Update(IProgramTime time)
     {
         if (!IsPlaying) return;
 

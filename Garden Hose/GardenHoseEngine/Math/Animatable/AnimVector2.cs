@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine.Frame;
+using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 

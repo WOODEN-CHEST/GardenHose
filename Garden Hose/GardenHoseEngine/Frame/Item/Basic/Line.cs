@@ -17,13 +17,8 @@ public class Line : ColoredItem
         get => _thickness;
         set
         {
-            if (!float.IsFinite(value))
-            {
-                throw new ArgumentException($"Invalid line thickness: \"{value}\"");
-            }
-
             _thickness = value;
-            UpdateShouldDraw();
+            UpdateIsDrawingNeeded();
         }
     }
 
@@ -32,13 +27,8 @@ public class Line : ColoredItem
         get => _length;
         set
         {
-            if (!float.IsFinite(value))
-            {
-                throw new ArgumentException($"Invalid line length: \"{value}\"");
-            }
-
             _length = value;
-            UpdateShouldDraw();
+            UpdateIsDrawingNeeded();
         }
     }
 
@@ -63,34 +53,34 @@ public class Line : ColoredItem
     public void Set(Vector2 endPosition)
     {
         Set(Position, Vector2.Distance(Position, endPosition),
-            MathF.Atan2(endPosition.Y - Position.Vector.Y, endPosition.X - Position.Vector.X));
+            MathF.Atan2(endPosition.Y - Position.Y, endPosition.X - Position.X));
     }
 
     public void Set(Vector2 position, float length, float rotation)
     {
-        Position.Vector = position;
+        Position = position;
         Length = length;
         Rotation = rotation;
     }
 
 
     // Inherited methods.
-    protected override void UpdateShouldDraw()
+    protected override void UpdateIsDrawingNeeded()
     {
-        _ShouldDraw = (_thickness != 0f) && (_length != 0f) && (IsVisible) && (Opacity != 0f);
+        IsDrawingNeeded = (_thickness != 0f) && (_length != 0f) && (IsVisible) && (Opacity != 0f);
     }
 
-    public override void Draw()
+    public override void Draw(IDrawInfo info)
     {
-        if (!_ShouldDraw) return;
+        if (!IsDrawingNeeded) return;
 
-        GameFrameManager.s_spriteBatch .Draw(Display.SinglePixel,
+        info.SpriteBatch.Draw(Display.SinglePixel,
             Display.ToRealPosition(Position),
             null,
             CombinedMask,
             _lineRotation + Rotation,
             s_origin,
-            Display.ToRealScale(Scale) * new Vector2(_length, _thickness),
+            Display.ToRealScale(new Vector2(_length, _thickness)),
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }

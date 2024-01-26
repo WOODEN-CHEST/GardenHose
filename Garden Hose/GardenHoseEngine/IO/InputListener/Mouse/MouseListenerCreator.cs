@@ -1,8 +1,5 @@
-﻿using GardenHoseEngine.Frame;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.Xna.Framework.Input;
+
 
 namespace GardenHoseEngine.IO;
 
@@ -10,55 +7,50 @@ namespace GardenHoseEngine.IO;
 public static class MouseListenerCreator
 {
     // Internal static methods.
-    public static IInputListener AnyButton(object? creator,
-        bool requiresFocus,
+    public static IInputListener AnyButton(bool requiresFocus,
         MouseCondition condition,
-        EventHandler<MouseEventArgs> handler)
+        EventHandler handler)
     {
-        return new InputListener<MouseEventArgs>(creator, requiresFocus, 
+        return new InputListener(requiresFocus, 
             GetPredicateAnyButton(condition), handler);
     }
 
-    public static IInputListener SingleButton(object? creator,
-        bool requiresFocus,
+    public static IInputListener SingleButton(bool requiresFocus,
         MouseCondition condition,
-        EventHandler<MouseEventArgs> handler,
+        EventHandler handler,
         MouseButton button)
     {
-        return new InputListener<MouseEventArgs>(creator, requiresFocus,
+        return new InputListener(requiresFocus,
             GetPredicateSingleButton(condition, button), handler);
     }
 
-    public static IInputListener MultiButton(object? creator,
-        bool requiresFocus,
+    public static IInputListener MultiButton(bool requiresFocus,
         MouseCondition condition,
-        EventHandler<MouseEventArgs> handler,
+        EventHandler handler,
         params MouseButton[] buttons)
     {
-        return new InputListener<MouseEventArgs>(creator, requiresFocus,
+        return new InputListener(requiresFocus,
             GetPredicateMultiButton(condition, buttons), handler);
     }
 
-    public static IInputListener Scroll(object?  creator,
-        bool requiresFocus,
+    public static IInputListener Scroll(bool requiresFocus,
         ScrollDirection scrollDirection,
-        EventHandler<MouseEventArgs> handler)
+        EventHandler handler)
     {
-        return new InputListener<MouseEventArgs>(creator, requiresFocus,
+        return new InputListener(requiresFocus,
             GetPredicateScroll(scrollDirection), handler);
     }
 
-    public static IInputListener Move(object? creator,
-        bool requiresFocus,
-        EventHandler<MouseEventArgs> handler)
+    public static IInputListener Move(bool requiresFocus,
+        EventHandler handler)
     {
-        return new InputListener<MouseEventArgs>(creator, requiresFocus,
+        return new InputListener(requiresFocus,
             GetPreicateMove(), handler);
     }
 
 
     // Private static methods.
-    private static Predicate<InputListener<MouseEventArgs>> GetPredicateAnyButton(MouseCondition condition)
+    private static Predicate<InputListener> GetPredicateAnyButton(MouseCondition condition)
     {
         return condition switch
         {
@@ -71,18 +63,7 @@ public static class MouseListenerCreator
 
             MouseCondition.OnRelease => (self) =>
             {
-                if (UserInput.MouseButtonsPressedCount.Current < UserInput.MouseButtonsPressedCount.Previous)
-                {
-                    self.Args ??= new(UserInput.VirtualMousePosition.Current);
-                    return true;
-                }
-
-                if ((UserInput.MouseButtonsPressedCount.Current > UserInput.MouseButtonsPressedCount.Previous)
-                    && (self.Args == null))
-                {
-                    self.Args = new(UserInput.VirtualMousePosition.Current);
-                }
-                return false;
+                return UserInput.MouseButtonsPressedCount.Current < UserInput.MouseButtonsPressedCount.Previous;
             },
 
             _ => throw new EnumValueException(nameof(condition), nameof(MouseCondition),
@@ -90,7 +71,7 @@ public static class MouseListenerCreator
         };
     }
 
-    private static Predicate<InputListener<MouseEventArgs>> GetPredicateSingleButton(
+    private static Predicate<InputListener> GetPredicateSingleButton(
         MouseCondition condition, MouseButton button)
     {
         return condition switch
@@ -113,17 +94,7 @@ public static class MouseListenerCreator
                 bool ButtonWasReleased = self.Flag;
                 self.Flag = !IsButtonPressed(UserInput.MouseState.Current, button);
 
-                if (!ButtonWasReleased && self.Flag)
-                {
-                    self.Args ??= new(UserInput.VirtualMousePosition.Current);
-                    return true;
-                }
-
-                if (ButtonWasReleased && !self.Flag)
-                {
-                    self.Args = new(UserInput.VirtualMousePosition.Current);
-                }
-                return false;
+                return !ButtonWasReleased && self.Flag;
             },
 
             _ => throw new EnumValueException(nameof(condition), nameof(MouseCondition),
@@ -131,7 +102,7 @@ public static class MouseListenerCreator
         };
     }
 
-    private static Predicate<InputListener<MouseEventArgs>> GetPredicateMultiButton(
+    private static Predicate<InputListener> GetPredicateMultiButton(
         MouseCondition condition, params MouseButton[] buttons)
     {
         if (buttons == null)
@@ -210,7 +181,7 @@ public static class MouseListenerCreator
         };
     }
 
-    private static Predicate<InputListener<MouseEventArgs>> GetPredicateScroll(
+    private static Predicate<InputListener> GetPredicateScroll(
         ScrollDirection scrollDirection)
     {
         return scrollDirection switch
@@ -229,7 +200,7 @@ public static class MouseListenerCreator
         };
     }
 
-    private static Predicate<InputListener<MouseEventArgs>> GetPreicateMove()
+    private static Predicate<InputListener> GetPreicateMove()
     {
         return (self) => UserInput.MouseState.Current.Position != UserInput.MouseState.Previous.Position;
     }

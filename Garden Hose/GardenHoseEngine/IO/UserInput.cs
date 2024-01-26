@@ -1,15 +1,11 @@
 ﻿using GardenHoseEngine.Collections;
-using GardenHoseEngine.Frame;
-using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
 
 namespace GardenHoseEngine.IO;
 
-// All this code just works, somehow.
+// All the code for user input just works, somehow. Very bad implementation, a working one.
 public static class UserInput
 {
     // Fields.
@@ -40,6 +36,10 @@ public static class UserInput
         if (listener == null)
         {
             throw new ArgumentNullException(nameof(listener));
+        }
+        if (s_listeners.Contains(listener))
+        {
+            return;
         }
         s_listeners.Add(listener);
     }

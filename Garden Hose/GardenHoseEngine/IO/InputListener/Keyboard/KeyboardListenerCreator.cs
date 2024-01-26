@@ -11,44 +11,41 @@ namespace GardenHoseEngine.IO;
 public static class KeyboardListenerCreator
 {
     // Static methods.
-    public static IInputListener AnyKey(object? creator,
-        KeyCondition condition,
-        EventHandler<EventArgs> handler)
+    public static IInputListener AnyKey(KeyCondition condition,
+        EventHandler handler)
     {
-        return new InputListener<EventArgs>(creator, false,
+        return new InputListener(false,
             GetPredicateAnyKey(condition), handler);
     }
 
     public static IInputListener SingleKey(object? creator,
         KeyCondition condition,
-        EventHandler<EventArgs> handler,
+        EventHandler handler,
         Keys key)
     {
-        return new InputListener<EventArgs>(creator, false,
+        return new InputListener(false,
             GetPredicateSingleKey(condition, key), handler);
     }
 
-    public static IInputListener MultiKey(object? creator,
-        KeyCondition condition,
-        EventHandler<EventArgs> handler,
+    public static IInputListener MultiKey(KeyCondition condition,
+        EventHandler handler,
         params Keys[] keys)
     {
-        return new InputListener<EventArgs>(creator, false,
+        return new InputListener(false,
             GetPredicateMultiKey(condition, keys), handler);
     }
 
-    public static IInputListener Shortcut(object? creator,
-        KeyCondition condition,
-        EventHandler<EventArgs> handler,
+    public static IInputListener Shortcut(KeyCondition condition,
+        EventHandler handler,
         params Keys[] keys)
     {
-        return new InputListener<EventArgs>(creator, false,
+        return new InputListener(false,
             GetPredicateShortcut(condition, keys), handler);
     }
 
 
     // Private static methods.
-    private static Predicate<InputListener<EventArgs>> GetPredicateAnyKey(KeyCondition condition)
+    private static Predicate<InputListener> GetPredicateAnyKey(KeyCondition condition)
     {
         return condition switch
         {
@@ -62,7 +59,7 @@ public static class KeyboardListenerCreator
         };
     }
 
-    private static Predicate<InputListener<EventArgs>> GetPredicateSingleKey(KeyCondition condition, Keys key)
+    private static Predicate<InputListener> GetPredicateSingleKey(KeyCondition condition, Keys key)
     {
         return condition switch
         {
@@ -90,7 +87,7 @@ public static class KeyboardListenerCreator
         };
     }
 
-    private static Predicate<InputListener<EventArgs>> GetPredicateMultiKey(KeyCondition condition, Keys[] keys)
+    private static Predicate<InputListener> GetPredicateMultiKey(KeyCondition condition, Keys[] keys)
     {
         if (keys == null)
         {
@@ -159,7 +156,7 @@ public static class KeyboardListenerCreator
         };
     }
 
-    private static Predicate<InputListener<EventArgs>> GetPredicateShortcut(KeyCondition condition, Keys[] keys)
+    private static Predicate<InputListener> GetPredicateShortcut(KeyCondition condition, Keys[] keys)
     {
         if (keys == null)
         {

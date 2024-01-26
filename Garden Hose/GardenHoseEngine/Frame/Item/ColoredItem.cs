@@ -13,7 +13,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
         set
         {
             _isVisible = value;
-            UpdateShouldDraw();
+            UpdateIsDrawingNeeded();
         }
     }
 
@@ -23,7 +23,7 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
         set
         {
             _colorMask.Opacity = value;
-            UpdateShouldDraw();
+            UpdateIsDrawingNeeded();
         }
     }
 
@@ -42,9 +42,8 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
     public Color CombinedMask => _colorMask.CombinedMask;
 
 
-
     // Protected fields.
-    protected bool _ShouldDraw = true;
+    protected bool IsDrawingNeeded = true;
 
 
     // Private fields.
@@ -52,13 +51,9 @@ public abstract class ColoredItem : PositionalItem, IColorMaskable
     private ColorMask _colorMask = new();
 
 
-    // Constructors.
-    public ColoredItem() : base() { }
-
-
     // Protected methods.
-    protected virtual void UpdateShouldDraw()
+    protected virtual void UpdateIsDrawingNeeded()
     {
-        _ShouldDraw = _isVisible && Opacity != 0f;
+        IsDrawingNeeded = _isVisible && Opacity != 0f;
     }
 }

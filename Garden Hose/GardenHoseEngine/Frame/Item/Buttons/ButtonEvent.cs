@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace GardenHoseEngine.Frame.Item.Buttons;
 
 public enum ButtonEvent
@@ -24,8 +19,8 @@ public enum ButtonEvent
     ScrollDown = 10,
     Scroll = 11,
 
-    OnHover,
-    Hovering,
-    OnUnhover,
-    NotHovering
+    Hover = 12,
+    Hovering = 13,
+    Unhover = 14,
+    NotHovering = 15
 }

@@ -275,8 +275,8 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     /* Other */
     private void CreateButtonHandlers()
     {
-        _button.SetEventHandler(ButtonEvent.OnHover, OnButtonHoverEvent);
-        _button.SetEventHandler(ButtonEvent.OnUnhover, OnButtonUnHoverEvent);
+        _button.SetEventHandler(ButtonEvent.Hover, OnButtonHoverEvent);
+        _button.SetEventHandler(ButtonEvent.Unhover, OnButtonUnHoverEvent);
         _button.SetEventHandler(ButtonEvent.LeftClick, OnButtonClickEvent);
     }
 

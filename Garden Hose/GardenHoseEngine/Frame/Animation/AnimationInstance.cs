@@ -125,7 +125,7 @@ public sealed class AnimationInstance
 
 
     // Inherited methods.
-    public void Update(ProgramTime time)
+    public void Update(IProgramTime time)
     {
         if (!_isAnimating) return;
 

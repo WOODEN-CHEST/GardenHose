@@ -4,5 +4,5 @@ namespace GardenHoseEngine;
 
 public interface ITimeUpdatable
 {
-    public void Update(ProgramTime time);
+    public void Update(IProgramTime time);
 }

@@ -144,7 +144,7 @@ internal class GHGame
         Background.Update();
 
         /* Tick dependent things. */
-        ProgramTime Time = new();
+        IProgramTime Time = new();
         Time.PassedTimeSeconds = GameFrameManager.PassedTimeSeconds;
 
         if (!GameTime.Update(Time))

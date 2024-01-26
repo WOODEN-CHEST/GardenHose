@@ -16,45 +16,55 @@ public class SpriteItem : ColoredItem
         get => _activeAnimation;
         set => _activeAnimation = value ?? throw new ArgumentNullException(nameof(value));
     }
-
+    public virtual Vector2 Size
+    {
+        get => _size;
+        set
+        {
+            _size = value;
+            TextureScale = _size / TextureSize;
+        }
+    }
     public virtual Vector2 TextureSize => new(ActiveAnimation.GetFrame().Texture.Width, ActiveAnimation.GetFrame().Texture.Height);
-
-    public virtual Vector2? TargetTextureSize { get; set; } = null;
+    internal virtual Vector2 TextureScale { get; private set; }
+    public virtual Vector2 SpriteCenter => Position + (TextureSize * 0.5f - ActiveAnimation.GetFrame().Origin) * TextureScale;
+    public SpriteEffects Effects { get; set; } = SpriteEffects.None;
 
 
     // Private fields.
     private AnimationInstance _activeAnimation;
+    private Vector2 _size = new Vector2(50f, 50f);
 
 
     // Constructors.
-    public SpriteItem(AnimationInstance animationInstance) : base()
+    public SpriteItem(AnimationInstance animationInstance)
     {
         ActiveAnimation = animationInstance;
+        Size = TextureSize;
     }
 
-    public SpriteItem(SpriteAnimation animation) : base()
+    public SpriteItem(AnimationInstance animationInstance, Vector2 size)
     {
-        ActiveAnimation = animation.CreateInstance();
+        ActiveAnimation = animationInstance;
+        Size = size;
     }
-
-    public SpriteEffects Effects { get; set; } = SpriteEffects.None;
 
 
     // Inherited methods.
-    public override void Draw()
+    public override void Draw(IDrawInfo info)
     {
-        if (!_ShouldDraw) return;
+        if (!IsDrawingNeeded) return;
 
-        Vector2 SpriteSize = TargetTextureSize == null ? Scale : (TargetTextureSize.Value / TextureSize * Scale);
+        ActiveAnimation.Update(info.Time);
 
-        GameFrameManager.s_spriteBatch.Draw(
+        info.SpriteBatch.Draw(
             ActiveAnimation.GetFrame().Texture,
             Display.ToRealPosition(Position),
             ActiveAnimation.TextureRegion,
             CombinedMask,
             Rotation,
             ActiveAnimation.GetFrame().Origin,
-            Display.ToRealScale(SpriteSize),
+            Display.ToRealScale(TextureScale),
             Effects,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
     }
