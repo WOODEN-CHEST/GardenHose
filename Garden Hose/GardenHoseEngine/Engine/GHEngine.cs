@@ -14,7 +14,6 @@ public static class GHEngine
     public static string GameName { get; private set; }
     public static string InternalName { get; private set; }
     public static string DataRootPath { get; private set; }
-
     public static GHEngineStartupSettings? StartupSettings { get; private set; }
 
 

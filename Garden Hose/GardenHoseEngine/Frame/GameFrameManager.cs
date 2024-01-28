@@ -20,23 +20,20 @@ public static class GameFrameManager
     private static SpriteBatch s_spriteBatch;
     private static RenderTarget2D s_layerPixelBuffer;
     private static RenderTarget2D s_framePixelBuffer;
-    private static GenericProgramTime s_time = new();
+    
     private static GenericDrawInfo s_drawInfo = new();
 
 
     // Static methods.
-    public static void UpdateFrames(float passedTimeSeconds)
+    public static void UpdateFrames(IProgramTime time)
     {
-        s_time.TotalTimeSeconds += passedTimeSeconds;
-        s_time.PassedTimeSeconds = passedTimeSeconds;
-
         while (s_actions.TryDequeue(out Action? ActionToExecute))
         {
             ActionToExecute!.Invoke();
         }
 
 
-        ActiveFrame.Update(s_time);
+        ActiveFrame.Update(time);
     }
 
     public static void DrawFrames()

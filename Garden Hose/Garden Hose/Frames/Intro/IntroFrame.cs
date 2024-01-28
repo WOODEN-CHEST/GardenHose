@@ -60,6 +60,7 @@ internal class IntroFrame : GameFrame
     {
         _monogameLogo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/monogame_logo").CreateInstance(), LOGO_START_SCALE);
         _logo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/logo").CreateInstance(), LOGO_START_SCALE);
+        GH.LoadGlobalAssets();
 
         base.Load();
     }

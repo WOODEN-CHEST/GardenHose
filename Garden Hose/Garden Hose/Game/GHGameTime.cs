@@ -10,13 +10,13 @@ namespace GardenHose.Game;
 internal class GHGameTime
 {
     // Internal fields.
-    internal const float DEFULT_MIN_PASSED_TIME = 1f / 720f;
-    internal const float DEFULT_MAX_PASSED_TIME = 1f / 20f;
+    internal const float DEFULT_MIN_PASSED_WORLD_TIME = 1f / 720f;
+    internal const float DEFULT_MAX_PASSED_WORLD_TIME = 1f / 20f;
 
-    internal float MinPassedTime { get; private init; } = DEFULT_MIN_PASSED_TIME;
-    internal float MaxPassedTime { get; private init; } = DEFULT_MAX_PASSED_TIME;
-    internal IProgramTime RealProgramTime { get; private set; } // The actual program time.
-    internal IProgramTime FakeProgramTime { get; private init; } = new(); // Disguised as program time but stores world time.
+    internal float MinPassedWorldTime { get; private init; } = DEFULT_MIN_PASSED_WORLD_TIME;
+    internal float MaxPassedWorldTime { get; private init; } = DEFULT_MAX_PASSED_WORLD_TIME;
+    internal IProgramTime ProgramTime { get; private set; }
+    internal WorldTime WorldTime { get; } = new WorldTime();
     internal float PassedWorldTimeSeconds { get; set; } = 0f;
     internal float TotalWorldTimeSeconds { get; set; } = 0f;
     internal bool IsRunningSlowly { get; private set; } = false;
@@ -31,29 +31,27 @@ internal class GHGameTime
 
     internal GHGameTime(float minTime, float maxTime)
     {
-        MinPassedTime = minTime;
-        MaxPassedTime = maxTime;
+        MinPassedWorldTime = minTime;
+        MaxPassedWorldTime = maxTime;
     }
 
 
     // Internal methods.
     internal bool Update(IProgramTime programTime)
     {
-        RealProgramTime = programTime;
-        FakeProgramTime.TotalTimeSeconds = 
+        ProgramTime = programTime;
 
-        TotalWorldTimeSeconds += RealProgramTime.PassedTimeSeconds;
-        _timeSinceLastUpdateSeconds += RealProgramTime.PassedTimeSeconds;
+        _timeSinceLastUpdateSeconds += ProgramTime.PassedTimeSeconds;
 
-        if (_timeSinceLastUpdateSeconds < MinPassedTime)
+        if (_timeSinceLastUpdateSeconds < MinPassedWorldTime)
         {
             return false;
         }
 
-        if (_timeSinceLastUpdateSeconds > MaxPassedTime)
+        if (_timeSinceLastUpdateSeconds > MaxPassedWorldTime)
         {
             IsRunningSlowly = true;
-            PassedWorldTimeSeconds = MaxPassedTime;
+            PassedWorldTimeSeconds = MaxPassedWorldTime;
         }
         else
         {
@@ -62,8 +60,8 @@ internal class GHGameTime
         }
         _timeSinceLastUpdateSeconds = 0f;
 
-        FakeProgramTime.TotalTimeSeconds = TotalWorldTimeSeconds;
-        FakeProgramTime.PassedTimeSeconds = PassedWorldTimeSeconds;
+        WorldTime.TotalTimeSeconds = TotalWorldTimeSeconds;
+        WorldTime.PassedTimeSeconds = PassedWorldTimeSeconds;
 
         return true;
     }

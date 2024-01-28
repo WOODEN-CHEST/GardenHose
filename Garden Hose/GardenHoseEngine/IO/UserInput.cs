@@ -37,6 +37,7 @@ public static class UserInput
         {
             throw new ArgumentNullException(nameof(listener));
         }
+
         if (s_listeners.Contains(listener))
         {
             return;
@@ -44,7 +45,10 @@ public static class UserInput
         s_listeners.Add(listener);
     }
 
-    public static void RemoveListener(IInputListener listener) => s_listeners.Remove(listener);
+    public static void RemoveListener(IInputListener listener)
+    {
+         s_listeners.Remove(listener);
+    }
 
 
     // Internal methods.

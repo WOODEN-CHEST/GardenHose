@@ -71,7 +71,7 @@ public class GameWorld : IIDProvider
 
 
     /* Debug. */
-    internal bool IsDebugInfoEnabled
+    internal bool IsDebugInfoDrawn
     {
         get => _isDebugInfoEnabled;
         set
@@ -316,7 +316,7 @@ public class GameWorld : IIDProvider
         {
             if (WorldEntity.IsPhysical)
             {
-                ((PhysicalEntity)WorldEntity).IsDebugInfoDrawn = IsDebugInfoEnabled;
+                ((PhysicalEntity)WorldEntity).IsDebugInfoDrawn = IsDebugInfoDrawn;
             }
         }
     }
@@ -326,9 +326,9 @@ public class GameWorld : IIDProvider
     {
         foreach (CollisionCase Case in collisionCases)
         {
-            if (Case.EntityA.Mass > Case.EntityB.Mass && Case.EntityB.IsCollisionReactionEnabled)
+            if (Case.SelfEntity.Mass > Case.TargetEntity.Mass && Case.TargetEntity.IsCollisionReactionEnabled)
             {
-                Case.EntityB.PushOutOfOtherEntity(Case.BoundB, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
+                Case.TargetEntity.PushOutOfOtherEntity(Case.TargetBound, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
             }
             else if (Case.EntityA.IsCollisionReactionEnabled)
             {
@@ -374,7 +374,7 @@ public class GameWorld : IIDProvider
             }
 
             PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
-            PhysicalWorldEntity.IsDebugInfoDrawn = IsDebugInfoEnabled;
+            PhysicalWorldEntity.IsDebugInfoDrawn = Game.;
         }
         _entitiesCreated.Clear();
     }

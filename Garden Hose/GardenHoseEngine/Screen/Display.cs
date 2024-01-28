@@ -104,13 +104,7 @@ public static class Display
     private static Vector2 s_fullScreenSize;
 
     [ThreadStatic]
-    private static Line s_sharedLine;
-
-    /* Info. */
-    private static float _infoUpdateRequiredTime = 0.5f; // 0.5 seconds.
-    private static float _timeSinceUpdate = 0f;
-    private static int _infoUpdatesReceived = 0;
-    private static float _totalFPSOverUpdates = 0;
+    private static Line s_sharedLine;;
 
 
     // Static methods.
@@ -146,23 +140,9 @@ public static class Display
         else IsFullScreen = !IsFullScreen;
     }
 
-    internal static void Update()
+    internal static void Update(IProgramTime time)
     {
-        _infoUpdatesReceived++;
-        _timeSinceUpdate += GameFrameManager.PassedTimeSeconds;
-        _totalFPSOverUpdates += (1f / GameFrameManager.PassedTimeSeconds);
-
-        if (_timeSinceUpdate <= _infoUpdateRequiredTime)
-        {
-            return;
-        }
-
-
-        FPS = _totalFPSOverUpdates / _infoUpdatesReceived;
-
-        _timeSinceUpdate = 0f;
-        _infoUpdatesReceived = 0;
-        _totalFPSOverUpdates = 0f;
+        FPS = 1f / time.PassedTimeSeconds;
     }
 
 

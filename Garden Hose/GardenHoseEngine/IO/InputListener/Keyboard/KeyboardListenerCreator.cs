@@ -18,8 +18,7 @@ public static class KeyboardListenerCreator
             GetPredicateAnyKey(condition), handler);
     }
 
-    public static IInputListener SingleKey(object? creator,
-        KeyCondition condition,
+    public static IInputListener SingleKey(KeyCondition condition,
         EventHandler handler,
         Keys key)
     {

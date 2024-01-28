@@ -11,6 +11,10 @@ namespace GardenHoseEngine.Engine;
 
 public partial class GHEngineGame : Game
 {
+    // Private fields.
+    private GenericProgramTime _time = new();
+
+
     // Constructors.
     public GHEngineGame()
     {
@@ -32,7 +36,7 @@ public partial class GHEngineGame : Game
         Display.SinglePixel.SetData(new Color[] { Color.White });
         Display.SharedLine = new();
         Window.ClientSizeChanged += Display.OnWindowSizeChangeByUserEvent;
-        UserInput.AddListener(KeyboardListenerCreator.SingleKey(null, KeyCondition.OnPress,
+        UserInput.AddListener(KeyboardListenerCreator.SingleKey(KeyCondition.OnPress,
             Display.OnUserToggleFullscreenEvent, Keys.F11));
 
         /* User input. */
@@ -53,16 +57,16 @@ public partial class GHEngineGame : Game
 
         // Start frames.
         GameFrameManager.Initialize(GHEngine.StartupSettings.StartupFrame);
-
-        // Delete startup settings.
-        GHEngine.StartupSettings = null;
     }
 
     protected override void Update(GameTime gameTime)
     {
+        _time.TotalTimeSeconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _time.PassedTimeSeconds = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         UserInput.ListenForInput(IsActive);
-        GameFrameManager.UpdateFrames((float)gameTime.ElapsedGameTime.TotalSeconds);
-        Display.Update();
+        GameFrameManager.UpdateFrames(_time);
+        Display.Update(_time);
     }
 
     protected override void Draw(GameTime gameTime)

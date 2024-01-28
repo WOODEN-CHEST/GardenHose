@@ -12,6 +12,13 @@ namespace GardenHose.UI.Buttons.Connector;
 
 internal partial class ConnectorRectangleButton : ConnectorElement
 {
+    // Internal static fields.
+    internal static readonly Vector2 SQUARE_BUTTON_SIZE = new(200f, 200f);
+    internal static readonly Vector2 NARROW_BUTTON_SIZE = new(400f, 200f);
+    internal static readonly Vector2 NORMAL_BUTTON_SIZE = new(800f, 200f);
+    internal static readonly Vector2 WIDE_BUTTON_SIZE = new(1600f, 200f);
+    internal static readonly Vector2 PANEL_GLOW_SIZE_DIFFERENCE = new(8f, 8f);
+
 
     // Internal fields.
     internal bool IsClickable { get; set; } = true;
@@ -64,14 +71,6 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     internal Vector2 Size { get; private init; }
     internal FloatColor ClickedColor { get; set; } = DEFAULT_CLICKED_COLOR;
     internal EventHandler? ClickHandler { get; set; }
-
-
-    // Private static fields.
-    private static readonly Vector2 SQUARE_BUTTON_SIZE = new(200f, 200f);
-    private static readonly Vector2 NARROW_BUTTON_SIZE = new(400f, 200f);
-    private static readonly Vector2 NORMAL_BUTTON_SIZE = new(800f, 200f);
-    private static readonly Vector2 WIDE_BUTTON_SIZE = new(1600f, 200f);
-    private static readonly Vector2 PANEL_GLOW_SIZE_DIFFERENCE = new(8f, 8f);
 
 
     // Private fields.
