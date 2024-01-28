@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace GardenHoseEngine.IO;
 
-// All the code for user input just works, somehow. Very bad implementation, a working one.
+// All the code for user input just works, somehow. Very bad implementation, but a working one.
 public static class UserInput
 {
     // Fields.
@@ -21,9 +21,9 @@ public static class UserInput
     public static DeltaValue<int> MouseButtonsPressedCount { get; private set; } = new();
 
 
-    public static event EventHandler<TextInputEventArgs> TextInput;
+    public static event EventHandler<TextInputEventArgs>? TextInput;
 
-    public static event EventHandler<FileDropEventArgs> FileDrop;
+    public static event EventHandler<FileDropEventArgs>? FileDrop;
 
 
     // Private fields.

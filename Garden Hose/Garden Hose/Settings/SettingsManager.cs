@@ -98,15 +98,15 @@ internal static class SettingsManager
         };
     }
 
+    private static void WriteSettingsToCompound(DataFileCompound compound)
+    {
+        compound.Add(ID_IS_FULL_SCREEN, Settings.IsFullScreen);
+    }
+
     private static GameSettings CreateSettingsFile()
     {
         Settings = (GameSettings)DefaultSettings.Clone();
         WriteSettings();
         return Settings;
-    }
-
-    private static void WriteSettingsToCompound(DataFileCompound compound)
-    {
-        compound.Add(ID_IS_FULL_SCREEN, Settings.IsFullScreen);
-    }
+    }  
 }

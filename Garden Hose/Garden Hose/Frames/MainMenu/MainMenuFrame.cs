@@ -8,49 +8,46 @@ namespace GardenHose.Frames.MainMenu;
 
 internal partial class MainMenuFrame : GameFrame
 {
-    // Internal fields.
-    internal MainFrameLayerManager LayerManager { get; private init; }
-
-    internal MainFrameButtonManager ButtonManager { get; private init; }
-
-    internal MainFrameBackgroundManager BackgroundManager { get; private init; }
+    // Private fields.
+    private readonly MainFrameLayerManager _layerManager;
+    private readonly MainFrameButtonManager _buttonManager; 
+    private readonly MainFrameBackgroundManager _backgroundManager;
 
 
     // Constructors.
     public MainMenuFrame(string? name) : base(name)
     {
-        LayerManager = new(this);
-        BackgroundManager = new(this, LayerManager.BackgroundLayer);
-        ButtonManager = new(this, LayerManager.UILayer);
+        _layerManager = new(this);
+        _backgroundManager = new(this, _layerManager.BackgroundLayer);
+        _buttonManager = new(this, _layerManager.UILayer);
     }
 
 
     // Inherited methods.
     public override void Load()
     {
+        _layerManager.Load();
+        _buttonManager.Load();
+        _backgroundManager.Load();
         base.Load();
-
-        LayerManager.Load();
-        ButtonManager.Load();
-        BackgroundManager.Load();
     }
 
     public override void OnStart()
     {
         base.OnStart();
         
-        LayerManager.OnStart();
-        ButtonManager.OnStart();
-        BackgroundManager.OnStart();
+        _layerManager.OnStart();
+        _buttonManager.OnStart();
+        _backgroundManager.OnStart();
 
         GHEngine.Game.IsMouseVisible = true;
     }
 
-    public override void Update()
+    public override void Update(IProgramTime time)
     {
-        base.Update();
-        LayerManager.Update();
-        BackgroundManager.Update();
-        ButtonManager.Update();
+        base.Update(time);
+        _layerManager.Update(time);
+        _backgroundManager.Update(time);
+        _buttonManager.Update(time);
     }
 }

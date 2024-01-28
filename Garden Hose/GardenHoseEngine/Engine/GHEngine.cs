@@ -11,14 +11,15 @@ public static class GHEngine
 {
     // Static fields.
     public static Game Game { get; private set; }
-
     public static string GameName { get; private set; }
-
     public static string InternalName { get; private set; }
-
     public static string DataRootPath { get; private set; }
 
-    public static GHEngineStartupSettings? StartupSettings;
+    public static GHEngineStartupSettings? StartupSettings { get; private set; }
+
+
+    // Private fields.
+    private const string LOGS_SUBDIRECTORY = "logs";
 
 
     // Static methods.
@@ -33,6 +34,7 @@ public static class GHEngine
 
         GameName = StartupSettings.GameName;
         InternalName = StartupSettings.InternalName;
+
         DataRootPath = Path.Combine(StartupSettings.GameDataRootDirectory, InternalName);
         if (!Path.IsPathFullyQualified(DataRootPath))
         {
@@ -40,7 +42,7 @@ public static class GHEngine
         }
         Directory.CreateDirectory(DataRootPath);
 
-        Logger.Initialize(Path.Combine(DataRootPath, "logs"));
+        Logger.Initialize(Path.Combine(DataRootPath, LOGS_SUBDIRECTORY));
 
         try
         {
@@ -78,6 +80,6 @@ public static class GHEngine
     private static void Stop()
     {
         Logger.Stop();
-        AudioEngine.Engine.Dispose();
+        AudioEngine.DefaultEngine.Dispose();
     }
 }

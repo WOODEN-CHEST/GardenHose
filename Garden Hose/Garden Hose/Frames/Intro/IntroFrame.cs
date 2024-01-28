@@ -1,37 +1,38 @@
 ﻿using GardenHose.Frames.MainMenu;
 using GardenHose.Settings;
 using GardenHoseEngine;
-using GardenHoseEngine.Animatable;
 using GardenHoseEngine.Engine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 
+
 namespace GardenHose.Frames.Intro;
+
 
 internal class IntroFrame : GameFrame
 {
     // Private fields.
-    private SpriteAnimation _monogameLogoAnim;
-    private SpriteItem _monogameLogoItem;
-    private SpriteAnimation _logoAnim;
-    private SpriteItem _logoItem;
+    private SpriteItem _monogameLogo;
+    private SpriteItem _logo;
 
-    private float _passedTime = -0.5f;
+    private float _passedTime = 0f;
     private bool _nextFrameLoaded = false;
 
     private IInputListener _keyboardListener;
     private IInputListener _mouseListener;
 
-    private const float LOGO_TIME_SEC = 5f;
-    private const float LOGO_TIME_SIN_MULTIPLIER = MathF.PI / LOGO_TIME_SEC;
-    private readonly Vector2 _logoStartSize = new(0.6f, 0.6f);
-    private readonly Vector2 _logoEndSize = new(0.75f, 0.75f);
+    private const float LOGO_DURATION = MathF.PI * 0.75f;
+    private const float FIRST_LOGO_TIME = 1.0f;
+    private const float SECOND_LOGO_TIME = FIRST_LOGO_TIME + LOGO_DURATION;
+    private const float EXIT_TIME = SECOND_LOGO_TIME + LOGO_DURATION;
+
+    private const float LOGO_START_SCALE = 0.6f;
+    private const float LOGO_SCALE_INCREASE = 0.15f / LOGO_DURATION;
 
 
     // Constructors.
@@ -39,36 +40,12 @@ internal class IntroFrame : GameFrame
 
 
     // Private methods.
-    private void CreateLogos()
-    {
-        _monogameLogoItem = new(_monogameLogoAnim);
-        _monogameLogoItem.Opacity = 0f;
-        _monogameLogoItem.Position.Vector = Display.VirtualSize / 2f;
-        _monogameLogoItem.Scale.SetKeyFrames(new KeyframeCollection(_logoStartSize)
-            .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
-        _monogameLogoItem.Scale.Start();
-        AddItem(_monogameLogoItem);
-        TopLayer!.AddDrawableItem(_monogameLogoItem);
-
-
-        _logoItem = new(_logoAnim);
-        _logoItem.Opacity = 0f;
-        _logoItem.Position.Vector = Display.VirtualSize / 2f;
-        _logoItem.Scale.Vector = Vector2.One; ;
-        _logoItem.Scale.SetKeyFrames(new KeyframeCollection(_logoStartSize)
-            .AddKeyFrame(LOGO_TIME_SEC)
-            .AddKeyFrame(_logoEndSize, LOGO_TIME_SEC));
-        _logoItem.Scale.Start();
-        AddItem(_logoItem);
-        TopLayer!.AddDrawableItem(_logoItem);
-    }
-
     private void CreateSkipListeners()
     {
-        _keyboardListener = KeyboardListenerCreator.AnyKey(this, KeyCondition.WhileDown, OnKeyboardInputEvent);
-        _mouseListener = MouseListenerCreator.AnyButton(this, true, MouseCondition.WhileDown, OnMouseInputEvent);
-        UserInput.AddListener(_keyboardListener);
-        UserInput.AddListener(_mouseListener);
+        _keyboardListener = KeyboardListenerCreator.AnyKey(KeyCondition.WhileDown, OnUserInputEvent);
+        _mouseListener = MouseListenerCreator.AnyButton(true, MouseCondition.WhileDown, OnUserInputEvent);
+        _keyboardListener.StartListening();
+        _mouseListener.StartListening();
     }
 
     private void LoadSettings()
@@ -81,10 +58,10 @@ internal class IntroFrame : GameFrame
     // Inherited methods.
     public override void Load()
     {
-        base.Load();
+        _monogameLogo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/monogame_logo").CreateInstance(), LOGO_START_SCALE);
+        _logo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/logo").CreateInstance(), LOGO_START_SCALE);
 
-        _monogameLogoAnim = new(0f, this, Origin.Center, "ui/monogame_logo");
-        _logoAnim = new(0f, this, Origin.Center, "ui/logo");
+        base.Load();
     }
 
     public override void OnStart()
@@ -92,8 +69,6 @@ internal class IntroFrame : GameFrame
         base.OnStart();
 
         AddLayer(new Layer("logo layer"));
-
-        CreateLogos();
         CreateSkipListeners();
 
         GHEngine.Game.IsFixedTimeStep = false;
@@ -103,29 +78,37 @@ internal class IntroFrame : GameFrame
         GameFrameManager.LoadNextFrame(new MainMenuFrame("Main Menu"), () => _nextFrameLoaded = true);
     }
 
-    public override void Update()
+    public override void Update(IProgramTime time)
     {
-        base.Update();
+        base.Update(time);
+        _passedTime += time.PassedTimeSeconds;
 
-        _passedTime += GameFrameManager.PassedTimeSeconds;
-
-        if (_passedTime <= LOGO_TIME_SEC)
+        if (_passedTime <= FIRST_LOGO_TIME)
         {
-            _monogameLogoItem.Opacity = (float)Math.Sin(_passedTime * LOGO_TIME_SIN_MULTIPLIER);
-            return;
+            _monogameLogo.Opacity = 0f;
+            _logo.Opacity = 0f;
         }
-        else if (_passedTime <= LOGO_TIME_SEC * 2)
+        else if (_passedTime < SECOND_LOGO_TIME)
         {
-            _monogameLogoItem.Opacity = 0f;
-            _logoItem.Opacity = (float)Math.Sin((_passedTime - LOGO_TIME_SEC) * LOGO_TIME_SIN_MULTIPLIER);
-            return;
+            _monogameLogo.Size += _monogameLogo.TextureSize * LOGO_SCALE_INCREASE * time.PassedTimeSeconds;
+            _monogameLogo.Opacity = MathF.Sin((_passedTime - FIRST_LOGO_TIME) / (SECOND_LOGO_TIME - FIRST_LOGO_TIME) * MathF.PI);
+            _logo.Opacity = 0f;
         }
-
-        _logoItem.Opacity = 0f;
-        _monogameLogoItem.Opacity = 0f;
-        if (_nextFrameLoaded && (_passedTime >= LOGO_TIME_SEC * 2))
+        else if (_passedTime < EXIT_TIME)
         {
-            GameFrameManager.JumpToNextFrame();
+            _monogameLogo.Opacity = 0f;
+            _logo.Size += _monogameLogo.TextureSize * LOGO_SCALE_INCREASE * time.PassedTimeSeconds;
+            _logo.Opacity = MathF.Sin((_passedTime - FIRST_LOGO_TIME) / (SECOND_LOGO_TIME - FIRST_LOGO_TIME) * MathF.PI);
+        }
+        else
+        {
+            _logo.Opacity = 0f;
+            _monogameLogo.Opacity = 0f;
+
+            if (_nextFrameLoaded)
+            {
+                GameFrameManager.JumpToNextFrame();
+            }
         }
     }
 
@@ -139,7 +122,7 @@ internal class IntroFrame : GameFrame
 
 
     // Private methods.
-    private void OnKeyboardInputEvent(object? sender, EventArgs args)
+    private void OnUserInputEvent(object? sender, EventArgs args)
     {
         if (UserInput.KeyboardState.Current.IsKeyDown(Keys.F11)
             || UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
@@ -150,7 +133,5 @@ internal class IntroFrame : GameFrame
         SkipIntro();
     }
 
-    private void OnMouseInputEvent(object? sender, MouseEventArgs args) => SkipIntro();
-
-    private void SkipIntro() => _passedTime = LOGO_TIME_SEC * 3;
+    private void SkipIntro() => _passedTime = EXIT_TIME;
 }

@@ -1,18 +1,17 @@
-﻿using GardenHoseEngine;
-using GardenHoseEngine.Frame;
+﻿using GardenHoseEngine.Frame;
 using System;
 
 namespace GardenHose.Frames;
 
 
-internal abstract class FrameComponentManager<FrameType> where FrameType : IGameFrame
+internal abstract class FrameComponentManager<T> where T : IGameFrame
 {
     // Protected fields.
-    protected readonly FrameType ParentFrame;
+    protected T ParentFrame { get; init; }
 
 
     // Constructors.
-    internal FrameComponentManager(FrameType parentFrame)
+    internal FrameComponentManager(T parentFrame)
     {
         ParentFrame = parentFrame ?? throw new ArgumentNullException(nameof(parentFrame));
     }
@@ -27,6 +26,5 @@ internal abstract class FrameComponentManager<FrameType> where FrameType : IGame
 
     internal virtual void Unload() { }
 
-    internal virtual void Update() { }
-
+    internal virtual void Update(IProgramTime time) { }
 }

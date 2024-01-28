@@ -11,10 +11,6 @@ namespace GardenHoseEngine.Engine;
 
 public partial class GHEngineGame : Game
 {
-    // Private fields.
-    private 
-
-
     // Constructors.
     public GHEngineGame()
     {
@@ -44,10 +40,10 @@ public partial class GHEngineGame : Game
         Window.TextInput += UserInput.OnTextInputEvent;
 
         /*  Audio engine. */
-        AudioEngine.Engine = new();
+        AudioEngine.DefaultEngine = new();
 
         /* Asset manager. */
-        AssetManager.Initialize(GHEngine.StartupSettings.AssetBasePath, GHEngine.StartupSettings.AssetExtraPath);
+        AssetManager.Initialize(GHEngine.StartupSettings.AssetBasePath);
 
 
         // Set fields.
@@ -56,7 +52,7 @@ public partial class GHEngineGame : Game
         Window.AllowUserResizing = GHEngine.StartupSettings.AllowUserResizing;
 
         // Start frames.
-        GameFrameManager.Initialize(GHEngine.StartupSettings.StartupFrame, GHEngine.StartupSettings.GlobalFrame);
+        GameFrameManager.Initialize(GHEngine.StartupSettings.StartupFrame);
 
         // Delete startup settings.
         GHEngine.StartupSettings = null;

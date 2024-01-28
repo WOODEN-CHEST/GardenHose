@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHoseEngine.Frame;
 
-public interface IGameFrame
+public interface IGameFrame : IColorMaskable
 {
     // Properties.
     public string Name { get; }

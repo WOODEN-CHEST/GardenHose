@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GardenHoseEngine.Frame.Animation;
+﻿using GardenHoseEngine.Frame.Animation;
 
 namespace GardenHoseEngine.Frame.Item;
 
@@ -61,8 +56,8 @@ public class PropertyAnimation : ITimeUpdatable
 
         float Progress = (NextFrame.Time - PreviousFrame.Time) / (NextFrame.Time - AnimationTime);
 
-        Item.Position.Vector = GHMath.Interpolate(NextFrame.Interpolation, PreviousFrame.Position, NextFrame.Position, Progress);
-        Item.Scale.Vector = GHMath.Interpolate(NextFrame.Interpolation, PreviousFrame.Size, NextFrame.Size, Progress);
+        Item.Position = GHMath.Interpolate(NextFrame.Interpolation, PreviousFrame.Position, NextFrame.Position, Progress);
+        Item.Size = GHMath.Interpolate(NextFrame.Interpolation, PreviousFrame.Size, NextFrame.Size, Progress);
         Item.Rotation = GHMath.Interpolate(NextFrame.Interpolation, PreviousFrame.Rotation, NextFrame.Rotation, Progress);
     }
 }

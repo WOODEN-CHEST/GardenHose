@@ -29,7 +29,6 @@ public record class GHEngineStartupSettings
     public bool AllowUserResizing { get; set; }
 
     public IGameFrame StartupFrame { get; set; }
-    public IGameFrame GlobalFrame { get; set; }
 
 
     // Constructors.
@@ -51,6 +50,5 @@ public record class GHEngineStartupSettings
         AllowUserResizing = true;
 
         StartupFrame = new GameFrame("Default Startup Frame");
-        GlobalFrame = new GameFrame("Default Global Frame");
     }
 }

@@ -11,7 +11,6 @@ public class GameFrame : IGameFrame
 {
     // Fields.
     public string Name { get; set; }
-
     public bool IsLoaded { get; internal set; } = false;
 
     public ILayer? TopLayer
@@ -25,13 +24,33 @@ public class GameFrame : IGameFrame
     }
 
     public int LayerCount => _layers.Count;
-
     public PropertyAnimManager AnimationManager { get; } = new();
+
+    public float Brightness
+    {
+        get => _colorMask.Brightness;
+        set => _colorMask.Brightness = value;
+    }
+
+    public float Opacity
+    {
+        get => _colorMask.Opacity;
+        set => _colorMask.Opacity = value;
+    }
+
+    public Color Mask
+    {
+        get => _colorMask.Mask;
+        set => _colorMask.Mask = value;
+    }
+
+    public Color CombinedMask => _colorMask.CombinedMask;
 
 
     // Private fields.
     private readonly List<ILayer> _layers = new();
     private readonly DiscreteTimeList<ITimeUpdatable> _updateableItems = new();
+    private ColorMask _colorMask;
 
 
     // Constructors.
@@ -106,6 +125,7 @@ public class GameFrame : IGameFrame
     public virtual void Update(IProgramTime time)
     {
         _updateableItems.ApplyChanges();
+        AnimationManager.Update(time);
 
         foreach (var Item in _updateableItems)
         {

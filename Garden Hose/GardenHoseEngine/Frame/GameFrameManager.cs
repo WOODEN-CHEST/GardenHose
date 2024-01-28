@@ -49,7 +49,7 @@ public static class GameFrameManager
 
         Display.GraphicsManager.GraphicsDevice.SetRenderTarget(null);
         s_spriteBatch.Begin(blendState: DefaultBlendState);
-        s_spriteBatch.Draw(s_framePixelBuffer, Vector2.Zero, Color.White);
+        s_spriteBatch.Draw(s_framePixelBuffer, Vector2.Zero, ActiveFrame.CombinedMask);
         s_spriteBatch.End();
     }
 

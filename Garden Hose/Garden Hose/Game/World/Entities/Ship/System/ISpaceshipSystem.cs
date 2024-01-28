@@ -1,4 +1,4 @@
-﻿using GardenHose.Game.AssetManager;
+﻿using GardenHose.Game.GameAssetManager;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 

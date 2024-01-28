@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.IO;
+﻿using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
-using System.Xml;
 
 namespace GardenHoseEngine.Logging;
 
@@ -19,6 +16,10 @@ public static class Logger
     private static BlockingCollection<string> s_messages = new(new ConcurrentQueue<string>());
     private static CancellationTokenSource s_cancellationTokenSource = new();
     private static Task s_loggerTask;
+
+    private const string LATEST_LOG_FILE_NAME = "latest.log";
+    private const string OLD_LOG_DIRECTORY_NAME = "old";
+
 
     // Static methods.
     public static void Initialize(string logDirectory)
@@ -40,10 +41,11 @@ public static class Logger
         DateTime Time = DateTime.Now;
         Directory.CreateDirectory(logDirectory);
 
-        LogPath = Path.Combine(logDirectory, "latest.log");
+        LogPath = Path.Combine(logDirectory, LATEST_LOG_FILE_NAME);
         if (File.Exists(LogPath))
         {
-            ArchiveOldLog(Path.Combine(logDirectory, "old"), LogPath);
+            ArchiveOldLog(Path.Combine(logDirectory, OLD_LOG_DIRECTORY_NAME), LogPath);
+            File.Delete(LogPath);
         }
 
         s_fileWriter = new(File.Create(LogPath), Encoding.UTF8);
@@ -62,7 +64,6 @@ public static class Logger
         }
 
         s_cancellationTokenSource.Cancel();
-        Info("Logger stopped, goodbye world!");
         s_loggerTask.Wait();
 
         s_fileWriter.Flush();
@@ -84,13 +85,8 @@ public static class Logger
             throw new ArgumentNullException(message);
         }
 
-        StringBuilder FullMessage = new(message.Length + 30);
-
-        FullMessage.Append($"{Environment.NewLine}[{GetFormattedTime(DateTime.Now)}]");
-        FullMessage.Append(level == LogLevel.Info ? ' ' : $"[{level}] ");
-        FullMessage.Append(message);
-
-        s_messages.Add(FullMessage.ToString());
+        string FullMessage = $"\n[{GetFormattedTime(DateTime.Now)}{(level == LogLevel.Info ? ' ' : $"[{level}]")} {message}]";
+        s_messages.Add(FullMessage);
     }
 
 
@@ -137,17 +133,14 @@ public static class Logger
     {
         try
         {
-            while (!s_cancellationTokenSource.IsCancellationRequested)
+            while (!s_cancellationTokenSource.IsCancellationRequested || (s_messages.Count > 0))
             {
                 s_fileWriter.Write(s_messages.Take(s_cancellationTokenSource.Token));
             }
         }
         catch (OperationCanceledException)
         {
-            while (s_messages.TryTake(out string? message))
-            {
-                s_fileWriter.Write(message);
-            }
+            s_fileWriter.Write("Logger stopped.");
         }
     }
 }

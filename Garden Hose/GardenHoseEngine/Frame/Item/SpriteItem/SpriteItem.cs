@@ -49,6 +49,12 @@ public class SpriteItem : ColoredItem
         Size = size;
     }
 
+    public SpriteItem(AnimationInstance animationInstance, float scale)
+    {
+        ActiveAnimation = animationInstance;
+        Size = TextureSize * scale;
+    }
+
 
     // Inherited methods.
     public override void Draw(IDrawInfo info)

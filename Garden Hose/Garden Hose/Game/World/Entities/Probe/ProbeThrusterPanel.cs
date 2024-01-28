@@ -1,4 +1,4 @@
-﻿using GardenHose.Game.AssetManager;
+﻿using GardenHose.Game.GameAssetManager;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Item.Buttons;

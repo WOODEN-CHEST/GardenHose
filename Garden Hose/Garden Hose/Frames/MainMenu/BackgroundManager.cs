@@ -1,4 +1,6 @@
-﻿using GardenHoseEngine;
+﻿using GardenHose.Game;
+using GardenHose.Game.Background;
+using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
@@ -6,31 +8,22 @@ using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace GardenHose.Frames.MainMenu;
+
 
 internal class MainFrameBackgroundManager : FrameComponentManager<MainMenuFrame>
 {
     // Private fields.
-    private readonly ILayer _bgLayer;
+    private readonly ILayer _backgroundLayer;
 
-    private SpriteAnimation _logoAnim;
     private SpriteItem _logo;
     private const float LOGO_SPEED = 1 / 7f;
-    private const float LOGO_POSITION_Y = 50f;
     private const float LOGO_POSITION_MOVEMENT_Y = 15f;
 
-    private SpriteAnimation _backgroundAnim;
-    private SpriteItem _background;
-    private SpriteAnimation _planetAnim;
     private SpriteItem _planet;
-    private SpriteAnimation _starAnim;
-    private SpriteItem[] _stars;
 
     private Vector2 _focusPosition = Vector2.Zero;
     private const float PLANET_SIZE = 1.1f;
@@ -45,11 +38,13 @@ internal class MainFrameBackgroundManager : FrameComponentManager<MainMenuFrame>
     private const float MAX_STAR_SIZE = 0.085f;
     private const int ATTEMPTED_STAR_COUNT = 300;
 
+    private GameBackground _background = new(BackgroundImage.Default); 
+
 
     // Constructors.
-    public MainFrameBackgroundManager(MainMenuFrame parentFrame, ILayer bgLayer) : base(parentFrame)
+    public MainFrameBackgroundManager(MainMenuFrame parentFrame, ILayer backgroundLayer) : base(parentFrame)
     {
-        _bgLayer = bgLayer ?? throw new ArgumentNullException(nameof(bgLayer));
+        _backgroundLayer = backgroundLayer ?? throw new ArgumentNullException(nameof(backgroundLayer));
     }
 
 
@@ -62,68 +57,11 @@ internal class MainFrameBackgroundManager : FrameComponentManager<MainMenuFrame>
         _planet.Position.Vector = Display.VirtualSize + _maxPlanetOffset - _maxPlanetOffset * (_focusPosition / Display.VirtualSize);
     }
 
-    private void UpdateStars()
-    {
-        _timeSinceStarUpdate += GameFrameManager.PassedTimeSeconds;
-        if (_timeSinceStarUpdate < REQUIRED_STAR_TIME)
-        {
-            return;
-        }
-
-        foreach (SpriteItem Star in _stars)
-        {
-            Star.Opacity = Random.Shared.Next(MIN_STAR_OPACITY, MAX_STAR_OPACITY) / (float)MAX_STAR_OPACITY;
-        }
-        _timeSinceStarUpdate -= REQUIRED_STAR_TIME;
-    }
-
-    private void CreateStars()
-    {
-        float EliminationDistance = _planet.TextureSize.X * _planet.Scale.Vector.X * 0.5f;
-        Vector2 PlanetCenter = _planet.Position;
-        PlanetCenter.X -= _planet.TextureSize.X * 0.5f;
-        PlanetCenter.Y -= _planet.TextureSize.Y * 0.15f;
-
-        List<SpriteItem> Stars = new();
-        for (int i = 0; i < ATTEMPTED_STAR_COUNT; i++)
-        {
-            Vector2 Position = new(
-                Random.Shared.Next((int)Display.VirtualSize.X),
-                Random.Shared.Next((int)Display.VirtualSize.Y));
-            if (Vector2.Distance(PlanetCenter, Position) <= EliminationDistance)
-            {
-                continue;
-            }
-
-
-            SpriteItem Star = new(_starAnim);
-            Star.Position.Vector = Position;
-
-            FloatColor Color = new();
-            Color.R = Random.Shared.Next(MIN_STAR_COLOR_CHANNEl, MAX_STAR_COLOR_CHANNEl) / (float)MAX_STAR_COLOR_CHANNEl;
-            Color.G = Random.Shared.Next(MIN_STAR_COLOR_CHANNEl, MAX_STAR_COLOR_CHANNEl) / (float)MAX_STAR_COLOR_CHANNEl;
-            Color.B = Random.Shared.Next(MIN_STAR_COLOR_CHANNEl, MAX_STAR_COLOR_CHANNEl) / (float)MAX_STAR_COLOR_CHANNEl;
-            Color.A = 1f;
-            Star.Mask = Color;
-
-            Star.Scale.Vector = Vector2.One * MAX_STAR_SIZE * Random.Shared.NextSingle();
-            Star.Rotation = Random.Shared.NextSingle() * MathHelper.TwoPi;
-
-            ParentFrame.LayerManager.BackgroundLayer.AddDrawableItem(Star);
-            Stars.Add(Star);
-        }
-        _stars = Stars.ToArray();
-        
-    }
-
 
     // Inherited methods.
     internal override void Load()
     {
-        _logoAnim = new(0f, ParentFrame, Origin.TopLeft, "ui/logo_tiny");
-        _backgroundAnim = new(0f, ParentFrame, Origin.TopLeft, "ui/title/title_background");
-        _planetAnim = new(0f, ParentFrame, Origin.BottomRight, "ui/title/planet");
-        _starAnim = new(0f, ParentFrame, Origin.Center, "ui/title/star");
+        _background.Load(ParentFrame);
     }
 
     internal override void OnStart()

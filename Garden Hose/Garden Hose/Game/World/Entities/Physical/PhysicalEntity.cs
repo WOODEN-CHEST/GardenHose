@@ -7,7 +7,7 @@ using GardenHoseEngine;
 using GardenHoseEngine.Screen;
 using GardenHose.Game.World.Material;
 using GardenHose.Game.World.Entities.Physical.Events;
-using GardenHose.Game.AssetManager;
+using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical.Collision;
 
 namespace GardenHose.Game.World.Entities.Physical;

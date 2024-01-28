@@ -17,7 +17,7 @@ public sealed partial class SpriteAnimation
 
 
     // Constructors.
-    public SpriteAnimation(float fps, IGameFrame owner, Origin? textureOrigin, params string[] relativePaths)
+    public SpriteAnimation(float fps, IGameFrame? owner, Origin? textureOrigin, params string[] relativePaths)
     {
         DefaultFPS = fps;
 

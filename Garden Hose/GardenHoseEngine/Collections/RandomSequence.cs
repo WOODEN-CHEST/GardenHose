@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 
 
 namespace GardenHoseEngine.Collections;
 
-public class RandomSequence<T> : IEnumerable<T>
+public class RandomSequence<T>
 {
     // Fields.
+    [MemberNotNull(nameof(_items))]
     public T[] Items
     {
         get => _items.ToArray();
@@ -67,20 +62,6 @@ public class RandomSequence<T> : IEnumerable<T>
 
         _index = _items.Length - 1;
     }
-
-    // Inherited methods.
-    public IEnumerator<T> GetEnumerator()
-    {
-        Randomize();
-
-        for (; _index > 0; _index--)
-        {
-            yield return _items[_index];
-        }
-    }
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
 
     // Operators.
     public T this[int index]

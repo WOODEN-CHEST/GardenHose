@@ -1,21 +1,19 @@
-﻿using GardenHoseEngine.Logging;
-using NAudio.CoreAudioApi;
-using NAudio.Dsp;
+﻿using NAudio.CoreAudioApi;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
-using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
+
 namespace GardenHoseEngine.Audio;
+
 
 public class AudioEngine : IDisposable, ISampleProvider
 {
     // Static fields.
     public const int MAX_SOUNDS = 128;
     public const int AUDIO_LATENCY_MS = 30;
-    public static AudioEngine Engine { get; internal set; }
+    public static AudioEngine DefaultEngine { get; internal set; }
 
 
     // Fields.

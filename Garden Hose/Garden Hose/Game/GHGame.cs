@@ -2,7 +2,7 @@
 using GardenHose.Game.World;
 using GardenHoseEngine.Frame;
 using GardenHose.Frames.InGame;
-using GardenHose.Game.AssetManager;
+using GardenHose.Game.GameAssetManager;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework.Input;
 using GardenHoseEngine.Frame.Item.Text;

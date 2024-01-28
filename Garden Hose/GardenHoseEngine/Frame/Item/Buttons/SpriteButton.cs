@@ -99,7 +99,7 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
         }
     }
 
-    public void ClearHandlers(ButtonEvent buttonEvent)
+    public void ClearHandlers()
     {
         foreach (ButtonHandler Handler in _handlers.Values)
         {

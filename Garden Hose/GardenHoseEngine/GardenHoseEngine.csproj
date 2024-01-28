@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <Compile Remove="Frame\DynamicFont.cs" />
+    <Compile Remove="Frame\Item\Buttons\Button.cs" />
     <Compile Remove="Frame\Item\Buttons\IButtonComponent.cs" />
     <Compile Remove="Frame\Item\Buttons\RectangleButtonComponent.cs" />
     <Compile Remove="Frame\Item\Buttons\RoundButtonComponent.cs" />

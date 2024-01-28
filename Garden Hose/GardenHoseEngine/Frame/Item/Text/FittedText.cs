@@ -17,6 +17,7 @@ public class FittedText : ColoredItem, ITextItem
         set
         {
             _text = value ?? throw new ArgumentNullException(nameof(value));
+            UpdateTextProperties();
         }
     }
 
@@ -24,49 +25,85 @@ public class FittedText : ColoredItem, ITextItem
     public SpriteFont Font
     {
         get => _font;
-        set => _font = value ?? throw new ArgumentNullException(nameof(_font));
+        set
+        {
+            _font = value ?? throw new ArgumentNullException(nameof(_font));
+            UpdateTextProperties();
+        }
     }
 
-    public Origin TextOrigin { get; set; }
+    public Origin TextOrigin
+    {
+        get => _origin;
+        set
+        {
+            _origin = value;
+            UpdateTextProperties();
+        }
+    }
+
     public float Scale
     {
         get => _scale;
         set
         {
             _scale = value;
-            UpdateFinalTextSize();
+            UpdateTextProperties();
         }
     }
+
     public SpriteEffects Effects { get; set; }
-    public float FittingSizePixels { get; set; }
+
+    public float FittingSizePixels
+    {
+        get => _fittingSizePixels;
+        set
+        {
+            _fittingSizePixels = value;
+            UpdateTextProperties();
+        }
+    }
+
     public Vector2 PixelSize => _font.MeasureString(Text);
     public bool IsShadowEnabled {  get; set; } = false;
     public Color ShadowColor { get; set; } = Color.Black;
 
+    public Vector2 ShadowOffset
+    {
+        get => _shadowOffset;
+        set
+        {
+            _shadowOffset = value;
+            UpdateTextProperties();
+        }
+    }
+
+
     // Private fields.
     private string _text;
     private SpriteFont _font;
+
+    private Origin _origin;
     private Vector2 _originLocation;
-    private float _scale;
-    private float _finalTextSize;
+
+    private float _fittingSizePixels = float.MaxValue;
+    private float _scale = 1f;
+    private float _finalTextSize = 1f;
+
+    private Vector2 _shadowOffset = new(0.15f, 0.15f);
+    private Vector2 _finalShadowOffset = new(0.15f, 0.15f);
 
 
     // Constructors.
     public FittedText(string text, SpriteFont font)
     {
+        _font = font ?? throw new ArgumentNullException(nameof(font));
         Text = text;
-        Font = font;
     }
 
 
     // Private methods.
-    private void UpdateFinalTextSize()
-    {
-        float TextLengthPixels = PixelSize.X * Scale;
-        _finalTextSize = Math.Min(1f, FittingSizePixels / TextLengthPixels);
-    }
-
-    private void UpdateOrigin()
+    private void UpdateTextProperties()
     {
         Vector2 TextSizePixels = PixelSize;
         _originLocation = TextOrigin switch
@@ -77,21 +114,36 @@ public class FittedText : ColoredItem, ITextItem
             Origin.CenterLeft => new Vector2(0f, TextSizePixels.Y * 0.5f),
             Origin.Center => new Vector2(TextSizePixels.X * 0.5f, TextSizePixels.Y * 0.5f),
             Origin.CenterRight => new Vector2(TextSizePixels.X, TextSizePixels.Y * 0.5f),
-            Origin.BottomLeft => new Vector2(0f, TextSizePixels.Y ),
+            Origin.BottomLeft => new Vector2(0f, TextSizePixels.Y),
             Origin.BottomMiddle => new Vector2(TextSizePixels.X * 0.5f, TextSizePixels.Y),
             Origin.BottomRight => new Vector2(TextSizePixels.X, TextSizePixels.Y),
             _ => throw new EnumValueException(nameof(TextOrigin), TextOrigin),
         };
+
+        float TextLengthPixels = TextSizePixels.X * Scale;
+        _finalTextSize = Math.Min(Scale, FittingSizePixels / TextLengthPixels);
+
+        _finalShadowOffset = _shadowOffset * _finalTextSize * Font.Spacing;
     }
 
     // Inherited methods.
     public override void Draw(IDrawInfo info)
     {
+        if (!IsDrawingNeeded) return;
 
         if (IsShadowEnabled)
         {
-
+            info.SpriteBatch.DrawString(Font,
+            Text,
+            Display.ToRealPosition(Position),
+            ShadowColor,
+            Rotation,
+            _originLocation + _finalShadowOffset,
+            Display.ToRealScale(new Vector2(_finalTextSize)),
+            Effects,
+            IDrawableItem.DEFAULT_LAYER_DEPTH);
         }
+
         info.SpriteBatch.DrawString(Font,
             Text,
             Display.ToRealPosition(Position),

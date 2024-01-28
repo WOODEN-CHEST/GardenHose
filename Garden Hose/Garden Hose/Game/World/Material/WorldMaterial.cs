@@ -1,4 +1,4 @@
-﻿using GardenHose.Game.AssetManager;
+﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Particle;
 using GardenHoseEngine.Audio;
 

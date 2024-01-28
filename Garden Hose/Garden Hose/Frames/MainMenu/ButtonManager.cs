@@ -1,5 +1,4 @@
 ﻿using GardenHose.Frames.InGame;
-using GardenHose.UI;
 using GardenHose.UI.Buttons.Connector;
 using GardenHoseEngine;
 using GardenHoseEngine.Animatable;
@@ -41,13 +40,13 @@ internal class MainFrameButtonManager : FrameComponentManager<MainMenuFrame>
     // Internal methods.
     internal void SetMainButtonAbility(bool ability)
     {
-        _play.IsEnabled = ability;
+        _play.IsFunctional = ability;
         _play.IsVisible = ability;
-        _editor.IsEnabled = ability;
+        _editor.IsFunctional = ability;
         _editor.IsVisible = ability;
-        _options.IsEnabled = ability;
+        _options.IsFunctional = ability;
         _options.IsVisible = ability;
-        _exit.IsEnabled = ability;
+        _exit.IsFunctional = ability;
         _exit.IsVisible = ability;
 
     }

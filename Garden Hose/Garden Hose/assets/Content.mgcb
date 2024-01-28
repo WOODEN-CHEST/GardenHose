@@ -705,18 +705,6 @@
 /processorParam:TextureFormat=Color
 /build:textures/ui/title/planet.png
 
-#begin textures/ui/title/star.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:textures/ui/title/star.png
-
 #begin textures/ui/title/title_background.png
 /importer:TextureImporter
 /processor:TextureProcessor

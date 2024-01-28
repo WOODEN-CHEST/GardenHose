@@ -2,7 +2,7 @@
 
 public enum InterpolationMethod
 {
-    Linear = 0,
+    Linear,
     EaseIn,
     EaseOut,
     Sine,

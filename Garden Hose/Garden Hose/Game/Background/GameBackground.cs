@@ -1,4 +1,4 @@
-﻿using GardenHose.Game.AssetManager;
+﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.Background;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
@@ -8,29 +8,36 @@ using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using static System.Formats.Asn1.AsnWriter;
 
 
 namespace GardenHose.Game;
 
-internal class GameBackground : IDrawableItem, ITimeUpdatable
+internal class GameBackground : IDrawableItem
 {
     // Fields.
     public bool IsVisible { get; set; } = true;
-
     public Effect? Shader { get; set; } = null;
 
 
     // Internal fields.
+    internal const string ASSETPATH_STAR_SMALL = "game/stars/small";
+    internal const string ASSETPATH_STAR_MEDIUM = "game/stars/medium";
+    internal const string ASSETPATH_STAR_BIG = "game/stars/big";
+    internal const string ASSETPATH_BACKGROUND_DEFAULT = "game/backgrounds/default";
+
     internal Color SpaceColor { get; set; } = Color.Black;
-
     internal int SmallStarCount { get; init; } = 0;
-
     internal int MediumStarCount { get; init; } = 0;
-
     internal int BigStarCount { get; init; } = 0;
-
     internal BackgroundImage Image { get; init; }
+
+
+    // Private static fields.
+    private static readonly Vector2 SMALL_STAR_SIZE = new(11f);
+    private static readonly Vector2 MEDIUM_STAR_SIZE = new(24f);
+    private static readonly Vector2 LARGE_STAR_SIZE = new(58f);
+    private const float MAX_STAR_SCALE = 1f;
+    private const float MIN_STAR_SCALE = 0.5f;
 
 
     // Private fields.
@@ -42,6 +49,7 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
     private const float STAR_TWINKLE_TIME = 1 / 10f;
     private float _timeSinceStarTwinkle = 0f;
     private const float STAR_MIN_BRIGHTNESS = 0.8f;
+    private const float STAR_MAX_BRIGHTNESS = 1.0f;
     private SpriteItem[] _stars;
 
 
@@ -53,19 +61,31 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
     }
 
 
-
     // Internal methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _smallStarAnim = assetManager.GetAnimation("background_star_small")!.CreateInstance();
-        _mediumStarAnim = assetManager.GetAnimation("background_star_medium")!.CreateInstance();
-        _bigStarAnim = assetManager.GetAnimation("background_star_big")!.CreateInstance();
+        _smallStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Small)!.CreateInstance();
+        _mediumStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Medium)!.CreateInstance();
+        _bigStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Big)!.CreateInstance();
 
         _background = Image switch
         {
-            BackgroundImage.Default => new(assetManager.GetAnimation("background_default")!),
-            _ => throw new EnumValueException(nameof(Image), nameof(BackgroundImage),
-                Image.ToString(), (int)Image)
+            BackgroundImage.Default => new(assetManager.GetAnimation(GameAnimationName.Background_Default)!.CreateInstance()),
+            _ => throw new EnumValueException(nameof(Image), Image)
+        };
+    }
+
+    internal void Load(IGameFrame? owner)
+    {
+        _smallStarAnim = new SpriteAnimation(0f, owner, Origin.Center, ASSETPATH_STAR_SMALL).CreateInstance();
+        _mediumStarAnim = new SpriteAnimation(0f, owner, Origin.Center, ASSETPATH_STAR_MEDIUM).CreateInstance();
+        _bigStarAnim = new SpriteAnimation(0f, owner, Origin.Center, ASSETPATH_STAR_BIG).CreateInstance();
+
+        _background = Image switch
+        {
+            BackgroundImage.Default => new(new SpriteAnimation(0f, owner, Origin.TopLeft, 
+                ASSETPATH_BACKGROUND_DEFAULT) .CreateInstance(), Display.VirtualSize),
+            _ => throw new EnumValueException(nameof(Image), Image)
         };
     }
 
@@ -76,31 +96,28 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
 
         for (int i =0; i < SmallStarCount; i++, Index++)
         {
-            SpriteItem Star = new(_smallStarAnim);
-            Star.Position.Vector = GetRandomPosition();
+            SpriteItem Star = new(_smallStarAnim, SMALL_STAR_SIZE * GetRandomScale());
+            Star.Position = GetRandomPosition();
             Star.Mask = GetRandomStarColor();
             Star.Rotation = GetRandomRotation();
-            Star.Scale.Vector = GetRandomScale();
             _stars[Index] = Star;
         }
 
         for (int i = 0; i < MediumStarCount; i++, Index++)
         {
-            SpriteItem Star = new(_mediumStarAnim);
-            Star.Position.Vector = GetRandomPosition();
+            SpriteItem Star = new(_mediumStarAnim, MEDIUM_STAR_SIZE * GetRandomScale());
+            Star.Position = GetRandomPosition();
             Star.Mask = GetRandomStarColor();
             Star.Rotation = GetRandomRotation();
-            Star.Scale.Vector = GetRandomScale();
             _stars[Index] = Star;
         }
 
         for (int i = 0; i < BigStarCount; i++, Index++)
         {
-            SpriteItem Star = new(_bigStarAnim);
-            Star.Position.Vector = GetRandomPosition();
+            SpriteItem Star = new(_bigStarAnim, LARGE_STAR_SIZE * GetRandomScale());
+            Star.Position = GetRandomPosition();
             Star.Mask = GetRandomStarColor();
             Star.Rotation = GetRandomRotation();
-            Star.Scale.Vector = GetRandomScale();
             _stars[Index] = Star;
         }
     }
@@ -125,41 +142,34 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
         return Random.Shared.NextSingle() * MathHelper.TwoPi;
     }
 
-    private Vector2 GetRandomScale()
+    private float GetRandomScale()
     {
-        const float STAR_SCALE = 0.25f;
-        const float MAX_STAR_DOWNSCALE = 0.5f;
-
-        return new Vector2(STAR_SCALE - (MAX_STAR_DOWNSCALE * Random.Shared.NextSingle()) );
+        return MAX_STAR_SCALE - (MIN_STAR_SCALE * Random.Shared.NextSingle());
     }
 
     private void TwinkleStars()
     {
         foreach (SpriteItem Star in _stars)
         {
-            Star.Brightness = STAR_MIN_BRIGHTNESS + (Random.Shared.NextSingle() * (1f - STAR_MIN_BRIGHTNESS));
+            Star.Brightness = STAR_MIN_BRIGHTNESS - (Random.Shared.NextSingle() * (1f - STAR_MIN_BRIGHTNESS));
         }
     }
 
 
     // Inherited methods.
-    public void Update()
+    public void Draw(IDrawInfo info)
     {
-        _timeSinceStarTwinkle += GameFrameManager.PassedTimeSeconds;
+        if (!IsVisible) return;
+
+        _timeSinceStarTwinkle += info.Time.PassedTimeSeconds;
 
         if (_timeSinceStarTwinkle > STAR_TWINKLE_TIME)
         {
             TwinkleStars();
             _timeSinceStarTwinkle = 0f;
         }
-        
-    }
 
-    public void Draw()
-    {
-        if (!IsVisible) return;
-
-        GameFrameManager.SpriteBatch.Draw(
+        info.SpriteBatch.Draw(
             Display.SinglePixel,
             Vector2.Zero,
             null,
@@ -170,11 +180,11 @@ internal class GameBackground : IDrawableItem, ITimeUpdatable
             SpriteEffects.None,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
 
-        _background.Draw();
+        _background.Draw(info);
 
         foreach (SpriteItem Star in _stars)
         {
-            Star.Draw();
+            Star.Draw(info);
         }
     }
 }
