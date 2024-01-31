@@ -44,30 +44,7 @@ public class GameWorld : IIDProvider
 
 
     /* Camera. */
-    internal Vector2 CameraCenter
-    {
-        get => _cameraCenter;
-        set
-        {
-            _cameraCenter = value;
-            ObjectVisualOffset = (Display.VirtualSize / 2f) - (_cameraCenter * Zoom);
-        }
-    }
-
-    internal Vector2 ObjectVisualOffset { get; private set; }
-
-    internal float Zoom
-    {
-        get => _zoom;
-        set
-        {
-            _zoom = value;
-            InverseZoom = 1f / value;
-            CameraCenter = _cameraCenter; // Forces object visual position update.
-        }
-    }
-
-    internal float InverseZoom { get; private set; } = 1f;
+    
 
 
     /* Debug. */
@@ -94,8 +71,7 @@ public class GameWorld : IIDProvider
     private readonly List<Entity> _entitiesRemoved = new();
 
     /* Camera. */
-    private Vector2 _cameraCenter;
-    private float _zoom = 1f;
+    
 
     /* Debug. */
     private bool _isDebugInfoEnabled = false;
@@ -243,31 +219,17 @@ public class GameWorld : IIDProvider
     }
 
 
-    /* Camera. */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal Vector2 ToViewportPosition(Vector2 worldPosition)
-    {
-        return (worldPosition * Zoom) + ObjectVisualOffset;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal Vector2 ToWorldPosition(Vector2 viewportPosition)
-    {
-        return (viewportPosition - ObjectVisualOffset) / Zoom;
-    }
-
-
     /* Collision. */
     internal void AddPhysicalEntityToWorldPart(PhysicalEntity entity)
     {
         int HALF_WORLD_PART_COUNT = WORLD_PART_COUNT / 2;
-        int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
-        int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
         int UpperX = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.X + entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+            ((int)(entity.Position.X + entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
         int UpperY = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.Y + entity.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+            ((int)(entity.Position.Y + entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
         for (int i = LowerX; i <= UpperX; i++)
         {
@@ -324,15 +286,17 @@ public class GameWorld : IIDProvider
     /* Tick. */
     private void HandleEntityCollisionCases(CollisionCase[] collisionCases)
     {
-        foreach (CollisionCase Case in collisionCases)
+        foreach (CollisionCase SelfCase in collisionCases)
         {
+            CollisionCase TargetCase = SelfCase.GetInvertedCase();
+
             if (Case.SelfEntity.Mass > Case.TargetEntity.Mass && Case.TargetEntity.IsCollisionReactionEnabled)
             {
-                Case.TargetEntity.PushOutOfOtherEntity(Case.TargetBound, Case.BoundA, Case.EntityA, Case.PartB, Case.PartA);
+                Case.TargetEntity.PushOutOfOtherEntity(Case.TargetBound, Case.SelfBound, Case.EntityA, Case.PartB, Case.PartA);
             }
-            else if (Case.EntityA.IsCollisionReactionEnabled)
+            else if (Case.SelfEntity.IsCollisionReactionEnabled)
             {
-                Case.EntityA.PushOutOfOtherEntity(Case.BoundA, Case.BoundB, Case.EntityB, Case.PartA, Case.PartB);
+                Case.SelfEntity.PushOutOfOtherEntity(Case.SelfBound, Case.TargetBound, Case.TargetEntity, Case.SelfPart, Case.TargetPart);
             }
 
             Case.EntityA.OnCollision(Case.EntityB,

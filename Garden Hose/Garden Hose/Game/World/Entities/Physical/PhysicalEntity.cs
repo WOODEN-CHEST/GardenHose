@@ -26,11 +26,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Collision. */
-    internal bool IsCollisionEnabled { get; set; } = true; // Whether collision testing is even done.
+    internal EntityCollisionHandler CollisionHandler { get; private init; }
 
-    internal bool IsCollisionReactionEnabled { get; set; } = true; // Whether the object reacts to collisions.
-
-    internal float BoundingLength { get; private set; }
+    
 
     internal bool IsInvulnerable { get; set; } = false;
 
@@ -207,7 +205,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     protected const float MIN_POSITION = -100_000f;
     protected const float MAX_POSITION = 100_000f;
 
-    protected readonly HashSet<PhysicalEntity> EntitiesCollidedWith = new();
+    
 
 
     // Private fields.
@@ -219,7 +217,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     private Vector2 _motion;
     private float _angularMotion;
 
-    private readonly HashSet<PhysicalEntity> _collisionIgnorableEntities = new();
+   
     
 
     // Constructors.
@@ -236,6 +234,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position = position;
 
         CommonMath = new(this);
+        CollisionHandler = new(this);
     }
 
 
@@ -276,49 +275,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     /* Collision. */
-    internal virtual bool TestCollisionAgainstEntity(PhysicalEntity entity, out CollisionCase[] collisions)
-    {
-        collisions = Array.Empty<CollisionCase>();
 
-        // Early exits and special cases.
-        if (!IsCollisionEnabled || !entity.IsCollisionEnabled ||
-            _collisionIgnorableEntities.Contains(entity) || entity._collisionIgnorableEntities.Contains(this)
-            || EntitiesCollidedWith.Contains(entity) || entity.EntitiesCollidedWith.Contains(this))
-        {
-            return false;
-        }
-
-        // Test bounding circles.
-        if (Vector2.Distance(Position, entity.Position) > (BoundingLength + entity.BoundingLength))
-        {
-            return false;
-        }
-
-        // Test parts against entity.
-        List<CollisionCase> Collisions = null!;
-
-        foreach (PhysicalEntityPart SelfPart in Parts)
-        {
-            CollisionCase[] CollisionsInPart = SelfPart.TestCollisionAgainstEntity(entity);
-            
-            if (CollisionsInPart.Length != 0)
-            {
-                Collisions ??= new();
-                Collisions.AddRange(CollisionsInPart);
-            }
-        }
-
-        collisions = Collisions?.ToArray() ?? Array.Empty<CollisionCase>();
-
-        if (collisions.Length != 0)
-        {
-            EntitiesCollidedWith.Add(entity);
-
-            entity.EntitiesCollidedWith.Add(this);
-            return true;
-        }
-        return false;
-    }
 
     internal virtual void OnCollision(PhysicalEntity otherEntity,
         PhysicalEntityPart selfPart,
@@ -392,36 +349,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Position = SelfPosition;
     }
 
-    internal void AddCollisionIgnorable(PhysicalEntity entity)
-    {
-        if  (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
 
-        if (_collisionIgnorableEntities.Add(entity))
-        {
-            entity.EntityDelete += OnCollisionIgnorableEntityDeleteEvent;
-        }
-    }
-
-    internal void RemoveCollisionIgnorable(PhysicalEntity entity)
-    {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
-
-        if (_collisionIgnorableEntities.Remove(entity))
-        {
-            entity.EntityDelete -= OnCollisionIgnorableEntityDeleteEvent;
-        }
-    }
-
-    internal bool IsCollisionIgnored(PhysicalEntity targetEntity)
-    {
-        return _collisionIgnorableEntities.Contains(targetEntity);
-    }
 
 
     /* Part events. */
@@ -561,109 +489,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Collision. */
-    private void CreateBoundingBox()
-    {
-        if (MainPart == null)
-        {
-            return;
-        }
-
-        List<Vector2> Points = GetAllPointsInCollisionBounds();
-
-        if (Points.Count == 0)
-        {
-            return;
-        }
-
-        Vector2? FurthestPoint = null;
-        foreach (Vector2 point in Points)
-        {
-            if ((FurthestPoint == null) || (point.LengthSquared() > FurthestPoint.Value.LengthSquared()))
-            {
-                FurthestPoint = point;
-            }
-        }
-
-        BoundingLength = FurthestPoint!.Value.Length();
-    }
-
-    private List<Vector2> GetAllPointsInCollisionBounds()
-    {
-        List<Vector2> Points = new();
-
-        foreach (PhysicalEntityPart Part in Parts)
-        {
-            if (Part.CollisionBounds == null)
-            {
-                continue;
-            }
-
-            Vector2 PartPosition = Vector2.Zero;
-            foreach (PartLink Link in Part.GetPathFromMainPart())
-            {
-                PartPosition += Link.LinkDistance;
-            }
-
-            foreach (ICollisionBound Bound in Part.CollisionBounds)
-            {
-                Points.AddRange(GetCollisionBoundPoints(Bound, PartPosition));
-            }
-        }
-
-        return Points;
-    }
-
-    private Vector2[] GetCollisionBoundPoints(ICollisionBound bound, Vector2 partPosition)
-    {
-        Vector2 BoundPosition = partPosition + bound.Offset;
-
-        switch (bound.Type)
-        {
-            case CollisionBoundType.Rectangle:
-                RectangleCollisionBound RectBound = (RectangleCollisionBound)bound;
-                float LongestEdgeLength = Math.Max(RectBound.HalfSize.X, RectBound.HalfSize.Y);
-
-                return new Vector2[]
-                {
-                BoundPosition + new Vector2(LongestEdgeLength, LongestEdgeLength),
-                BoundPosition + new Vector2(-LongestEdgeLength, -LongestEdgeLength),
-                BoundPosition + new Vector2(-LongestEdgeLength, LongestEdgeLength),
-                BoundPosition + new Vector2(LongestEdgeLength, -LongestEdgeLength),
-                };
-
-
-            case CollisionBoundType.Ball:
-                BallCollisionBound BallBound = (BallCollisionBound)bound;
-
-                Vector2 NormalToBallPoint = BoundPosition -partPosition;
-                if (NormalToBallPoint.LengthSquared() == 0)
-                {
-                    NormalToBallPoint = Vector2.UnitX;
-                }
-                else
-                {
-                    NormalToBallPoint = Vector2.Normalize(NormalToBallPoint);
-                }
-
-                return new Vector2[]
-                {
-                    BoundPosition + NormalToBallPoint * BallBound.Radius
-                };
-
-
-            default:
-                throw new NotImplementedException("Getting collision bound points is not supported for bound type" +
-                    $"of \"{bound.Type}\" (int value of {(int)bound.Type})");
-        }
-    }
-
-    private void OnCollisionIgnorableEntityDeleteEvent(object? sender, EventArgs args)
-    {
-        if (sender != null)
-        {
-            _collisionIgnorableEntities.Remove((PhysicalEntity)sender);
-        }
-    }
+  
 
     private void OnSoftCollision(PhysicalEntity otherEntity, Vector2 collisionPoint, Vector2 selfMotion, Vector2 otherMotion)
     {

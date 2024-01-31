@@ -7,9 +7,7 @@ internal struct Circle
 {
     // Fields.
     internal float RSquared { get; init; }
-
     internal float XNumber { get; init; }
-
     internal float YNumber { get; init; }
 
 

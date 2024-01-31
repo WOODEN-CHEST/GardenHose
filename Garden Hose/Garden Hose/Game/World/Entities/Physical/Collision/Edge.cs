@@ -12,13 +12,9 @@ internal struct Edge
 {
     // Fields.
     internal Vector2 StartVertex { get; set; }
-
     internal Vector2 EndVertex { get; set; }
-
     internal Vector2 Step => EndVertex - StartVertex;
-
     internal Vector2 MiddleVertex => StartVertex + (Step * 0.5f);
-
     internal float Length => Vector2.Distance(StartVertex, EndVertex);
 
 
@@ -46,13 +42,13 @@ internal struct Edge
     // Inherited methods.
     public override bool Equals([NotNullWhen(true)] object? obj)
     {
-        if (obj is not Edge)
+        if (obj is Edge)
         {
-            return false;
+            Edge ObjEdge = (Edge)obj;
+            return (ObjEdge.StartVertex == StartVertex) && (ObjEdge.EndVertex == EndVertex);
         }
-
-        Edge ObjEdge = (Edge)obj;
-        return (ObjEdge.StartVertex == StartVertex && ObjEdge.EndVertex == EndVertex);
+        return false;
+        
     }
 
     public override int GetHashCode()

@@ -13,9 +13,7 @@ internal struct EquationRay
 {
     // Fields.
     internal float YOffset { get; private set; }
-
     internal float YStep { get; private set; }
-
     internal float OriginX { get; private set; } // Cheap band-aid fix for vertical ray cases where y=∞x+.
 
 

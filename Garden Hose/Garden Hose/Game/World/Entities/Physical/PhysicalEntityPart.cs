@@ -57,7 +57,7 @@ internal class PhysicalEntityPart
 
 
     /* Collision bounds and parts. */
-    internal virtual ICollisionBound[]? CollisionBounds
+    internal virtual ICollisionBound[] CollisionBounds
     {
         get => _collisionBounds;
         set
@@ -66,9 +66,12 @@ internal class PhysicalEntityPart
             {
                 return;
             }
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
 
             _collisionBounds = value;
-
             Entity.OnPartCollisionBoundChange();
             CollisionBoundChange?.Invoke(this, _collisionBounds);
         }
@@ -122,14 +125,14 @@ internal class PhysicalEntityPart
 
 
     // Private fields.
-    private ICollisionBound[]? _collisionBounds;
+    private ICollisionBound[] _collisionBounds;
     private float _selfRotation = 0f;
 
     private PartLink? _parentLink;
 
 
     // Constructors.
-    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, WorldMaterial material, PhysicalEntity entity)
+    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, WorldMaterial material, PhysicalEntity entity)
         : this(collisionBounds, material.CreateInstance(), entity) { }
 
     internal PhysicalEntityPart(WorldMaterial material, PhysicalEntity entity)
@@ -138,7 +141,7 @@ internal class PhysicalEntityPart
     internal PhysicalEntityPart(WorldMaterialInstance material, PhysicalEntity entity)
         : this(null, material, entity) { }
 
-    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, 
+    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, 
         WorldMaterialInstance material,
         PhysicalEntity entity)
     {
@@ -242,49 +245,7 @@ internal class PhysicalEntityPart
     }
 
     /* Collision. */
-    internal virtual CollisionCase[] TestCollisionAgainstEntity(PhysicalEntity entity)
-    {
-        if (CollisionBounds == null || MaterialInstance.State == WorldMaterialState.Gas)
-        {
-            return Array.Empty<CollisionCase>();
-        }
 
-        foreach (ICollisionBound CollisionBound in CollisionBounds)
-        {
-            return TestBoundAgainstEntity(CollisionBound, entity);
-        }
-
-        return Array.Empty<CollisionCase>();
-    }
-
-    internal (Vector2[] points, Vector2 surfaceNormal)? TestBoundAgainstBound(ICollisionBound selfBound,
-        ICollisionBound targetBound, PhysicalEntityPart targetPart)
-    {
-        if (selfBound.Type == CollisionBoundType.Rectangle && targetBound.Type == CollisionBoundType.Rectangle)
-        {
-            return GetCollisionPointsRectToRect((RectangleCollisionBound)selfBound, (RectangleCollisionBound)targetBound, targetPart);
-        }
-        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Rectangle)
-        {
-            return GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound,
-                targetPart, (BallCollisionBound)selfBound, this);
-        }
-        else if (selfBound.Type == CollisionBoundType.Rectangle && targetBound.Type == CollisionBoundType.Ball)
-        {
-            return GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound,
-                this, (BallCollisionBound)targetBound, targetPart);
-        }
-        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Ball)
-        {
-            return GetCollisionPointsBallToBall((BallCollisionBound)selfBound, (BallCollisionBound)targetBound, targetPart);
-        }
-        else
-        {
-            throw new NotSupportedException("Unknown bound types, cannot test collision. " +
-               $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
-               $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
-        }
-    }
 
     internal void OnCollision(Vector2 location, float appliedForce)
     {
@@ -378,7 +339,7 @@ internal class PhysicalEntityPart
 
     internal virtual void DrawCollisionBounds()
     {
-        if (CollisionBounds == null)
+        if (CollisionBounds.Length == 0)
         {
             return;
         }
@@ -411,168 +372,7 @@ internal class PhysicalEntityPart
 
     // Protected methods.
     /* Collision. */
-    protected virtual CollisionCase[] TestBoundAgainstEntity(ICollisionBound selfBound,
-        PhysicalEntity targetEntity)
-    {
-        List<CollisionCase> CollisionCases = new();
 
-        foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
-        {
-            if (TargetPart.CollisionBounds == null || TargetPart.MaterialInstance.State == WorldMaterialState.Gas)
-            {
-                continue;
-            }
-
-            (Vector2[] points, Vector2 surfaceNormal)? CollisionData = null;
-
-            foreach (ICollisionBound TargetBound in TargetPart.CollisionBounds) // At this point it is a 4 layer deep foreach loop...
-            {
-                //Test collision box bounds.
-                float Radius1 = selfBound.GetRadius();
-                float Radius2 = TargetBound.GetRadius();
-
-                if (Vector2.Distance(Position + selfBound.Offset, TargetPart.Position + TargetBound.Offset) > Radius1 + Radius2)
-                {
-                    continue;
-                }
-
-                // Get collision data.
-                CollisionData = TestBoundAgainstBound(selfBound, TargetBound, TargetPart);
-
-                if (CollisionData == null)
-                {
-                    continue;
-                }
-
-                // Build case.
-                CollisionCase Case = new(
-                    Entity,
-                    targetEntity,
-                    this,
-                    TargetPart,
-                    selfBound,
-                    TargetBound,
-                    CollisionData.Value.surfaceNormal,
-                    CollisionData.Value.points);
-                CollisionCases.Add(Case);
-            }
-        }
-
-        return CollisionCases.ToArray();
-    }
-
-    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToRect(RectangleCollisionBound rect1,
-        RectangleCollisionBound rect2,
-        PhysicalEntityPart rect2SourcePart)
-    {
-        // Prepare variables.
-        Vector2[] VerticesRect1 = rect1.GetVertices(Position, CombinedRotation);
-        Vector2[] VerticesRect2 = rect1.GetVertices(rect2SourcePart.Position, rect2SourcePart.CombinedRotation);
-        Edge[] rect2Edges = new Edge[]
-        {
-            new Edge(VerticesRect2[0], VerticesRect2[1]),
-            new Edge(VerticesRect2[1], VerticesRect2[2]),
-            new Edge(VerticesRect2[2], VerticesRect2[3]),
-            new Edge(VerticesRect2[3], VerticesRect2[0])
-        };
-        EquationRay[] rect2Rays = new EquationRay[]
-        {
-            new(rect2Edges[0]),
-            new(rect2Edges[1]),
-            new(rect2Edges[2]),
-            new(rect2Edges[3]),
-        };
-        List<Vector2> CollisionPoints = new();
-
-        // Find collision points.
-        for (int EdgeIndex1 = 0; EdgeIndex1 < VerticesRect1.Length; EdgeIndex1++)
-        {
-            Edge PrimaryEdge = new Edge(VerticesRect1[EdgeIndex1], VerticesRect1[(EdgeIndex1 + 1) % VerticesRect1.Length]);
-            EquationRay PrimaryEdgeRay = new EquationRay(PrimaryEdge);
-
-            for (int EdgeIndex2 = 0; EdgeIndex2 < rect2Rays.Length; EdgeIndex2++)
-            {
-                Vector2? CollisionPoint = EquationRay.GetIntersection(PrimaryEdgeRay, rect2Rays[EdgeIndex2]);
-
-                if  (CollisionPoint != null 
-                    && PrimaryEdge.IsPointInEdgeArea(CollisionPoint.Value)
-                    && rect2Edges[EdgeIndex2].IsPointInEdgeArea(CollisionPoint.Value))
-                {
-                    CollisionPoints.Add(CollisionPoint.Value);
-                }
-            }
-        }
-
-        // Return intersection points.
-        if (CollisionPoints.Count == 0)
-        {
-            return null;
-        }
-        return (CollisionPoints.ToArray(), Vector2.Normalize((rect2SourcePart.Position + rect2.Offset) - (Position + rect1.Offset)));
-    }
-
-    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsRectToBall(
-        RectangleCollisionBound rect,
-        PhysicalEntityPart rectSourcePart,
-        BallCollisionBound ball,
-        PhysicalEntityPart ballSourcePart)
-    {
-        // Prepare variables.
-        List<Vector2> CollisionPoints = new();
-        Vector2[] Vertices = rect.GetVertices(rectSourcePart.Position, rectSourcePart.CombinedRotation);
-
-        Vector2 RectPosition = rectSourcePart.Position + rect.Offset;
-        Vector2 BallPosition = ballSourcePart.Position + ball.Offset;
-
-        Circle BallCircle = new(ball.Radius, BallPosition);
-
-        // Iterate over edge rays, find intersections with circle.
-        for (int EdgeIndex = 0; EdgeIndex < Vertices.Length; EdgeIndex++)
-        {
-            Edge Edge = new(Vertices[EdgeIndex], Vertices[(EdgeIndex + 1) % Vertices.Length]);
-            EquationRay EdgeRay = new(Edge);
-
-            Vector2[] Points = Circle.GetIntersections(BallCircle, EdgeRay);
-            if (Points.Length != 0)
-            {
-                foreach (Vector2 Point in Points)
-                {
-                    if (Edge.IsPointInEdgeArea(Point))
-                    {
-                        CollisionPoints.Add(Point);
-                    }
-                }
-            }
-        }
-
-        // Return intersection points.
-        if (CollisionPoints.Count == 0)
-        {
-            return null;
-        }
-
-        return (CollisionPoints.ToArray(), Vector2.Normalize(RectPosition- BallPosition));
-    }
-
-    protected virtual (Vector2[] points, Vector2 surfaceNormal)? GetCollisionPointsBallToBall(BallCollisionBound ball1,
-        BallCollisionBound ball2,
-        PhysicalEntityPart ball2SourcePart
-        )
-    {
-        // Prepare variables.
-        Circle PrimaryCircle = new(ball1.Radius, Position + ball1.Offset);
-        Circle SecondaryCircle = new(ball2.Radius, ball2SourcePart.Position + ball2.Offset);
-
-        // Find collision points.
-        Vector2[] CollisionPoints = Circle.GetIntersections(PrimaryCircle, SecondaryCircle);
-
-        if (CollisionPoints.Length == 0)
-        {
-            return null;
-        }
-
-        return (CollisionPoints, Vector2.Normalize((ball2SourcePart.Position + ball2.Offset) - (Position + ball1.Offset)));
-    }
 
 
     /* Parts. */
