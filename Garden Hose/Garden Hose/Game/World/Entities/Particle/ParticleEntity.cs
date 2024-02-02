@@ -40,9 +40,9 @@ internal class ParticleEntity : PhysicalEntity
 
         MainPart = new ParticlePart(this, settings);
 
-        SelfPosition = position;
+        _position = position;
         Motion = motion;
-        SelfRotation = settings.GetRotation();
+        _rotation = settings.GetRotation();
         AngularMotion = settings.GetAngularMotion();
         _fadeInSpeed = 1f / settings.FadeInTime;
         _fadeOutSpeed = 1f / settings.FadeOutTime;

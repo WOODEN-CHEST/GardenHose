@@ -1,4 +1,7 @@
-﻿using GardenHose.Game.World.Material;
+﻿using GardenHose.Game.World.Entities.Particle;
+using GardenHose.Game.World.Entities.Stray;
+using GardenHose.Game.World.Material;
+using GardenHoseEngine;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -11,7 +14,12 @@ internal class EntityCollisionHandler
     internal PhysicalEntity Entity { get; private init; }
     internal bool IsCollisionEnabled { get; set; } = true;
     internal bool IsCollisionReactionEnabled { get; set; } = true;
-    internal float BoundingLength { get; private set; }
+    internal float BoundingRadius { get; private set; }
+
+    internal event EventHandler<CollisionEventArgs>? Collision;
+    internal event EventHandler<CollisionEventArgs>? PartDamage;
+    internal event EventHandler<CollisionEventArgs>? PartDestroy;
+    internal event EventHandler<CollisionEventArgs>? PartBreakOff;
 
 
     // Private fields.
@@ -91,7 +99,7 @@ internal class EntityCollisionHandler
         }
 
         // Test bounding circles.
-        if (Vector2.Distance(Entity.Position, targetEntity.Position) > (BoundingLength + targetEntity.CollisionHandler.BoundingLength))
+        if (Vector2.Distance(Entity.Position, targetEntity.Position) > (BoundingRadius + targetEntity.CollisionHandler.BoundingRadius))
         {
             return false;
         }
@@ -115,8 +123,66 @@ internal class EntityCollisionHandler
         return false;
     }
 
+    internal virtual void OnCollision(CollisionCase collisionCase, GHGameTime time)
+    {
+        if (!IsCollisionReactionEnabled) return;
+
+        if (collisionCase.SelfPart.MaterialInstance.State != WorldMaterialState.Solid
+            || collisionCase.TargetPart.MaterialInstance.State != WorldMaterialState.Solid)
+        {
+            OnSoftCollision(collisionCase, time);
+        }
+        else
+        {
+            OnHardCollision(collisionCase);
+        }
+    }
+    internal virtual void PushOutOfOtherEntity(CollisionCase collisionCase)
+    {
+        if ((collisionCase.TargetPart.MaterialInstance.State != WorldMaterialState.Solid)
+            || (collisionCase.SelfPart.MaterialInstance.State != WorldMaterialState.Solid))
+        {
+            return;
+        }
+
+        // Prepare variables.
+        Vector2 PushOutDirection = GetPushOutDirection(collisionCase.TargetEntity);
+        const int STEP_COUNT = 8;
+        float STEP_DISTANCE = 10f;
+
+        // Push out of other entity.
+        do
+        {
+            Entity.Position += PushOutDirection * STEP_DISTANCE;
+        }
+        while (TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
+            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0);
+
+        // Push closer as much as possible.
+        for (int Step = 0; Step < STEP_COUNT; Step++)
+        {
+            Vector2 PreviousPosition = Entity.Position;
+            STEP_DISTANCE /= 2f;
+
+            Entity.Position -= PushOutDirection * STEP_DISTANCE;
+
+            if (TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
+            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0)
+            {
+                Entity.Position = PreviousPosition;
+            }
+        }
+    }
+
+    internal void SpacePartitionEntity()
+    {
+        _entitiesCollidedWith.Clear();
+        Entity.World!.AddPhysicalEntityToWorldPart(Entity);
+    }
+
 
     // Protected methods.
+    /* Collision testing. */
     protected virtual void TestPartAgainstEntity(List<CollisionCase> cases, PhysicalEntityPart selfPart, PhysicalEntity targetEntity)
     {
         if ((selfPart.CollisionBounds.Length == 0) || (selfPart.MaterialInstance.State == WorldMaterialState.Gas))
@@ -324,11 +390,9 @@ internal class EntityCollisionHandler
         return CollisionPoints;
     }
 
-
-    // Private methods.
-    private void CreateBoundingBox()
+    internal void CreateBoundingBox()
     {
-        BoundingLength = 0f;
+        BoundingRadius = 0f;
 
         if (Entity.MainPart == null)
         {
@@ -350,9 +414,173 @@ internal class EntityCollisionHandler
             }
         }
 
-        BoundingLength = FurthestPoint.Length();
+        BoundingRadius = FurthestPoint.Length();
     }
 
+
+    /* Parts. */
+    protected void OnPartCollision(CollisionEventArgs collisionArgs)
+    {
+        collisionArgs.Case.SelfPart.MaterialInstance.HeatByCollision(collisionArgs.ForceApplied);
+
+        const float SOUND_FORCE_DOWNSCALE = 0.7f;
+        if (collisionArgs.ForceApplied >= (collisionArgs.Case.SelfPart.MaterialInstance.Material.Resistance * SOUND_FORCE_DOWNSCALE))
+        {
+            // TODO: implement sound.
+        }
+
+        if (!collisionArgs.Case.SelfEntity.IsInvulnerable)
+        {
+            DamagePart(collisionArgs);
+        }
+    }
+
+    protected void DamagePart(CollisionEventArgs collisionArgs)
+    {
+        CreateDamageParticles(collisionArgs);
+
+        if (collisionArgs.ForceApplied >= collisionArgs.Case.SelfPart.MaterialInstance.Material.Resistance)
+        {
+            collisionArgs.Case.SelfPart.MaterialInstance.CurrentStrength -= collisionArgs.ForceApplied;
+
+            if (collisionArgs.Case.SelfPart.MaterialInstance.Stage == WorldMaterialStage.Destroyed)
+            {
+                OnPartDestroy(collisionArgs);
+                PartDestroy?.Invoke(this, collisionArgs);
+            }
+            else
+            {
+                PartDamage?.Invoke(this, collisionArgs);
+            }
+        }
+
+        if ((collisionArgs.Case.SelfPart.ParentLink != null)
+            && (collisionArgs.ForceApplied >= collisionArgs.Case.SelfPart.ParentLink.LinkStrength))
+        {
+            OnPartBreakOff(collisionArgs);
+            PartBreakOff?.Invoke(this, collisionArgs);
+        }
+    }
+
+    protected void OnPartDestroy(CollisionEventArgs collisionArgs)
+    {
+        if (!collisionArgs.Case.SelfPart.IsMainPart)
+        {
+            collisionArgs.Case.SelfPart.ParentLink!.ParentPart.UnlinkPart(collisionArgs.Case.SelfPart);
+            return;
+        }
+
+        foreach (PartLink Link in collisionArgs.Case.SelfPart.SubPartLinks)
+        {
+            StrayEntity Stray = new(Entity.World!, Link.LinkedPart);
+
+            Entity.World!.AddEntity(Stray);
+        }
+
+        Entity.Delete();
+    }
+
+    protected void OnPartBreakOff(CollisionEventArgs collisionArgs)
+    {
+        PhysicalEntity OldEntity = Entity;
+
+        StrayEntity Stray = new(Entity.World!, collisionArgs.Case.SelfPart);
+
+        Stray.CollisionHandler.AddCollisionIgnorable(OldEntity);
+        Entity.World!.AddEntity(Stray);
+    }
+
+    protected void CreateDamageParticles(CollisionEventArgs collisionArgs)
+    {
+        if (collisionArgs.Case.SelfPart.MaterialInstance.Material.DamageParticles == null)
+        {
+            return;
+        }
+
+        const int MAX_PARTICLES = 20;
+        const float FORCE_MULTIPLIER = 1f / 7500f;
+        const float MOTION_MAGNITUDE_RANDOMNESS = 0.5f;
+        const float PARTICLE_SPREAD = MathF.PI / 1.75f;
+        int ParticleCount = Math.Min(MAX_PARTICLES, (int)(collisionArgs.ForceApplied * FORCE_MULTIPLIER));
+
+        if (ParticleCount == 0)
+        {
+            return;
+        }
+        
+        ParticleEntity.CreateParticles(Entity.World!,
+            collisionArgs.Case.SelfPart.MaterialInstance.Material.DamageParticles!,
+            new Range(ParticleCount / 2, ParticleCount),
+            collisionArgs.Case.AverageCollisionPoint,
+            Entity.Motion,
+            MOTION_MAGNITUDE_RANDOMNESS,
+            PARTICLE_SPREAD,
+            Entity);
+    }
+
+
+    /* Collisions. */
+    private void OnSoftCollision(CollisionCase collisionCase, GHGameTime time)
+    {
+        // Theoretically this code can cause strange behavior of objects pushing out of each other,
+        // but practically it is rare. In case of such a bug, search here.
+        // Soft collisions do not damage entity parts.
+
+        Vector2 MotionRelativeToOtherEntity = collisionCase.SelfMotion - collisionCase.TargetMotion;
+
+        const float ARBITRARY_SPEED_CHANGE_VALUE = 11.195f;
+        float Multiplier = Math.Max(0f, 1f - (ARBITRARY_SPEED_CHANGE_VALUE * time.WorldTime.PassedTimeSeconds));
+
+        Vector2 ChangeInRelativeMotion = MotionRelativeToOtherEntity - (MotionRelativeToOtherEntity * Multiplier);
+        Entity.Motion -= ChangeInRelativeMotion;
+
+        Entity.AngularMotion *= Multiplier;
+
+        Collision?.Invoke(this, new CollisionEventArgs(collisionCase, 0f));
+    }
+
+    private void OnHardCollision(CollisionCase collisionCase)
+    {
+        Vector2 MotionAtPoint = collisionCase.SelfMotion + collisionCase.SelfRotationalMotionAtPoint;
+        Vector2 EntityBMotionAtPoint = collisionCase.TargetMotion + collisionCase.TargetRotationalMotionAtPoint;
+
+        // Surface normal not actually surface normal but rather direction from one entity to other, but produces convincing results so who cares.
+        Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
+        float AlignedYMotion = Vector2.Dot(MotionAtPoint, collisionCase.SurfaceNormal);
+        float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
+        float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, collisionCase.SurfaceNormal);
+
+        float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness
+            + collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
+        float CombinedFrictionCoef = (collisionCase.SelfPart.MaterialInstance.Material.Friction
+            + collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
+
+        float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Entity.Mass,
+            EntityBAlignedYMotion, collisionCase.TargetEntity.Mass, CombinedBounciness);
+
+        Vector2 NewMotion = (collisionCase.SurfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
+        Vector2 ForceApplied = Entity.Mass * (NewMotion - MotionAtPoint);
+
+
+        // Apply forces.
+        Entity.ApplyForce(ForceApplied, collisionCase.AverageCollisionPoint);
+
+        // Notify parts and event handlers.
+        CollisionEventArgs CollisionArgs = new(collisionCase, ForceApplied.Length());
+        OnPartCollision(CollisionArgs);
+        Collision?.Invoke(this, CollisionArgs);
+    }
+
+    protected float CalculateSpeedOnAxis(float v1, float m1, float v2, float m2, float cor)
+    {
+        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
+        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
+        // So here I just stole some formula from the Internet and I don't know how it works (Since my calculations give different results)
+        return (m1 * v1 + m2 * v2 + m2 * (v2 - v1)) / (m1 + m2) * cor;
+    }
+
+
+    // Private methods.
     private List<Vector2> GetAllPointsInCollisionBounds()
     {
         List<Vector2> Points = new();
@@ -403,10 +631,18 @@ internal class EntityCollisionHandler
         }
     }
 
-    
+    private Vector2 GetPushOutDirection(PhysicalEntity otherEntity)
+    {
+        Vector2 Direction = Entity.Position - otherEntity.Position;
 
+        if (Direction.Length() is 0f or -0f)
+        {
+            Direction = -Vector2.UnitY;
+        }
 
-    // Private methods.
+        return Vector2.Normalize(Direction);
+    }
+
     private void OnCollisionIgnorableEntityDeleteEvent(object? sender, EventArgs args)
     {
         PhysicalEntity DeletedEntity = (PhysicalEntity)sender!;

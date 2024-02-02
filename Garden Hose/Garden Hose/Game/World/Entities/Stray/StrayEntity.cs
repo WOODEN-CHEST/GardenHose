@@ -6,22 +6,27 @@ namespace GardenHose.Game.World.Entities.Stray;
 
 internal class StrayEntity : PhysicalEntity
 {
-    public StrayEntity(GameWorld? world, 
-        PhysicalEntityPart strayPart, 
-        Vector2 entityPosition, 
-        Vector2 entityMotion, 
-        float entityRotation)
+    public StrayEntity(GameWorld world,
+        PhysicalEntityPart partToStray)
         : base(EntityType.Stray, world)
     {
-        if (strayPart == null)
+        if (partToStray == null)
         {
-            throw new ArgumentNullException(nameof(strayPart));
+            throw new ArgumentNullException(nameof(partToStray));
+        }
+        if (partToStray.Entity == null)
+        {
+            throw new ArgumentException("Part to stray must have an entity.", nameof(partToStray));
+        }
+        if (partToStray.IsMainPart)
+        {
+            throw new ArgumentException("Part to stray must not be the main part.", nameof(partToStray));
         }
 
-        strayPart.ParentLink = null;
-        strayPart.Entity = this;
-        Motion = entityMotion;
-        MainPart = strayPart;
-        SetPositionAndRotation(entityPosition, entityRotation);
+        partToStray.ParentLink?.UnlinkPart();
+        MainPart = partToStray;
+        Motion = partToStray.Entity.Motion;
+        Position = partToStray.Entity.Position;
+        Rotation = partToStray.Entity.Rotation;
     }
 }

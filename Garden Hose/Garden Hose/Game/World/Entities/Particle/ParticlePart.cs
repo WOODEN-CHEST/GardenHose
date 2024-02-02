@@ -47,8 +47,8 @@ internal class ParticlePart : PhysicalEntityPart
     [TickedFunction(false)]
     internal override void Draw()
     {
-        Sprites[0].Opacity = ((ParticleEntity)Entity).FadeStatus;
-        Sprites[0].Scale = ParticleScale;
+        _sprites[0].Opacity = ((ParticleEntity)Entity).FadeStatus;
+        _sprites[0].Scale = ParticleScale;
         base.Draw();
     }
 }

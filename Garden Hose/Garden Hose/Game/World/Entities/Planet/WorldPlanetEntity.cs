@@ -66,7 +66,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
     {
         base.Load(assetManager);
 
-        foreach (PhysicalEntityPartSprite Sprite in MainPart.PartSprites)
+        foreach (PartSprite Sprite in MainPart.Sprites)
         {
             Sprite.Scale = new Vector2(Radius) / (Sprite.Sprite.TextureSize / 2f) * Sprite.Scale;
         }

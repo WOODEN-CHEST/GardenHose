@@ -77,7 +77,7 @@ public class GameWorld : IIDProvider
     private bool _isDebugInfoEnabled = false;
 
     /* Collisions. */
-    private ConcurrentQueue<CollisionCase[]> _collisionCases = new();
+    private List<CollisionCase> _collisionCases = new();
     private const int WORLD_PART_POWER = 7;
     private const int WORLD_PART_SIZE = 128; // 2^7.
     private const int WORLD_PART_COUNT = 32;
@@ -89,7 +89,6 @@ public class GameWorld : IIDProvider
     internal GameWorld(GHGame game, ILayer bottomLayer, ILayer topLayer, GameWorldSettings settings)
     {
         Game = game ?? throw new ArgumentNullException(nameof(game));
-        CameraCenter = new(0, 0);
 
         _bottomLayer = bottomLayer ?? throw new ArgumentNullException(nameof(bottomLayer));
         _topLayer = topLayer ?? throw new ArgumentNullException(nameof(topLayer));
@@ -137,11 +136,7 @@ public class GameWorld : IIDProvider
                 _worldParts[Row, Column].Clear();
             }
         }
-
-        foreach (var CaseCollection in _collisionCases)
-        {
-            HandleEntityCollisionCases(CaseCollection);
-        }
+        HandleEntityCollisionCases();
         _collisionCases.Clear();
 
         // Create and remove entities.
@@ -223,13 +218,13 @@ public class GameWorld : IIDProvider
     internal void AddPhysicalEntityToWorldPart(PhysicalEntity entity)
     {
         int HALF_WORLD_PART_COUNT = WORLD_PART_COUNT / 2;
-        int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
-        int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
         int UpperX = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.X + entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+            ((int)(entity.Position.X + entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
         int UpperY = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.Y + entity.CollisionHandler.BoundingLength) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+            ((int)(entity.Position.Y + entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
 
         for (int i = LowerX; i <= UpperX; i++)
         {
@@ -434,19 +429,12 @@ public class GameWorld : IIDProvider
         {
             for (int SecondIndex = FirstIndex + 1; SecondIndex < entities.Count; SecondIndex++)
             {
-                lock (entities[FirstIndex])
+                if (!entities[FirstIndex].CollisionHandler.TestCollisionAgainstEntity(
+                    entities[SecondIndex], out CollisionCase[] collisions))
                 {
-                    if (!entities[FirstIndex].TestCollisionAgainstEntity(
-                        entities[SecondIndex], out CollisionCase[] collisions))
-                    {
-                        continue;
-                    }
-
-                    if (collisions.Length > 0)
-                    {
-                        _collisionCases.Enqueue(collisions);
-                    }
+                    continue;
                 }
+                _collisionCases.AddRange(collisions);
             }
         }
     }

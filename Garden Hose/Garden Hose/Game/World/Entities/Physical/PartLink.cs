@@ -1,9 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
@@ -22,7 +18,7 @@ internal class PartLink
         set
         {
             _linkDistance = value;
-            Entity.OnPartLinkDistanceChange();
+            Entity.ResetPartInfo();
         }
     }
 
@@ -48,5 +44,12 @@ internal class PartLink
         Entity = entity ?? throw new ArgumentNullException(nameof(entity));
         LinkDistance = linkDistance;
         LinkStrength = linkStrength;
+    }
+
+
+    // Internal methods.
+    internal void UnlinkPart()
+    {
+        ParentPart.UnlinkPart(LinkedPart);
     }
 }

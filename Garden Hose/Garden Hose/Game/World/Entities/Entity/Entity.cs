@@ -1,10 +1,5 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities;
 
@@ -12,13 +7,9 @@ internal abstract class Entity
 {
     // Internal fields.
     internal ulong ID { get; set; }
-
     internal EntityType EntityType { get; private init; }
-
     internal GameWorld? World { get; set; }
-
     internal virtual bool IsPhysical => false;
-
     internal virtual bool IsTicked { get; set; } = true;
 
     internal event EventHandler? EntityDelete;

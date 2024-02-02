@@ -26,24 +26,14 @@ internal class GHGameAssetManager
 
 
     // Internal methods.
-    internal SpriteAnimation? GetAnimation(GameAnimationName name)
+    internal SpriteAnimation GetAnimation(GameAnimationName name)
     {
-        if (!_animations.TryGetValue(name, out var Value))
-        {
-            return null;
-        }
-
-        return Value.GetAnimation(_parentFrame);
+        return _animations[name].GetAnimation(_parentFrame);
     }
 
-    internal Sound? GetSound(GameSoundName name)
+    internal Sound GetSound(GameSoundName name)
     {
-        if (!_sounds.TryGetValue(name, out var Value))
-        {
-            return null;
-        }
-
-        return Value.GetSound(_parentFrame);
+        return _sounds[name].GetSound(_parentFrame);
     }
 
 

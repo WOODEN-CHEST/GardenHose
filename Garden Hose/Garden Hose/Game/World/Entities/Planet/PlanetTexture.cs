@@ -59,9 +59,9 @@ internal class PlanetTexture
 
 
     // Operators.
-    public static implicit operator PhysicalEntityPartSprite(PlanetTexture texture)
+    public static implicit operator PartSprite(PlanetTexture texture)
     {
-        return new PhysicalEntityPartSprite(_textureEntries[texture.Type])
+        return new PartSprite(_textureEntries[texture.Type])
         {
             ColorMask = texture.Color,
             Opacity = texture.Opacity,

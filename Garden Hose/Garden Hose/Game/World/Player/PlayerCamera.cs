@@ -52,7 +52,7 @@ internal class PlayerCamera : IWorldCamera
 
 
     // Private fields.
-    private Vector2 _cameraCenter;
+    private Vector2 _cameraCenter = Vector2.Zero;
     private float _zoom = 1f;
 
     private IInputListener _zoomInListener;
