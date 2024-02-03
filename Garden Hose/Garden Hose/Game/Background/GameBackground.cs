@@ -64,13 +64,13 @@ internal class GameBackground : IDrawableItem
     // Internal methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _smallStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Small)!.CreateInstance();
-        _mediumStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Medium)!.CreateInstance();
-        _bigStarAnim = assetManager.GetAnimation(GameAnimationName.Background_Star_Big)!.CreateInstance();
+        _smallStarAnim = assetManager.GetAnimation(GHGameAnimationName.Background_Star_Small)!.CreateInstance();
+        _mediumStarAnim = assetManager.GetAnimation(GHGameAnimationName.Background_Star_Medium)!.CreateInstance();
+        _bigStarAnim = assetManager.GetAnimation(GHGameAnimationName.Background_Star_Big)!.CreateInstance();
 
         _background = Image switch
         {
-            BackgroundImage.Default => new(assetManager.GetAnimation(GameAnimationName.Background_Default)!.CreateInstance()),
+            BackgroundImage.Default => new(assetManager.GetAnimation(GHGameAnimationName.Background_Default)!.CreateInstance()),
             _ => throw new EnumValueException(nameof(Image), Image)
         };
     }

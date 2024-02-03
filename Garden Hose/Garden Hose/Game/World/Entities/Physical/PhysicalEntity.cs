@@ -189,14 +189,14 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     
 
     // Constructors.
-    internal PhysicalEntity(EntityType type, GameWorld? world)
-        : this(type, world, Vector2.Zero) { }
+    internal PhysicalEntity(EntityType type)
+        : this(type, Vector2.Zero) { }
 
-    internal PhysicalEntity(EntityType type, GameWorld? world, Vector2 position)
-        : this(type, world, position, 0f) { }
+    internal PhysicalEntity(EntityType type, Vector2 position)
+        : this(type, position, 0f) { }
 
-    internal PhysicalEntity(EntityType type, GameWorld? world, Vector2 position, float rotation)
-        : base(type, world)
+    internal PhysicalEntity(EntityType type, Vector2 position, float rotation)
+        : base(type)
     {
         Rotation = rotation;
         Position = position;

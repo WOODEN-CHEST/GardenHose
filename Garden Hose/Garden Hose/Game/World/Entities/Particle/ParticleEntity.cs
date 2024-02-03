@@ -1,7 +1,4 @@
-﻿using GardenHose.Game.GameAssetManager;
-using GardenHose.Game.World.Entities.Physical;
-using GardenHose.Game.World.Entities.Physical.Events;
-using GardenHoseEngine.Frame.Animation;
+﻿using GardenHose.Game.World.Entities.Physical;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -12,17 +9,12 @@ internal class ParticleEntity : PhysicalEntity
 {
     // Internal fields.
     bool IsKilledByPlanets { get; set; } = true;
-
     internal float Lifetime { get; set; }
-
     internal float TimeAlive { get; set; } = 0f;
-
     internal float FadeStatus { get; private set; } = 0f;
 
 
     // Private fields.
-    private float _scaleChangeSpeed;
-
     private readonly float _fadeInSpeed;
     private readonly float _fadeOutSpeed;
     private const float FADED_OUT = 0f;
@@ -30,8 +22,8 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Constructors.
-    protected ParticleEntity(GameWorld? world, ParticleSettings settings, Vector2 motion, Vector2 position) 
-        : base(EntityType.Particle, world)
+    protected ParticleEntity(ParticleSettings settings, Vector2 motion, Vector2 position) 
+        : base(EntityType.Particle)
     {
         if (settings == null)
         {
@@ -40,13 +32,12 @@ internal class ParticleEntity : PhysicalEntity
 
         MainPart = new ParticlePart(this, settings);
 
-        _position = position;
+        Position = position;
         Motion = motion;
-        _rotation = settings.GetRotation();
+        Rotation = settings.GetRotation();
         AngularMotion = settings.GetAngularMotion();
         _fadeInSpeed = 1f / settings.FadeInTime;
         _fadeOutSpeed = 1f / settings.FadeOutTime;
-        _scaleChangeSpeed = settings.GetScaleChangePerSecond();
         Lifetime = settings.GetLifetime();
 
         if (float.IsInfinity(_fadeInSpeed))
@@ -55,7 +46,7 @@ internal class ParticleEntity : PhysicalEntity
         }
 
         IsInvulnerable = true;
-        MainPart.SetPositionAndRotation(Position, Rotation);
+        IsCommonMathCalculated = false;
     }
 
 
@@ -66,8 +57,8 @@ internal class ParticleEntity : PhysicalEntity
         Vector2 position,
         Vector2 motion,
         float motionMagnitudeRandomness,
-        float motionDirectionRandomnessAngle,
-        PhysicalEntity? sourceEntity = null)
+        float motionDirectionSpread,
+        PhysicalEntity? sourceEntity)
     {
         ParticleEntity[] Particles = new ParticleEntity[Random.Shared.Next(count.Start.Value, count.End.Value + 1)];
 
@@ -79,20 +70,17 @@ internal class ParticleEntity : PhysicalEntity
 
         for (int i = 0; i < Particles.Length; i++)
         {
-            float Rotation = (Random.Shared.NextSingle() - 0.5f) * motionDirectionRandomnessAngle;
-            float MotionMagnitudeMultiplier = 1f + (Random.Shared.NextSingle() - 0.5f) * motionMagnitudeRandomness;
-            Vector2 Motion = Vector2.Transform(MotionNormal, Matrix.CreateRotationZ(Rotation)) * motion.Length() * MotionMagnitudeMultiplier;
+            float Rotation = (Random.Shared.NextSingle() - 0.5f) * motionDirectionSpread;
+            Vector2 Motion = Vector2.Transform(MotionNormal, Matrix.CreateRotationZ(Rotation))
+                * MathF.Pow(motion.Length(), (Random.Shared.NextSingle() - 0.5f) * 2f * motionMagnitudeRandomness);
 
-            ParticleEntity Particle = new(world, settings, Motion, position);
+            ParticleEntity Particle = new(settings, Motion, position);
             world.AddEntity(Particle);
             Particles[i] = Particle;
-        }
 
-        if (sourceEntity != null)
-        {
-            foreach (ParticleEntity Particle in Particles)
+            if (sourceEntity != null)
             {
-                Particle.AddCollisionIgnorable(sourceEntity);
+                Particle.CollisionHandler.AddCollisionIgnorable(sourceEntity);
             }
         }
 
@@ -102,43 +90,26 @@ internal class ParticleEntity : PhysicalEntity
 
     // Inherited methods.
     [TickedFunction(false)]
-    internal override void ParallelTick()
+    internal override void Tick(GHGameTime time)
     {
-        base.ParallelTick();
+        base.Tick(time);
 
-        TimeAlive += World!.PassedTimeSeconds;
+        TimeAlive += time.WorldTime.PassedTimeSeconds;
 
-        ((ParticlePart)MainPart).ParticleScale *= 1 + (World!.PassedTimeSeconds * _scaleChangeSpeed);
-
-        if ((FadeStatus < FADED_IN) && (TimeAlive < Lifetime))
+        if (FadeStatus < FADED_IN)
         {
-            FadeStatus = Math.Clamp(FadeStatus + _fadeInSpeed * World!.PassedTimeSeconds, 0f, 1f);
+            FadeStatus = Math.Clamp(FadeStatus + _fadeInSpeed * time.WorldTime.PassedTimeSeconds, FADED_OUT, FADED_IN);
+            return;
         }
-        else if (TimeAlive >= Lifetime)
-        {
-            FadeStatus = Math.Clamp(FadeStatus - _fadeOutSpeed * World!.PassedTimeSeconds, 0f, 1f);
 
-            if (FadeStatus <= FADED_OUT)
-            {
-                Delete();
-            }
+        if (TimeAlive >= Lifetime)
+        {
+            FadeStatus = Math.Clamp(FadeStatus - _fadeOutSpeed * time.WorldTime.PassedTimeSeconds, FADED_OUT, FADED_IN);
         }
-    }
 
-    internal override void OnCollision(PhysicalEntity otherEntity,
-        PhysicalEntityPart selfPart,
-        PhysicalEntityPart otherPart,
-        Vector2 selfMotion,
-        Vector2 otherMotion,
-        Vector2 selfRotationalMotionAtPoint,
-        Vector2 otherRotationalMotionAtPoint,
-        Vector2 surfaceNormal,
-        Vector2 collisionPoint)
-    {
-        if (IsKilledByPlanets && (otherEntity.EntityType == EntityType.Planet) && (TimeAlive < Lifetime))
+        if (FadeStatus <= FADED_OUT)
         {
-            TimeAlive = Lifetime;
-            FadeStatus = FADED_IN;
+            Delete();
         }
     }
 }

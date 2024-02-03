@@ -16,14 +16,11 @@ internal abstract class Entity
 
 
     // Constructors.
-    internal Entity(EntityType type, GameWorld? world = null)
+    internal Entity(EntityType type)
     {
         EntityType = type;
-        World = world;
         ID = World?.GetID() ?? 0uL;
     }
-
-    internal Entity(EntityType entityType) : this(entityType, null) { }
 
 
     // Internal methods.

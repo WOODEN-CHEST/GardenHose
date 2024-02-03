@@ -83,7 +83,7 @@ internal class PhysicalEntityPart
     internal virtual WorldMaterialInstance MaterialInstance { get; set; }
 
     /* Drawing. */
-    internal PartSpriteCollection[] Sprites => _sprites.ToArray();
+    internal PartSprite[] Sprites => _sprites.ToArray();
 
     /* Events. */
     internal event EventHandler<CollisionEventArgs>? Collision;
@@ -96,7 +96,7 @@ internal class PhysicalEntityPart
 
 
     // Private fields.
-    private readonly List<PartSpriteCollection> _sprites = new();
+    private readonly List<PartSprite> _sprites = new();
 
     private ICollisionBound[] _collisionBounds;
     private float _selfRotation = 0f;
@@ -129,9 +129,10 @@ internal class PhysicalEntityPart
     {
         MaterialInstance.Material.Load(assetManager);
 
-        foreach (PartSpriteCollection Sprite in _sprites)
+        foreach (PartSprite Sprite in _sprites)
         {
             Sprite.Load(assetManager);
+            Sprite.SetActiveSprite(MaterialInstance.Stage);
         }
     }
 
@@ -254,7 +255,7 @@ internal class PhysicalEntityPart
             Link.LinkedPart.Draw(info);
         }
 
-        foreach (PartSpriteCollection Sprite in _sprites)
+        foreach (PartSprite Sprite in _sprites)
         {
             Sprite.Draw(info, Entity!.World!.Player.Camera, this);
         }
@@ -273,7 +274,7 @@ internal class PhysicalEntityPart
         }
     }
 
-    internal void AddSprite(PartSpriteCollection sprite)
+    internal void AddSprite(PartSprite sprite)
     {
         if (sprite == null)
         {
@@ -283,7 +284,7 @@ internal class PhysicalEntityPart
         _sprites.Add(sprite);
     }
 
-    internal void RemoveSprite(PartSpriteCollection sprite)
+    internal void RemoveSprite(PartSprite sprite)
     {
         if (sprite == null)
         {
