@@ -1,4 +1,5 @@
-﻿using GardenHose.Game.World.Entities.Physical;
+﻿using GardenHose.Game.GameAssetManager;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Ship;
 using GardenHose.Game.World.Entities.Ship.System;
@@ -13,8 +14,6 @@ internal class ProbeEntity : SpaceshipEntity
 {
     // Internal fields.
     internal override ISpaceshipSystem ShipSystem { get; init; }
-
-    internal const float SPRITE_SCALING = 0.217f;
 
     internal PhysicalEntityPart? HeadPart { get; private set; }
 
@@ -32,64 +31,38 @@ internal class ProbeEntity : SpaceshipEntity
     private static Vector2 s_sideThrusterHitboxSize = new(11f, 17f);
     private static Vector2 s_mainThrusterHitboxSize = new(s_bodyHitboxSize.X - 1f, 20f);
 
-    /* Sprite. */
-    private static Vector2 SpriteScale = new(0.2f);
-
 
     // Private fields.
     /* Parts. */
     
 
     /* System. */
-    private ProbeSystem _system;
 
 
 
     // Constructors.
-    public ProbeEntity() : base(EntityType.Probe, null)
+    public ProbeEntity() : base(EntityType.Probe)
     {
-        _system = new ProbeSystem(this);
-        ShipSystem = _system;
+        ShipSystem = new ProbeSystem(this);
 
-        PhysicalEntityPart BasePart = CreateBodyPart(this);
-
+        PhysicalEntityPart Base = CreateBodyPart(this);
         HeadPart = CreateHeadPart(this);
         LeftThrusterPart = CreateSideThrusterPart(this, false);
         RightThrusterPart = CreateSideThrusterPart(this, true);
         MainThrusterPart = CreateMainThrusterPart(this);
 
         // A lot of magic numbers here are just offsets which were not calculated but just eyed until it looked right.
-        BasePart.LinkPart(HeadPart, new(0f, (-s_bodyHitboxSize.Y * 0.5f) - (s_headHitboxSize.Y * 0.5f) + 1.25f), 30_000f);
-        BasePart.LinkPart(RightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 30_000);
-        BasePart.LinkPart(LeftThrusterPart, -RightThrusterPart.ParentLink!.LinkDistance, 30_000f);
-        BasePart.LinkPart(MainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 30_000);
+        Base.LinkPart(HeadPart, new(0f, (-s_bodyHitboxSize.Y * 0.5f) - (s_headHitboxSize.Y * 0.5f) + 1.25f), 30_000f);
+        Base.LinkPart(RightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 30_000);
+        Base.LinkPart(LeftThrusterPart, -RightThrusterPart.ParentLink!.LinkDistance, 30_000f);
+        Base.LinkPart(MainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 30_000);
 
-        MainPart = BasePart;
+        MainPart = Base;
+
         IsInvulnerable = false;
         Pilot = SpaceshipPilot.Player;
     }
 
-    
-
-    protected override void AIParallelTick()
-    {
-
-    }
-
-    protected override void AISequentialTick()
-    {
-
-    }
-
-    protected override void PlayerParallelTick()
-    {
-
-    }
-
-    protected override void PlayerSequentialTick()
-    {
-
-    }
 
 
     // Private static methods.
@@ -98,7 +71,7 @@ internal class ProbeEntity : SpaceshipEntity
         PhysicalEntityPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_bodyHitboxSize)},
             WorldMaterial.Test,
             entity);
-        Part.AddSprite(new("ship_probe_base") { Scale = SpriteScale });
+        Part.AddSprite(new(GHGameAnimationName.Ship_Probe_Base) { Size = s_bodyHitboxSize });
 
         return Part;
     }
@@ -108,7 +81,7 @@ internal class ProbeEntity : SpaceshipEntity
         PhysicalEntityPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_headHitboxSize) },
             WorldMaterial.Test,
             entity);
-        Part.AddSprite(new("ship_probe_head") { Scale = SpriteScale });
+        Part.AddSprite(new(GHGameAnimationName.Ship_Probe_Head) { Size = s_headHitboxSize });
 
         return Part;
     }
@@ -127,13 +100,13 @@ internal class ProbeEntity : SpaceshipEntity
             ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
-            FuelEfficiency = THRUSTER_FUEL_EFFICIENCY,
+            FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
             ForceDirection = (MathF.PI / -2f)
         };
 
-        Part.AddSprite(new("ship_probe_sidethruster") 
+        Part.AddSprite(new(GHGameAnimationName.Ship_Probe_SideThruster) 
         { 
-            Scale = SpriteScale, 
+            Size = s_sideThrusterHitboxSize, 
             Effects = isRightPart ? SpriteEffects.None : SpriteEffects.FlipHorizontally
         });
 
@@ -154,25 +127,24 @@ internal class ProbeEntity : SpaceshipEntity
             ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
-            FuelEfficiency = THRUSTER_FUEL_EFFICIENCY,
+            FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
             ForceDirection = (MathF.PI / -2f)
         };
 
-        Part.AddSprite(new("ship_probe_mainthruster") {Scale = SpriteScale });
+        Part.AddSprite(new(GHGameAnimationName.Ship_Probe_MainThruster) {Size = s_mainThrusterHitboxSize });
 
         return Part;
     }
 
 
     // Inherited methods.
-    internal override void SequentialTick()
+    protected override void AITick()
     {
-        base.SequentialTick();
-        _system.SequentialTick(Pilot == SpaceshipPilot.Player);
+
     }
-    internal override void ParallelTick()
+
+    protected override void PlayerTick()
     {
-        base.ParallelTick();
-        _system.ParallelTick(Pilot == SpaceshipPilot.Player);
+
     }
 }

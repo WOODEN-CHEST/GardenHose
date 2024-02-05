@@ -50,7 +50,7 @@ public class GameFrame : IGameFrame
     // Private fields.
     private readonly List<ILayer> _layers = new();
     private readonly DiscreteTimeList<ITimeUpdatable> _updateableItems = new();
-    private ColorMask _colorMask;
+    private ColorMask _colorMask = new();
 
 
     // Constructors.

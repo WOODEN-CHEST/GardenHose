@@ -1,5 +1,6 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -16,6 +17,8 @@ internal class ParticlePart : PhysicalEntityPart
     private float _scaleChangeSpeed;
     private const float MIN_SCALE = 0f;
 
+    private PartSprite _particleSprite;
+
 
     // Constructors.
     internal ParticlePart(ParticleEntity entity, ParticleSettings settings) 
@@ -30,8 +33,8 @@ internal class ParticlePart : PhysicalEntityPart
             CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
         }
 
-        PartSprite Sprite = new(settings.AnimationName) { Size = _baseSize };
-        AddSprite(new PartSpriteCollection(Sprite, Sprite, Sprite, Sprite));
+        _particleSprite = new PartSprite(settings.AnimationName) { Size = _baseSize };
+        AddSprite(_particleSprite);
     }
 
 
@@ -44,10 +47,10 @@ internal class ParticlePart : PhysicalEntityPart
         _scale = Math.Max(_scale + (time.WorldTime.PassedTimeSeconds * _scaleChangeSpeed), MIN_SCALE);
     }
 
-    internal override void Draw()
+    internal override void Draw(IDrawInfo info)
     {
-        Sprites[0].Opacity = ((ParticleEntity)Entity).FadeStatus;
-        _sprites[0].Scale = ParticleScale;
-        base.Draw();
+        _particleSprite.Opacity = ((ParticleEntity)Entity!).FadeStatus;
+        _particleSprite.Size = _baseSize * _scale;
+        base.Draw(info);
     }
 }

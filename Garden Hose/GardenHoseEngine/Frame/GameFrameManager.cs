@@ -1,5 +1,4 @@
-﻿using GardenHoseEngine.Frame.Item;
-using GardenHoseEngine.Screen;
+﻿using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Concurrent;
@@ -36,9 +35,10 @@ public static class GameFrameManager
         ActiveFrame.Update(time);
     }
 
-    public static void DrawFrames()
+    public static void DrawFrames(IProgramTime time)
     {
-        s_drawInfo.Time = s_time;
+        s_drawInfo.Time = time;
+        s_drawInfo.SpriteBatch = s_spriteBatch;
 
         Display.GraphicsManager.GraphicsDevice.SetRenderTarget(s_framePixelBuffer);
         Display.GraphicsManager.GraphicsDevice.Clear(Color.Black);

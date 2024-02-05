@@ -6,14 +6,10 @@ using GardenHose.Game.World.Material;
 using GardenHose.Game.World.Player;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
-using GardenHoseEngine.Screen;
-using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 // Import everything.
 
@@ -124,7 +120,7 @@ public class GameWorld : IIDProvider
                 WorldEntity.Tick(gameTime);
             }
         }
-        Player.Tick();
+        Player.Tick(gameTime);
 
 
         // Handle collisions.
@@ -136,7 +132,7 @@ public class GameWorld : IIDProvider
                 _worldParts[Row, Column].Clear();
             }
         }
-        HandleEntityCollisionCases();
+        HandleEntityCollisionCases(gameTime);
         _collisionCases.Clear();
 
         // Create and remove entities.
@@ -279,40 +275,23 @@ public class GameWorld : IIDProvider
     }
 
     /* Tick. */
-    private void HandleEntityCollisionCases(CollisionCase[] collisionCases)
+    private void HandleEntityCollisionCases(GHGameTime time)
     {
-        foreach (CollisionCase SelfCase in collisionCases)
+        foreach (CollisionCase SelfCase in _collisionCases)
         {
             CollisionCase TargetCase = SelfCase.GetInvertedCase();
 
-            if (Case.SelfEntity.Mass > Case.TargetEntity.Mass && Case.TargetEntity.IsCollisionReactionEnabled)
+            if (SelfCase.SelfEntity.Mass > SelfCase.TargetEntity.Mass && SelfCase.TargetEntity.CollisionHandler.IsCollisionReactionEnabled)
             {
-                Case.TargetEntity.PushOutOfOtherEntity(Case.TargetBound, Case.SelfBound, Case.EntityA, Case.PartB, Case.PartA);
+                SelfCase.TargetEntity.CollisionHandler.PushOutOfOtherEntity(TargetCase);
             }
-            else if (Case.SelfEntity.IsCollisionReactionEnabled)
+            else if (SelfCase.SelfEntity.CollisionHandler.IsCollisionReactionEnabled)
             {
-                Case.SelfEntity.PushOutOfOtherEntity(Case.SelfBound, Case.TargetBound, Case.TargetEntity, Case.SelfPart, Case.TargetPart);
+                SelfCase.SelfEntity.CollisionHandler.PushOutOfOtherEntity(SelfCase);
             }
 
-            Case.EntityA.OnCollision(Case.EntityB,
-                Case.PartA,
-                Case.PartB,
-                Case.EntityA.Motion,
-                Case.EntityB.Motion,
-                Case.EntityARotationalMotionAtPoint,
-                Case.EntityBRotationalMotionAtPoint,
-                Case.SurfaceNormal,
-                Case.AverageCollisionPoint);
-
-            Case.EntityB.OnCollision(Case.EntityA,
-                Case.PartB,
-                Case.PartA,
-                Case.EntityB.Motion,
-                Case.EntityA.Motion,
-                Case.EntityBRotationalMotionAtPoint,
-                Case.EntityARotationalMotionAtPoint,
-                Case.SurfaceNormal,
-                Case.AverageCollisionPoint);
+            SelfCase.SelfEntity.CollisionHandler.OnCollision(SelfCase, time);
+            TargetCase.SelfEntity.CollisionHandler.OnCollision(TargetCase, time);
         }
     }
 
@@ -333,7 +312,7 @@ public class GameWorld : IIDProvider
             }
 
             PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
-            PhysicalWorldEntity.IsDebugInfoDrawn = Game.;
+            PhysicalWorldEntity.IsDebugInfoDrawn = IsDebugInfoDrawn;
         }
         _entitiesCreated.Clear();
     }

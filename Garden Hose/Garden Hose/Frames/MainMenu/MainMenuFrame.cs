@@ -47,7 +47,7 @@ internal partial class MainMenuFrame : GameFrame
 
     public override void Update(IProgramTime time)
     {
-        base.Update(time);;
+        base.Update(time);
         _backgroundManager.Update(time);
         _userInterfaceManager.Update(time);
     }

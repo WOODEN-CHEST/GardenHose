@@ -1,11 +1,9 @@
-﻿using GardenHose.Frames.Global;
-using GardenHose.Game.GameAssetManager;
+﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Ship;
 using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine;
-using GardenHoseEngine.Frame.Item.Text;
+using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
-using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -32,7 +30,7 @@ internal class ProbeSystem : ISpaceshipSystem
     internal const float MAX_FALLING_SPEED = 30f;
     internal const float MAX_ANGULAR_MOTION = MathF.PI;
     internal const float MAX_FOLLOW_SPEED = 100f;
-    internal const float MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW = 200f;
+    internal const float MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW = 300f;
     internal const float FOLLOW_ROLL = MathHelper.PiOver4;
 
 
@@ -72,13 +70,13 @@ internal class ProbeSystem : ISpaceshipSystem
     }
 
     internal ProbeAutopilotState AutopilotState { get; set; } = ProbeAutopilotState.FollowDirection;
+    public Vector2 TargetNavigationPosition { get; set; }
 
 
     // Private fields.
     private ProbeEntity _probe;
 
 
-    private SimpleTextBox _shipInfoText;
     private ProbeDashboard _dashboard;
     private ProbeThrusterPanel _thrusterPanel;
 
@@ -88,15 +86,6 @@ internal class ProbeSystem : ISpaceshipSystem
     internal ProbeSystem(ProbeEntity probe)
     {
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
-
-        _shipInfoText = new(GlobalFrame.GeEichFont, "")
-        {
-            IsShadowEnabled = true,
-            Mask = Color.White,
-            Origin = Origin.BottomLeft,
-            Scale = new Vector2(0.8f)
-        };
-        _shipInfoText.Position.Vector = new Vector2(20f, Display.VirtualSize.Y - 20f);
         _dashboard = new(this);
         _thrusterPanel = new(this);
     }
@@ -307,16 +296,12 @@ internal class ProbeSystem : ISpaceshipSystem
 
     // Inherited methods.
     /* Drawing. */
-    public void Draw()
+    public void Draw(IDrawInfo info)
     {
         if (!IsVisible) return;
-
-        _shipInfoText.Text = $"Altitude: {(AltitudeRelativeToGround * 0.1f).ToString("0")} dp\n" +
-            $"Speed: {(_probe.Motion.Length() * 0.1f).ToString("0")} dp/s\n\n";
             
-        _shipInfoText.Draw();
-        _dashboard.Draw();
-        _thrusterPanel.Draw();
+        _dashboard.Draw(info);
+        _thrusterPanel.Draw(info);
     }
 
     /* Navigating. */
@@ -328,9 +313,9 @@ internal class ProbeSystem : ISpaceshipSystem
             FixedShipLocation = Vector2.UnitY;
         }
         FixedShipLocation = Vector2.Normalize(FixedShipLocation);
-        FixedShipLocation = (FixedShipLocation * Ship.World.Planet.Radius) + (FixedShipLocation * TARGET_ALTITUDE);
+        FixedShipLocation = FixedShipLocation * Ship.World.Planet.Radius;
 
-        if ((Vector2.Distance(position, FixedShipLocation) * Ship.World.Zoom <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW) 
+        if ((Vector2.Distance(position, FixedShipLocation) * Ship.World.Player.Camera.Zoom <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW) 
             || AutopilotState == ProbeAutopilotState.StayStationary)
         {
             RemainStationary();
@@ -343,7 +328,7 @@ internal class ProbeSystem : ISpaceshipSystem
 
     /* Tick. */
     [TickedFunction(false)]
-    public void ParallelTick(bool isPlayerTick)
+    public void Tick()
     {
         HandleManualThrusterInput();
         if (AutopilotState == ProbeAutopilotState.Disabled)
@@ -351,18 +336,12 @@ internal class ProbeSystem : ISpaceshipSystem
             return;
         }
 
-        if (_probe.World!.Planet != null && isPlayerTick)
-        {
-            Vector2 TargetPosition = _probe.World!.ToWorldPosition(UserInput.VirtualMousePosition.Current) - _probe.World!.Planet!.Position;
-            if (TargetPosition.LengthSquared() == 0)
-            {
-                TargetPosition = _probe.Position;
-            }
-            Vector2 NormalizedDirection = Vector2.Normalize(TargetPosition);
-            TargetPosition = (NormalizedDirection * _probe.World!.Planet!.Radius) + (NormalizedDirection * TARGET_ALTITUDE);
+        NavigateToPosition(TargetNavigationPosition);
+    }
 
-            NavigateToPosition(TargetPosition);
-        }
+    public void ParallelTick(bool isPlayerTick)
+    {
+        
     }
 
     [TickedFunction(false)]

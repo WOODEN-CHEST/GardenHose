@@ -26,8 +26,7 @@ internal class ParticleCollisionHandler : EntityCollisionHandler
         if (IsKilledByPlanets && (collisionCase.TargetEntity.EntityType == EntityType.Planet)
             && (ParentEntity.TimeAlive < ParentEntity.Lifetime))
         {
-            TimeAlive = Lifetime;
-            FadeStatus = FADED_IN;
+            ParentEntity.TimeAlive = ParentEntity.Lifetime;
         }
 
         base.OnCollision(collisionCase, time);

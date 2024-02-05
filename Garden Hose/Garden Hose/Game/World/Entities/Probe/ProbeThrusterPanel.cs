@@ -2,7 +2,6 @@
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Item.Buttons;
-using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
@@ -35,19 +34,18 @@ internal class ProbeThrusterPanel
     // Methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _panelSprite = new(assetManager.GetAnimation("ship_probe_thrusterpanel")!);
-        _panelSprite.TargetTextureSize = new Vector2(150, 168);
+        _panelSprite = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ThrusterPanel).CreateInstance(), new Vector2(150, 168));
 
         Vector2 PanelPosition = new Vector2(10f, Display.VirtualSize.Y - 10f);
         PanelPosition.X += _panelSprite.TextureSize.X * 0.5f;
         PanelPosition.Y -= _panelSprite.TextureSize.Y * 0.5f;
-        _panelSprite.Position.Vector = PanelPosition;
+        _panelSprite.Position = PanelPosition;
 
-        _buttonModeManual = new(assetManager.GetAnimation("ship_probe_thrusterpanelbutton").CreateInstance(), new Vector2(44f, 40f));
-        _buttonModeStay = new(assetManager.GetAnimation("ship_probe_thrusterpanelbutton").CreateInstance(), new Vector2(44f, 40f));
-        _buttonModeStay.Sprite.ActiveAnimation.FrameIndex = 1;
-        _buttonModeFollow = new(assetManager.GetAnimation("ship_probe_thrusterpanelbutton").CreateInstance(), new Vector2(44f, 40f));
-        _buttonModeFollow.Sprite.ActiveAnimation.FrameIndex = 2;
+        _buttonModeManual = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ThrusterPanelButton).CreateInstance(), new Vector2(44f, 40f));
+        _buttonModeStay = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ThrusterPanelButton).CreateInstance(), new Vector2(44f, 40f));
+        _buttonModeStay.ActiveAnimation.FrameIndex = 1;
+        _buttonModeFollow = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ThrusterPanelButton).CreateInstance(), new Vector2(44f, 40f));
+        _buttonModeFollow.ActiveAnimation.FrameIndex = 2;
 
         _buttonModeManual.Position = PanelPosition + new Vector2(40.5f, -56f);
         _buttonModeStay.Position = PanelPosition + new Vector2(40.5f, -1.5f);
@@ -57,27 +55,27 @@ internal class ProbeThrusterPanel
         SetAutopilotState(_system.AutopilotState);
     }
 
-    internal void Draw()
+    internal void Draw(IDrawInfo info)
     {
-        _panelSprite.Draw();
-        _buttonModeManual.Draw();
-        _buttonModeStay.Draw();
-        _buttonModeFollow.Draw();
+        _panelSprite.Draw(info);
+        _buttonModeManual.Draw(info);
+        _buttonModeStay.Draw(info);
+        _buttonModeFollow.Draw(info);
     }
 
     internal void SetInputListeners(bool areEnabled)
     {
         if (areEnabled)
         {
-            _buttonModeManual?.Button.SetEventHandler(ButtonEvent.RightClick, OnManualAutopilotStatePressEvent);
-            _buttonModeStay?.Button.SetEventHandler(ButtonEvent.RightClick, OnStayAutopilotStatePressEvent);
-            _buttonModeFollow?.Button.SetEventHandler(ButtonEvent.RightClick, OnFollowAutopilotStatePressEvent);
+            _buttonModeManual?.SetHandler(ButtonEvent.RightClick, OnManualAutopilotStatePressEvent);
+            _buttonModeStay?.SetHandler(ButtonEvent.RightClick, OnStayAutopilotStatePressEvent);
+            _buttonModeFollow?.SetHandler(ButtonEvent.RightClick, OnFollowAutopilotStatePressEvent);
         }
         else
         {
-            _buttonModeManual?.Button.ClearEventHandlers();
-            _buttonModeStay?.Button.ClearEventHandlers();
-            _buttonModeFollow?.Button.ClearEventHandlers();
+            _buttonModeManual?.ClearHandlers();
+            _buttonModeStay?.ClearHandlers();
+            _buttonModeFollow?.ClearHandlers();
         }
     }
 
@@ -85,22 +83,22 @@ internal class ProbeThrusterPanel
     {
         _system.AutopilotState = state;
 
-        _buttonModeManual.Sprite.Mask = MODE_COLOR_OFF;
-        _buttonModeStay.Sprite.Mask = MODE_COLOR_OFF;
-        _buttonModeFollow.Sprite.Mask = MODE_COLOR_OFF;
+        _buttonModeManual.Mask = MODE_COLOR_OFF;
+        _buttonModeStay.Mask = MODE_COLOR_OFF;
+        _buttonModeFollow.Mask = MODE_COLOR_OFF;
 
         switch (state)
         {
             case ProbeAutopilotState.Disabled:
-                _buttonModeManual.Sprite.Mask = MODE_COLOR_ON;
+                _buttonModeManual.Mask = MODE_COLOR_ON;
                 break;
 
             case ProbeAutopilotState.StayStationary:
-                _buttonModeStay.Sprite.Mask = MODE_COLOR_ON;
+                _buttonModeStay.Mask = MODE_COLOR_ON;
                 break;
 
             case ProbeAutopilotState.FollowDirection:
-                _buttonModeFollow.Sprite.Mask = MODE_COLOR_ON;
+                _buttonModeFollow.Mask = MODE_COLOR_ON;
                 break;
 
             default:

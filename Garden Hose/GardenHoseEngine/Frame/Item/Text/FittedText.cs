@@ -54,7 +54,7 @@ public class FittedText : ColoredItem, ITextItem
 
     public SpriteEffects Effects { get; set; }
 
-    public float FittingSizePixels
+    public Vector2 FittingSizePixels
     {
         get => _fittingSizePixels;
         set
@@ -86,7 +86,7 @@ public class FittedText : ColoredItem, ITextItem
     private Origin _origin;
     private Vector2 _originLocation;
 
-    private float _fittingSizePixels = float.MaxValue;
+    private Vector2 _fittingSizePixels = new Vector2(float.MaxValue, float.MaxValue);
     private float _scale = 1f;
     private float _finalTextSize = 1f;
 
@@ -120,8 +120,7 @@ public class FittedText : ColoredItem, ITextItem
             _ => throw new EnumValueException(nameof(TextOrigin), TextOrigin),
         };
 
-        float TextLengthPixels = TextSizePixels.X * Scale;
-        _finalTextSize = Math.Min(Scale, FittingSizePixels / TextLengthPixels);
+        _finalTextSize = Math.Min(Scale, Math.Min(FittingSizePixels.X / TextSizePixels.X, FittingSizePixels.Y / TextSizePixels.Y));
 
         _finalShadowOffset = _shadowOffset * _finalTextSize * Font.Spacing;
     }
@@ -135,7 +134,7 @@ public class FittedText : ColoredItem, ITextItem
         {
             info.SpriteBatch.DrawString(Font,
             Text,
-            Display.ToRealPosition(Position),
+            Display.ToRealPosition(Position + (Font.LineSpacing * ShadowOffset)),
             ShadowColor,
             Rotation,
             _originLocation + _finalShadowOffset,

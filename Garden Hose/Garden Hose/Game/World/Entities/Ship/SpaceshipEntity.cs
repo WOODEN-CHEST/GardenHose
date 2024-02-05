@@ -1,13 +1,10 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Ship.System;
+using GardenHoseEngine;
 using GardenHoseEngine.IO;
-using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using GardenHoseEngine.Screen;
+using System.Numerics;
 
 namespace GardenHose.Game.World.Entities.Ship;
 
@@ -31,49 +28,46 @@ internal abstract class SpaceshipEntity : PhysicalEntity
 
     // Private fields.
     private SpaceshipPilot _pilot = SpaceshipPilot.None;
-    private bool _isInputListened = false;
 
 
     // Constructors.
-    internal SpaceshipEntity(EntityType type, GameWorld? world) : base(type, world) { }
+    internal SpaceshipEntity(EntityType type) : base(type) { }
 
 
     // Protected methods.
-    protected abstract void AIParallelTick();
+    protected abstract void AITick();
 
-    protected abstract void PlayerParallelTick();
-
-    protected abstract void AISequentialTick();
-
-    protected abstract void PlayerSequentialTick();
+    protected abstract void PlayerTick();
 
 
     // Inherited methods.
-    internal override void ParallelTick()
+    internal override void Tick(GHGameTime time)
     {
-        base.ParallelTick();
+        base.Tick(time);
 
         if (Pilot == SpaceshipPilot.Player)
         {
-            PlayerParallelTick();
+            PlayerTick();
+
+            if (World!.Planet != null)
+            {
+                ShipSystem.TargetNavigationPosition = GHMath.NormalizeOrDefault(
+                World!.Player.Camera.ToWorldPosition(UserInput.VirtualMousePosition.Current) - World.Planet.Position) * World.Planet.Radius;
+            }
+            else
+            {
+                ShipSystem.TargetNavigationPosition = World!.Player.Camera.ToWorldPosition(UserInput.VirtualMousePosition.Current);
+            }
+            
         }
         else if (Pilot == SpaceshipPilot.AI)
         {
-            AIParallelTick();
+            AITick();
         }
-    }
 
-    internal override void SequentialTick()
-    {
-        base.SequentialTick();
-
-        if (Pilot == SpaceshipPilot.Player)
+        if (ShipSystem.IsEnabled)
         {
-            PlayerSequentialTick();
-        }
-        else if (Pilot == SpaceshipPilot.AI)
-        {
-            AIParallelTick();
+            ShipSystem.Tick();
         }
     }
 

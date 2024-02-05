@@ -20,7 +20,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
             new PartSprite(GHGameAnimationName.Planet_RockSurface_1) { ColorMask = new Color(110, 140, 83) },
             new PartSprite(GHGameAnimationName.Planet_Clouds_4) { ColorMask = Color.White, Opacity = 0.8f },
         },
-        new PartSprite(GHGameAnimationName.Planet_Clouds_4) { ColorMask = new Color(161, 155, 130), Opacity = 0.6f });
+        new PartSprite(GHGameAnimationName.Planet_Atmosphere_Default) { ColorMask = new Color(161, 155, 130), Opacity = 0.6f });
 
 
     // Fields.
@@ -44,6 +44,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
             ApplyAtmosphereSize();
         }
     }
+
     internal override float Mass => 5.972e24f;
 
 
@@ -76,6 +77,10 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         }
 
         _atmosphere = atmosphere;
+        if (_atmosphere != null)
+        {
+            MainPart.AddSprite(_atmosphere);
+        }
         AtmosphereThickness = 20f;
 
         CollisionHandler.IsCollisionReactionEnabled = false;

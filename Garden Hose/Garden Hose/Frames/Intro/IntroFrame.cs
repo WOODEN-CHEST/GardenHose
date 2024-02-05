@@ -7,6 +7,7 @@ using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
@@ -26,7 +27,7 @@ internal class IntroFrame : GameFrame
     private IInputListener _keyboardListener;
     private IInputListener _mouseListener;
 
-    private const float LOGO_DURATION = MathF.PI * 0.75f;
+    private const float LOGO_DURATION = MathF.PI * 1.25f;
     private const float FIRST_LOGO_TIME = 1.0f;
     private const float SECOND_LOGO_TIME = FIRST_LOGO_TIME + LOGO_DURATION;
     private const float EXIT_TIME = SECOND_LOGO_TIME + LOGO_DURATION;
@@ -58,8 +59,16 @@ internal class IntroFrame : GameFrame
     // Inherited methods.
     public override void Load()
     {
-        _monogameLogo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/monogame_logo").CreateInstance(), LOGO_START_SCALE);
-        _logo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/logo").CreateInstance(), LOGO_START_SCALE);
+        _monogameLogo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/monogame_logo").CreateInstance(), LOGO_START_SCALE)
+        {
+            Position = Display.VirtualSize * 0.5f
+        };
+        _logo = new(new SpriteAnimation(0f, this, Origin.Center, "ui/logo").CreateInstance(), LOGO_START_SCALE)
+        {
+            Position = Display.VirtualSize * 0.5f
+        };
+
+
         GH.LoadGlobalAssets();
 
         base.Load();
@@ -70,6 +79,9 @@ internal class IntroFrame : GameFrame
         base.OnStart();
 
         AddLayer(new Layer("logo layer"));
+        TopLayer!.AddDrawableItem(_monogameLogo);
+        TopLayer.AddDrawableItem(_logo);
+
         CreateSkipListeners();
 
         GHEngine.Game.IsFixedTimeStep = false;
@@ -98,8 +110,8 @@ internal class IntroFrame : GameFrame
         else if (_passedTime < EXIT_TIME)
         {
             _monogameLogo.Opacity = 0f;
-            _logo.Size += _monogameLogo.TextureSize * LOGO_SCALE_INCREASE * time.PassedTimeSeconds;
-            _logo.Opacity = MathF.Sin((_passedTime - FIRST_LOGO_TIME) / (SECOND_LOGO_TIME - FIRST_LOGO_TIME) * MathF.PI);
+            _logo.Size += _logo.TextureSize * LOGO_SCALE_INCREASE * time.PassedTimeSeconds;
+            _logo.Opacity = MathF.Sin((_passedTime - SECOND_LOGO_TIME) / (EXIT_TIME - SECOND_LOGO_TIME) * MathF.PI);
         }
         else
         {
@@ -135,4 +147,9 @@ internal class IntroFrame : GameFrame
     }
 
     private void SkipIntro() => _passedTime = EXIT_TIME;
+
+    public override void Draw(IDrawInfo info, RenderTarget2D layerPixelBuffer, RenderTarget2D framePixelBuffer)
+    {
+        base.Draw(info, layerPixelBuffer, framePixelBuffer);
+    }
 }

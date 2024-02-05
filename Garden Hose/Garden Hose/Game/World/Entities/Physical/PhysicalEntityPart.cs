@@ -13,7 +13,18 @@ namespace GardenHose.Game.World.Entities.Physical;
 internal class PhysicalEntityPart
 {
     // Fields.
-    internal virtual PhysicalEntity? Entity { get; set; } = null;
+    internal virtual PhysicalEntity? Entity
+    {
+        get => _entity;
+        set
+        {
+            _entity = value;
+            foreach (PartLink Link in SubPartLinks)
+            {
+                Link.LinkedPart.Entity = value;
+            }
+        }
+    }
 
 
     /* Part properties. */
@@ -101,7 +112,7 @@ internal class PhysicalEntityPart
     private ICollisionBound[] _collisionBounds;
     private float _selfRotation = 0f;
 
-    private PartLink? _parentLink;
+    private PhysicalEntity? _entity = null;
 
 
     // Constructors.
@@ -152,15 +163,11 @@ internal class PhysicalEntityPart
         {
             throw new InvalidOperationException("Linked part already has a parent link.");
         }
-        if (Entity == null)
-        {
-            throw new InvalidOperationException("Cannot link part while entity is null.");
-        }
 
         var NewPartLinks = new PartLink[SubPartLinks.Length + 1];
         SubPartLinks.CopyTo(NewPartLinks, 0);
 
-        PartLink Link = new PartLink(this, part, Entity, distance, strength);
+        PartLink Link = new PartLink(this, part, distance, strength);
         NewPartLinks[^1] = Link;
         SubPartLinks = NewPartLinks;
 

@@ -17,7 +17,8 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     internal static readonly Vector2 NARROW_BUTTON_SIZE = new(400f, 200f);
     internal static readonly Vector2 NORMAL_BUTTON_SIZE = new(800f, 200f);
     internal static readonly Vector2 WIDE_BUTTON_SIZE = new(1600f, 200f);
-    internal static readonly Vector2 PANEL_GLOW_SIZE_DIFFERENCE = new(8f, 8f);
+    internal static readonly Vector2 PANEL_GLOW_SIZE_DIFFERENCE = new(8f);
+    internal static readonly Vector2 TEXT_PADDING = new(50f);
 
 
     // Internal fields.
@@ -46,9 +47,9 @@ internal partial class ConnectorRectangleButton : ConnectorElement
             _glowButton.Size = Size * Scale;
             _connector.Size = CONNECTOR_SIZE * Scale;
             _receiver.Scale = value;
-            _text.Scale = value;
             _maxReceiverDistance = DEFAULT_MAX_RECEIVER_DISTANCE * Scale;
             _maxBounceDistance = DEFAULT_MAX_BOUNCE_DISTANCE * Scale;
+            _text.FittingSizePixels = (Size - TEXT_PADDING) * Scale;
         }
     }
 
@@ -70,7 +71,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
 
     internal Vector2 Size { get; private init; }
     internal FloatColor ClickedColor { get; set; } = DEFAULT_CLICKED_COLOR;
-    internal EventHandler? ClickHandler { get; set; }
+    internal EventHandler? Click { get; set; }
 
 
     // Private fields.
@@ -85,7 +86,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
 
     private const float CLICK_POWER_CHANGE_SPEED = 2.5f;
     private const float CONNECTION_SPEED_UP = 12f;
-    private const float CONNECTION_SPEED_DOWN = 4f;
+    private const float CONNECTION_SPEED_DOWN = -4f;
     private const float POWER_CHANGE_SPEED = 4f;
 
     private const float DEFAULT_MAX_RECEIVER_DISTANCE = 200f;
@@ -95,7 +96,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     private const float MAX_BOUNCE_PERIOD = MathF.PI;
     private const float BOUNCE_SPEED = 5f * MathF.PI;
 
-    private const float TEXT_SCALE = 2f;
+    private const float TEXT_SCALE = 1000f;
 
 
 
@@ -162,26 +163,22 @@ internal partial class ConnectorRectangleButton : ConnectorElement
             IsShadowEnabled = true,
             ShadowColor = TEXT_SHADOW_COLOR,
             ShadowOffset = TEXT_SHADOW_OFFSET,
-            FittingSizePixels = Size.X - PANEL_GLOW_SIZE_DIFFERENCE.X,
             Scale = TEXT_SCALE
         };
         
         _directionUnit = GetDirectionVector(connectDirection);
+        Scale = 1f;
 
         IsFunctional = true;
     }
 
     // Private methods.
     /* Event handlers. */
-    private void OnButtonHoverEvent(object? sender, EventArgs args) => _isHovered = true;
-
-    private void OnButtonUnHoverEvent(object? sender, EventArgs args) => _isHovered = false;
-
     private void OnButtonClickEvent(object? sender, EventArgs args)
     {
         if (!IsClickable) return;
 
-        ClickHandler?.Invoke(this, EventArgs.Empty);
+        Click?.Invoke(this, EventArgs.Empty);
         _clickPower = MAX_CLICK_POWER;
 
         if (IsClickingResetOnClick)
@@ -196,8 +193,6 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     {
         if (IsFunctional)
         {
-            _glowButton.SetHandler(ButtonEvent.Hovering, OnButtonHoverEvent);
-            _glowButton.SetHandler(ButtonEvent.NotHovering, OnButtonUnHoverEvent);
             _glowButton.SetHandler(ButtonEvent.LeftClick, OnButtonClickEvent);
         }
         else
@@ -206,24 +201,26 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         }
     }
 
-    private void UpdateReceiver()
+    private void UpdateReceiver(Vector2 buttonPosition)
     {
-        _receiver.Position = Position + (Size * 0.5f * _directionUnit) + (_maxReceiverDistance * (MAX_CONNECTION - _connection) * _directionUnit);
+        _receiver.Position = buttonPosition + (Size * 0.5f * _directionUnit * Scale)
+            + (_maxReceiverDistance * (MAX_CONNECTION - _connection) * _directionUnit);
         _receiver.Opacity = _connection;
     }
 
-    private void AnimateBounce(IProgramTime time)
+    private Vector2 GetBouncePositions(IProgramTime time)
     {
         _bouncePeriod = Math.Min(_bouncePeriod + BOUNCE_SPEED * time.PassedTimeSeconds, MAX_BOUNCE_PERIOD);
         Vector2 BouncedPosition = Position + (MathF.Sin(_bouncePeriod) * (-_directionUnit) * _maxBounceDistance);
-        SetItemPositions(BouncedPosition);
+        return BouncedPosition;
     }
 
     private void SetItemPositions(Vector2 position)
     {
         _glowButton.Position = position;
         _panel.Position = position;
-        _receiver.Position = position + (Size * 0.5f * _directionUnit);
+        _connector.Position = position + (Size * 0.5f * _directionUnit * Scale);
+        _text.Position = position;
     }
 
 
@@ -231,6 +228,8 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     public override void Update(IProgramTime time)
     {
         if (!IsFunctional) return;
+
+        _isHovered = _glowButton.IsMouseOverButton;
 
         _connection = Math.Clamp(_connection + (_isHovered ? CONNECTION_SPEED_UP : CONNECTION_SPEED_DOWN) * time.PassedTimeSeconds,
             MIN_CONNECTION, MAX_CONNECTION);
@@ -241,7 +240,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         }
 
         _power = _connection == MAX_CONNECTION ? MAX_POWER : Math.Max(_power - POWER_CHANGE_SPEED * time.PassedTimeSeconds, MIN_POWER);
-        _clickPower = Math.Min(_clickPower - CLICK_POWER_CHANGE_SPEED * time.PassedTimeSeconds, MIN_CLICK_POWER);
+        _clickPower = Math.Max(_clickPower - CLICK_POWER_CHANGE_SPEED * time.PassedTimeSeconds, MIN_CLICK_POWER);
 
         if (_clickPower == MIN_CLICK_POWER)
         {
@@ -253,15 +252,20 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         }
 
         _glowButton.Mask = _lightColor;
-        _receiver.LightColor = _lightColor;
+        _receiver.LightColor = (_connection == MAX_CONNECTION) ? _lightColor : UNSELECTED_COLOR;
+        _text.Mask = _lightColor * 2f;
 
-        // Do not change order here, bounce alters position and thus alters the receiver's position when updated in UpdateReceiver.
         if (_bouncePeriod <= MAX_BOUNCE_PERIOD)
         {
-            AnimateBounce(time);
+            Vector2 BouncePosition = GetBouncePositions(time);
+            SetItemPositions(BouncePosition);
+            UpdateReceiver(BouncePosition);
         }
-
-        UpdateReceiver();
+        else
+        {
+            UpdateReceiver(Position);
+        }
+        
     }
 
 

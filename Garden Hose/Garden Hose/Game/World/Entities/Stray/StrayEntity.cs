@@ -1,5 +1,4 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
-using Microsoft.Xna.Framework;
 using System;
 
 namespace GardenHose.Game.World.Entities.Stray;
@@ -8,7 +7,7 @@ internal class StrayEntity : PhysicalEntity
 {
     public StrayEntity(GameWorld world,
         PhysicalEntityPart partToStray)
-        : base(EntityType.Stray, world)
+        : base(EntityType.Stray)
     {
         if (partToStray == null)
         {

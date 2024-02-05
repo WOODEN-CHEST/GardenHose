@@ -14,7 +14,8 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
     // Private fields.
     private readonly Vector2 FIRST_BUTTON_PADDING = new(50f, 0f);
     private readonly Vector2 SEQUENTIAL_BUTTON_PADDING = new(0f, 50f);
-    private readonly float FIRST_BUTTON_Y_POSITION = Display.VirtualSize.X * 0.4f;
+    private readonly float FIRST_BUTTON_Y_POSITION = Display.VirtualSize.X * 0.25f;
+    private const float MAIN_BUTTON_SCALE = 0.5f;
 
     private readonly ILayer _uiLayer;
 
@@ -58,39 +59,45 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
     // Private methods.
     private void CreateButtons()
     {
-        _play = new(Direction.Left, RectangleButtonType.Normal, _connectorAssets)
+        _play = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
         {
             Text = "Play",
-            Scale = 0.5f,
-            Position = new Vector2(ConnectorRectangleButton.NORMAL_BUTTON_SIZE.X * 0.5f, FIRST_BUTTON_Y_POSITION) + FIRST_BUTTON_PADDING
+            Scale = MAIN_BUTTON_SCALE,
+            Position = new Vector2(ConnectorRectangleButton.NORMAL_BUTTON_SIZE.X * 0.5f * MAIN_BUTTON_SCALE, FIRST_BUTTON_Y_POSITION)
+                + FIRST_BUTTON_PADDING
         };
+        _play.Click += OnPlayClickEvent;
         _uiLayer.AddDrawableItem(_play);
         ParentFrame.AddItem(_play);
 
-        _editor = new(Direction.Left, RectangleButtonType.Normal, _connectorAssets)
+        _editor = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
         {
             Text = "Level Editor",
-            Scale = 0.5f,
-            Position = _play.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y) + SEQUENTIAL_BUTTON_PADDING
+            Scale = MAIN_BUTTON_SCALE,
+            Position = _play.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+                + SEQUENTIAL_BUTTON_PADDING
         };
         _uiLayer.AddDrawableItem(_editor);
         ParentFrame.AddItem(_editor);
 
-        _options = new(Direction.Left, RectangleButtonType.Normal, _connectorAssets)
+        _options = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
         {
             Text = "Options",
-            Scale = 0.5f,
-            Position = _editor.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y) + SEQUENTIAL_BUTTON_PADDING
+            Scale = MAIN_BUTTON_SCALE,
+            Position = _editor.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+                + SEQUENTIAL_BUTTON_PADDING
         };
         _uiLayer.AddDrawableItem(_options);
         ParentFrame.AddItem(_options);
 
-        _exit = new(Direction.Left, RectangleButtonType.Normal, _connectorAssets)
+        _exit = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
         {
             Text = "Exit",
-            Scale = 0.5f,
-            Position = _options.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y) + SEQUENTIAL_BUTTON_PADDING
+            Scale = MAIN_BUTTON_SCALE,
+            Position = _options.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+                + SEQUENTIAL_BUTTON_PADDING
         };
+        _exit.Click += OnExitClickEvent;
         _uiLayer.AddDrawableItem(_exit);
         ParentFrame.AddItem(_exit);
     }

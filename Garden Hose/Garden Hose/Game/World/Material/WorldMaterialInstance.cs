@@ -75,7 +75,7 @@ internal sealed class WorldMaterialInstance
         const float ARBITRARY_REDUCTION_VALUE = 0.0078f;
         float AvgTransferRate = (Material.HeatTransferRate + otherMaterial.Material.HeatTransferRate) * 0.5f;
         float TemperatureDifference = otherMaterial.Temperature - Temperature;
-        Temperature += TemperatureDifference * AvgTransferRate * time.PassedWorldTimeSeconds * ARBITRARY_REDUCTION_VALUE;
+        Temperature += TemperatureDifference * AvgTransferRate * time.WorldTime.PassedTimeSeconds * ARBITRARY_REDUCTION_VALUE;
     }
 
     internal void HeatByCollision(float force)
@@ -94,11 +94,11 @@ internal sealed class WorldMaterialInstance
 
         if (Temperature >= Material.BoilingPoint)
         {
-            CurrentStrength -= BOILING_DAMAGE * time.PassedWorldTimeSeconds * ((Temperature - Material.BoilingPoint) * ARBITRARY_REDUCTION_VALUE);
+            CurrentStrength -= BOILING_DAMAGE * time.WorldTime.PassedTimeSeconds * ((Temperature - Material.BoilingPoint) * ARBITRARY_REDUCTION_VALUE);
         }
         else if (Temperature >= Material.MeltingPoint)
         {
-            CurrentStrength -= MELTING_DAMAGE * time.PassedWorldTimeSeconds * ((Temperature - Material.MeltingPoint) * ARBITRARY_REDUCTION_VALUE);
+            CurrentStrength -= MELTING_DAMAGE * time.WorldTime.PassedTimeSeconds * ((Temperature - Material.MeltingPoint) * ARBITRARY_REDUCTION_VALUE);
         }
     }
 }

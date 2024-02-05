@@ -71,6 +71,6 @@ public partial class GHEngineGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GameFrameManager.DrawFrames();
+        GameFrameManager.DrawFrames(_time);
     }
 }

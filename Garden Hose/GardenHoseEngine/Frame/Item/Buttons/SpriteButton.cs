@@ -1,10 +1,6 @@
 ﻿using GardenHoseEngine.Frame.Animation;
 using GardenHoseEngine.IO;
-using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
-
 
 namespace GardenHoseEngine.Frame.Item.Buttons;
 
@@ -48,8 +44,6 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
     public SpriteButton(AnimationInstance animationInstance) : base(animationInstance) { }
 
     public SpriteButton(AnimationInstance animationInstance, Vector2 size) : base(animationInstance, size) { }
-
-
 
 
     // Methods.
@@ -127,7 +121,7 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
             _ => throw new EnumValueException(nameof(buttonEvent), buttonEvent)
         };
 
-        return MouseListenerCreator.SingleButton(true, Condition, handler, Button);
+        return MouseListenerCreator.SingleButton(true, Condition, GetEventHandler(handler), Button);
     }
 
     private IInputListener GetInputListenerScroll(ButtonEvent buttonEvent, EventHandler handler)
@@ -139,7 +133,18 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
             2 => ScrollDirection.Any
         };
 
-        return MouseListenerCreator.Scroll(true, Direction, handler);
+        return MouseListenerCreator.Scroll(true, Direction, GetEventHandler(handler));
+    }
+    
+    private EventHandler GetEventHandler(EventHandler innerHandler)
+    {
+        return (object? sender, EventArgs args) =>
+        {
+            if (IsMouseOverButton)
+            {
+                innerHandler.Invoke(this, EventArgs.Empty);
+            }
+        };
     }
 
     // Inherited methods.

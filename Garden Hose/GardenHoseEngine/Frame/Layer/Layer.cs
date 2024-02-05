@@ -94,7 +94,7 @@ public class Layer : ILayer
         info.SpriteBatch.Begin(blendState: GameFrameManager.DefaultBlendState);
         foreach (IDrawableItem Item in _drawableItems)
         {
-            if (Item.Shader!= null)
+            if (Item.Shader != null)
             {
                 ShaderedDrawables ??= new();
                 ShaderedDrawables.Add(Item);

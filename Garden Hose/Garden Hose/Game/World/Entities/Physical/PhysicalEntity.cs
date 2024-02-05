@@ -123,8 +123,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
                 throw new ArgumentNullException(nameof(value));
             }
 
-            _mainpart.Entity = this;
             _mainpart = value;
+            _mainpart.Entity = this;
             ResetPartInfo();
             SetPositionAndRotation(Position, Rotation);
         }
@@ -211,18 +211,20 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
         // Linear.
-        Vector2 LinearAcceleration = force / Mass;
+        Vector2 LinearForceUnit = GHMath.NormalizeOrDefault(Position - location);
+        Vector2 LinearAcceleration = LinearForceUnit * (Vector2.Dot(LinearForceUnit, force) / Mass);
 
         // Rotational.
-        Vector2 LeverArm = Vector2.Normalize(location - Position);
-        Vector2 LeverArmNormal = GHMath.PerpVectorClockwise(LeverArm);
-        float DistanceFromCenter = Vector2.Distance(CenterOfMass, location);
-        float AppliedTorque = Vector2.Dot(force, LeverArmNormal) * DistanceFromCenter;
-        float MomentOfInertia = Vector2.DistanceSquared(Position, location) * Mass;
-        float AngularAcceleration = AppliedTorque / MomentOfInertia;
-        if (float.IsNaN(AngularAcceleration))
+        float AngularAcceleration = 0f;
+        Vector2 LeverArm = location - Position;
+        if (!(LeverArm.LengthSquared() is 0f or -0f))
         {
-            AngularAcceleration = 0f;
+            LeverArm.Normalize();
+            Vector2 LeverArmNormal = GHMath.PerpVectorClockwise(LeverArm);
+            float DistanceFromCenter = Vector2.Distance(CenterOfMass, location);
+            float AppliedTorque = Vector2.Dot(force, LeverArmNormal) * DistanceFromCenter;
+            float MomentOfInertia = Vector2.DistanceSquared(Position, location) * Mass;
+            AngularAcceleration = AppliedTorque / MomentOfInertia;
         }
 
         // Apply.

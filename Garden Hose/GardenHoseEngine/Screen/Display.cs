@@ -104,7 +104,7 @@ public static class Display
     private static Vector2 s_fullScreenSize;
 
     [ThreadStatic]
-    private static Line s_sharedLine;;
+    private static Line s_sharedLine;
 
 
     // Static methods.

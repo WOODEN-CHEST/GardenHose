@@ -1,7 +1,7 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Particle;
 using GardenHoseEngine.Audio;
-
+using GardenHoseEngine.Collections;
 
 namespace GardenHose.Game.World.Material;
 
@@ -86,38 +86,14 @@ internal class WorldMaterial
 
 
     /* Sound. */
-    internal Sound? TapSound { get; private set; }
-
-    internal Sound? LightHitSound { get; private set; }
-
-    internal Sound? HitSound { get; private set; }
-
-    internal Sound? HeavyHitSound { get; private set; }
-
-    internal Sound? SlightlyDamagedSound { get; private set; }
-
-    internal Sound? DamagedSound { get; private set; }
-
-    internal Sound? HeavilyDamagedSound { get; private set; }
-
-    internal Sound? DestroyedSound { get; private set; }
-
-
-    internal string? TapSoundName { get; init; }
-
-    internal string? LightHitSoundName { get; init; }
-
-    internal string? HitSoundName { get; init; }
-
-    internal string? HeavyHitSoundName { get; init; }
-
-    internal string? SlightDamageSoundName { get; init; }
-
-    internal string? DamagedSoundName { get; init; }
-
-    internal string? HeavilyDamagedSoundName { get; init; }
-
-    internal string? DestroyedSoundName { get; init; }
+    internal RandomSequence<GHGameSoundName>? TapSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? LightHitSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? HitSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? HeavyHitSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? SlightlyDamagedSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? DamagedSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? HeavilyDamagedSounds { get; init; }
+    internal RandomSequence<GHGameSoundName>? DestroySounds { get; init; }
 
 
     /* Particles. */
@@ -133,43 +109,34 @@ internal class WorldMaterial
 
     internal void Load(GHGameAssetManager assetManager)
     {
-        if (TapSoundName != null)
-        {
-            TapSound = assetManager.GetSound(TapSoundName);
-        }
-        if (LightHitSoundName != null)
-        {
-            LightHitSound = assetManager.GetSound(LightHitSoundName);
-        }
-        if (HitSoundName != null)
-        {
-            HitSound = assetManager.GetSound(HitSoundName);
-        }
-        if (HeavyHitSoundName != null)
-        {
-            HeavyHitSound = assetManager.GetSound(HeavyHitSoundName);
-        }
-
-        if (SlightDamageSoundName != null)
-        {
-            SlightlyDamagedSound = assetManager.GetSound(SlightDamageSoundName);
-        }
-        if (DamagedSoundName != null)
-        {
-            DamagedSound = assetManager.GetSound(DamagedSoundName);
-        }
-        if (HeavilyDamagedSoundName  != null)
-        {
-            HeavyHitSound = assetManager.GetSound(HeavilyDamagedSoundName);
-        }
-        if (DestroyedSoundName != null)
-        {
-            DestroyedSound = assetManager.GetSound(DestroyedSoundName);
-        }
+        LoadSounds(assetManager, TapSounds?.Items);
+        LoadSounds(assetManager, LightHitSounds?.Items);
+        LoadSounds(assetManager, HitSounds?.Items);
+        LoadSounds(assetManager, HeavyHitSounds?.Items);
+        LoadSounds(assetManager, SlightlyDamagedSounds?.Items);
+        LoadSounds(assetManager, DamagedSounds?.Items);
+        LoadSounds(assetManager, HeavilyDamagedSounds?.Items);
+        LoadSounds(assetManager, DestroySounds?.Items);
+        LoadSounds(assetManager, TapSounds?.Items);
 
         if (DamageParticles != null)
         {
             assetManager.GetAnimation(DamageParticles.AnimationName);
+        }
+    }
+
+
+    // Private methods.
+    private void LoadSounds(GHGameAssetManager assetManager, GHGameSoundName[]? sounds)
+    {
+        if (sounds == null)
+        {
+            return;
+        }
+
+        foreach (GHGameSoundName Sound in sounds)
+        {
+            assetManager.GetSound(Sound);
         }
     }
 }

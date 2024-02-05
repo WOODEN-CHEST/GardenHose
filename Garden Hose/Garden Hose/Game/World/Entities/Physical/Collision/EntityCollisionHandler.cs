@@ -451,7 +451,7 @@ internal class EntityCollisionHandler
             else
             {
                 PartDamage?.Invoke(this, collisionArgs);
-                foreach (PartSpriteCollection Sprite in collisionArgs.Case.SelfPart.Sprites)
+                foreach (PartSprite Sprite in collisionArgs.Case.SelfPart.Sprites)
                 {
                     Sprite.SetActiveSprite(collisionArgs.Case.SelfPart.MaterialInstance.Stage);
                 }

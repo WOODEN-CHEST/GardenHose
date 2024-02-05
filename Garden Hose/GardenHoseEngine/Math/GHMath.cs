@@ -123,4 +123,14 @@ public static class GHMath
     {
         return MathF.Cos(Vector2.Dot(vector1, vector2)) / (vector1.Length() * vector2.Length());
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 NormalizeOrDefault(Vector2 vector)
+    {
+        if (vector.LengthSquared() is 0f or -0f)
+        {
+            return new Vector2(0f, -1f);
+        }
+        return Vector2.Normalize(vector);
+    }
 }

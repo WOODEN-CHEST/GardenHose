@@ -11,16 +11,12 @@ internal interface ISpaceshipSystem : IDrawableItem
 
     public SpaceshipEntity Ship { get; }
 
+    public Vector2 TargetNavigationPosition { get; set; }
+
 
     // Internal methods.
     [TickedFunction(false)]
-    public void NavigateToPosition(Vector2 position);
-
-    [TickedFunction(false)]
-    public void ParallelTick(bool isPlayerTick);
-
-    [TickedFunction(false)]
-    public void SequentialTick(bool isPlayerTick);
+    public void Tick();
 
     public void Load(GHGameAssetManager assetManager);
 

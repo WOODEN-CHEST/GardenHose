@@ -2,7 +2,6 @@
 using GardenHoseEngine.Frame.Item.Text;
 using GardenHoseEngine.Frame.Item;
 using System;
-using GardenHose.Frames.Global;
 using GardenHoseEngine;
 using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
@@ -24,7 +23,7 @@ internal class ProbeDashboard
     /* Roll. */
     private SpriteItem _rollPanel;
     private SpriteItem _rollPanelIndicator;
-    private SimpleTextBox _rollPanelText;
+    private FittedText _rollPanelText;
 
     /* Altitude. */
 
@@ -38,9 +37,9 @@ internal class ProbeDashboard
     {
         _system = system ?? throw new ArgumentNullException(nameof(system));
 
-        _rollPanelText = new(GlobalFrame.GeEichFont, "");
-        _rollPanelText.Origin = Origin.Center;
-        _rollPanelText.Scale = new(0.6f);
+        _rollPanelText = new("", GH.GeeichFont);
+        _rollPanelText.TextOrigin = Origin.Center;
+        _rollPanelText.FittingSizePixels = new(100f, 50f);
     }
 
 
@@ -48,25 +47,22 @@ internal class ProbeDashboard
     // Methods.
     internal void Load(GHGameAssetManager assetManager)
     {
-        _rollPanel = new(assetManager.GetAnimation("ship_probe_rollpanel")!);
-        _rollPanelIndicator = new(assetManager.GetAnimation("ship_probe_rollpanelindicator")!);
-
-        _rollPanel.TargetTextureSize = ROLL_PANEL_SIZE;
-        _rollPanelIndicator.TargetTextureSize = ROLL_PANEL_INDICATOR_SIZE;
+        _rollPanel = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_RollPanel).CreateInstance(), ROLL_PANEL_SIZE);
+        _rollPanelIndicator = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_RollPanelIndicator).CreateInstance(), ROLL_PANEL_INDICATOR_SIZE);
 
         Vector2 RollPanelPosition = Display.VirtualSize - new Vector2(10f, 10f) - (_rollPanel.TextureSize * 0.5f);
-        _rollPanel.Position.Vector = RollPanelPosition;
-        _rollPanelIndicator.Position.Vector = RollPanelPosition + ROLL_PANEL_INDICATOR_OFFSET;
-        _rollPanelText.Position.Vector = RollPanelPosition + ROLL_PANEL_TEXT_OFFSET;
+        _rollPanel.Position = RollPanelPosition;
+        _rollPanelIndicator.Position = RollPanelPosition + ROLL_PANEL_INDICATOR_OFFSET;
+        _rollPanelText.Position = RollPanelPosition + ROLL_PANEL_TEXT_OFFSET;
     }
 
-    internal void Draw()
+    internal void Draw(IDrawInfo info)
     {
         float Roll = _system.RollRelativeToGround;
         _rollPanel.Rotation = Roll;
-        _rollPanel.Draw();
-        _rollPanelIndicator.Draw();
+        _rollPanel.Draw(info);
+        _rollPanelIndicator.Draw(info);
         _rollPanelText.Text = MathHelper.ToDegrees(Roll).ToString("0") + " deg";
-        _rollPanelText.Draw();
+        _rollPanelText.Draw(info);
     }
 }

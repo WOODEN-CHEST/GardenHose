@@ -59,9 +59,9 @@ internal class WorldPlayer
 
     // Internal methods.
     [TickedFunction(false)]
-    internal void Tick()
+    internal void Tick(GHGameTime time)
     {
-        Camera.Tick();
+        Camera.Tick(time);
     }
 
 

@@ -3,10 +3,6 @@ using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Material;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Ship;
 
@@ -35,9 +31,7 @@ internal class ThrusterPart : PhysicalEntityPart
     }
 
     internal float ThrusterThrottleChangeSpeed { get; init; }
-
     internal float ThrusterPower { get; init; }
-
     internal float ForceDirection { get; set; } = 0f;
 
 
@@ -61,13 +55,10 @@ internal class ThrusterPart : PhysicalEntityPart
         }
     }
 
-    internal float FuelEfficiency { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
-
-    internal bool IsFuelUsed { get; set; } = false;
-
-    internal float PotentialFuelTime => MaxFuel / (FuelEfficiency * ThrusterPower);
-
-    internal float EstimatedFuelTimeLeft => Fuel / (FuelEfficiency * ThrusterPower);
+    internal float FuleUsageRate { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
+    internal bool IsFuelUsed { get; set; } = true;
+    internal float PotentialFuelTime => MaxFuel / (FuleUsageRate * ThrusterPower);
+    internal float EstimatedFuelTimeLeft => Fuel / (FuleUsageRate * ThrusterPower);
 
 
     /* Events. */
@@ -84,10 +75,10 @@ internal class ThrusterPart : PhysicalEntityPart
 
 
     // Constructors.
-    internal ThrusterPart(ICollisionBound[]? bounds, WorldMaterial material, PhysicalEntity entity)
+    internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity)
         : base(bounds, material, entity) { }
 
-    internal ThrusterPart(WorldMaterial material, PhysicalEntity entity) : this(null, material, entity) { }
+    internal ThrusterPart(WorldMaterial material, PhysicalEntity entity) : this(Array.Empty<ICollisionBound>(), material, entity) { }
 
 
     // Internal methods.
@@ -98,12 +89,12 @@ internal class ThrusterPart : PhysicalEntityPart
 
     // Protected methods.
     [TickedFunction(false)]
-    protected void ThrusterTick()
+    protected void ThrusterTick(GHGameTime time)
     {
         if (IsThrusterOn)
         {
             float Step = MathF.Sign(TargetThrusterThrottle - CurrentThrusterThrottle);
-            float ThrottleChange = Step * ThrusterThrottleChangeSpeed * Entity.World!.PassedTimeSeconds;
+            float ThrottleChange = Step * ThrusterThrottleChangeSpeed * time.WorldTime.PassedTimeSeconds;
 
             if (Math.Abs(ThrottleChange) > Math.Abs(TargetThrusterThrottle - CurrentThrusterThrottle))
             {
@@ -114,18 +105,18 @@ internal class ThrusterPart : PhysicalEntityPart
         }
         else
         {
-            CurrentThrusterThrottle -= ThrusterThrottleChangeSpeed * Entity.World!.PassedTimeSeconds;
+            CurrentThrusterThrottle -= ThrusterThrottleChangeSpeed * time.WorldTime.PassedTimeSeconds;
         }
         
 
         if ((CurrentThrusterThrottle != 0f) && (Fuel != 0f))
         {
-            Vector2 ForceDirectionVector = Vector2.TransformNormal(Vector2.UnitX, Matrix.CreateRotationZ(CombinedRotation + ForceDirection));
-            Entity.ApplyForce(ForceDirectionVector * CurrentThrusterThrottle * ThrusterPower * Entity.World!.PassedTimeSeconds, Position);
+            Vector2 ForceDirectionVector = Vector2.TransformNormal(-Vector2.UnitY, Matrix.CreateRotationZ(CombinedRotation + ForceDirection));
+            Entity!.ApplyForce(ForceDirectionVector * CurrentThrusterThrottle * ThrusterPower * time.WorldTime.PassedTimeSeconds, Position);
 
             if (!IsFuelUsed)
             {
-                Fuel -= CurrentThrusterThrottle * ThrusterPower * FuelEfficiency * Entity.World.PassedTimeSeconds;
+                Fuel -= CurrentThrusterThrottle * ThrusterPower * FuleUsageRate * time.WorldTime.PassedTimeSeconds;
             }
         }
     }
@@ -133,9 +124,9 @@ internal class ThrusterPart : PhysicalEntityPart
 
     // Inherited methods.
     [TickedFunction(false)]
-    internal override void ParallelTick()
+    internal override void Tick(GHGameTime time)
     {
-        base.ParallelTick();
-        ThrusterTick();
+        base.Tick(time);
+        ThrusterTick(time);
     }
 }

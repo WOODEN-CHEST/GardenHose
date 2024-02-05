@@ -10,15 +10,13 @@ internal class PartLink
 
     internal PhysicalEntityPart LinkedPart { get; init; }
 
-    internal PhysicalEntity Entity { get; init; }
-
     internal Vector2 LinkDistance
     {
         get => _linkDistance;
         set
         {
             _linkDistance = value;
-            Entity.ResetPartInfo();
+            ParentPart.Entity?.ResetPartInfo();
         }
     }
 
@@ -30,18 +28,16 @@ internal class PartLink
 
 
     // Constructors.
-    public PartLink(PhysicalEntityPart mainPart, PhysicalEntityPart linkedPart, PhysicalEntity entity, Vector2 linkDistance)
-        : this(mainPart, linkedPart, entity, linkDistance, float.PositiveInfinity) { } 
+    public PartLink(PhysicalEntityPart mainPart, PhysicalEntityPart linkedPart, Vector2 linkDistance)
+        : this(mainPart, linkedPart, linkDistance, float.PositiveInfinity) { } 
 
     public PartLink(PhysicalEntityPart mainPart,
         PhysicalEntityPart linkedPart,
-        PhysicalEntity entity,
         Vector2 linkDistance,
         float linkStrength)
     {
         ParentPart = mainPart ?? throw new ArgumentNullException(nameof(mainPart));
         LinkedPart = linkedPart ?? throw new ArgumentNullException(nameof(linkedPart));
-        Entity = entity ?? throw new ArgumentNullException(nameof(entity));
         LinkDistance = linkDistance;
         LinkStrength = linkStrength;
     }

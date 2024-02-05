@@ -20,7 +20,7 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1697390738
-ModificationTime: 1697390899
+ModificationTime: 1706973458
 OS2TypoAscent: 0
 OS2TypoAOffset: 1
 OS2TypoDescent: 0
@@ -46,6 +46,13 @@ FitToEm: 0
 WinInfo: 0 38 14
 BeginPrivate: 0
 EndPrivate
-BeginChars: 256 0
+BeginChars: 256 1
+
+StartChar: exclam
+Encoding: 33 33 0
+Width: 410
+Flags: HW
+LayerCount: 2
+EndChar
 EndChars
 EndSplineFont

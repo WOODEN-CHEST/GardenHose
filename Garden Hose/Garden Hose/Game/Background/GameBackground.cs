@@ -49,7 +49,6 @@ internal class GameBackground : IDrawableItem
     private const float STAR_TWINKLE_TIME = 1 / 10f;
     private float _timeSinceStarTwinkle = 0f;
     private const float STAR_MIN_BRIGHTNESS = 0.8f;
-    private const float STAR_MAX_BRIGHTNESS = 1.0f;
     private SpriteItem[] _stars;
 
 

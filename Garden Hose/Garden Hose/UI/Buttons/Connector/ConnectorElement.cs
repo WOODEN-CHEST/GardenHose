@@ -19,7 +19,7 @@ internal abstract partial class ConnectorElement : ITimeUpdatable, IDrawableItem
     internal static readonly FloatColor SELECTED_COLOR = new(0.737f, 0.08f, 0.768f, 1f);
     internal static readonly FloatColor DEFAULT_CLICKED_COLOR = new(0.458f, 0.631f, 1f, 1f);
 
-    internal static readonly Color TEXT_SHADOW_COLOR = new(50, 50, 50, 255);
+    internal static readonly Color TEXT_SHADOW_COLOR = new(20, 20, 20, 255);
     internal static readonly Vector2 CONNECTOR_SIZE = new(79f, 142f);
     internal static readonly Vector2 TEXT_SHADOW_OFFSET = new(0.08f);
 
