@@ -101,14 +101,17 @@ public static class AssetManager
     {
         relativePath = FormatPath(relativePath);
 
+        GameAsset AssetEntry;
+
         if (!s_assets.ContainsKey(relativePath))
         {
-            GameAsset Asset = new(relativePath, type);
-            s_assets[relativePath] = Asset;
-            Asset.AddUser(user, GHEngine.Game.Content);
+            AssetEntry = new(relativePath, type);
+            s_assets[relativePath] = AssetEntry;
         }
 
-        return s_assets[relativePath].Asset!;
+        AssetEntry = s_assets[relativePath];
+        AssetEntry.AddUser(user, GHEngine.Game.Content);
+        return AssetEntry.Asset!;
     }
 
 

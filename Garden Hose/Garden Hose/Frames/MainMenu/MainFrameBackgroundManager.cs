@@ -1,5 +1,5 @@
 ﻿using GardenHose.Game;
-using GardenHose.Game.Background;
+using GardenHose.Game.GameAssetManager;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
@@ -29,7 +29,7 @@ internal class MainFrameBackgroundManager : FrameComponentManager<MainMenuFrame>
 
     // Private fields.
     private readonly ILayer _backgroundLayer;
-    private GameBackground _background = new(BackgroundImage.Default)
+    private GameBackground _background = new(GHGameAnimationName.Background_Default)
     {
         SmallStarCount = 100,
         MediumStarCount = 20,

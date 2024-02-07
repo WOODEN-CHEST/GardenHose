@@ -101,7 +101,7 @@ internal class ProbeEntity : SpaceshipEntity
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
             FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
-            ForceDirection = (MathF.PI / -2f)
+            ForceDirection = 0f
         };
 
         Part.AddSprite(new(GHGameAnimationName.Ship_Probe_SideThruster) 
@@ -115,7 +115,7 @@ internal class ProbeEntity : SpaceshipEntity
 
     private static ThrusterPart CreateMainThrusterPart(PhysicalEntity entity)
     {
-        const float THRUSTER_POWER = 18412;
+        const float THRUSTER_POWER = 23412;
         const float THRUSTER_FUEL = 20_000_000f;
         const float THRUSTER_FUEL_EFFICIENCY = 2.51f;
         const float THRUSTER_CHANGE_SPEED = 5.8f;
@@ -128,7 +128,7 @@ internal class ProbeEntity : SpaceshipEntity
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
             FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
-            ForceDirection = (MathF.PI / -2f)
+            ForceDirection = 0f
         };
 
         Part.AddSprite(new(GHGameAnimationName.Ship_Probe_MainThruster) {Size = s_mainThrusterHitboxSize });

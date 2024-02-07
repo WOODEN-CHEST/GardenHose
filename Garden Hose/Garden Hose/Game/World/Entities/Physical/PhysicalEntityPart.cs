@@ -174,7 +174,9 @@ internal class PhysicalEntityPart
         part.ParentLink = Link;
         part.Entity = Entity;
 
+        Entity?.UpdateAllPositionsAndRotations();
         Entity?.ResetPartInfo();
+        
         SubPartChange?.Invoke(this, SubPartLinks);
     }
 

@@ -19,31 +19,7 @@ internal class GHGame
 
 
     // Internal fields
-    internal const double SecondsPerTick = 0.05d;
-
-    internal float SimulationSpeed
-    {
-        get => _simulationSpeed;
-        set
-        {
-            lock (this)
-            {
-                _simulationSpeed = Math.Clamp(value, 0f, 10f);
-            }
-        }
-    }
-
-    internal bool IsPaused
-    {
-        get => _isPaused;
-        set
-        {
-            lock (this)
-            {
-                _isPaused = value;
-            }
-        }
-    }
+    internal bool IsPaused { get; set; } = false;
 
     internal bool IsRunning { get; private set; }
 
@@ -56,12 +32,6 @@ internal class GHGame
 
     // Private fields.
     private readonly GHGameDebugInfo _debugInfo;
-
-
-    /* Ticking. */
-    private bool _isPaused = false;
-    private float _simulationSpeed = 1f;
-    
 
 
     // Constructors.
@@ -82,14 +52,9 @@ internal class GHGame
         World = new(this, BottomItemLayer, TopItemLayer, worldSettings);
 
         _debugInfo = new(this, World, GameTime);
+        UILayer.AddDrawableItem(_debugInfo);
     }
 
-
-    // Private methods.
-    private void UpdateGame()
-    {
-        
-    }
 
     // Inherited methods.
     internal void OnStart()
@@ -108,12 +73,14 @@ internal class GHGame
             return;
         }
 
-        if (!GameTime.Update(time))
+        if (IsPaused || !GameTime.Update(time))
         {
             return;
         }
 
+        _debugInfo.StartTickMeasure();
         World.Tick(GameTime);
+        _debugInfo.StopTickMeasure(time);
     }
 
     internal void OnEnd()

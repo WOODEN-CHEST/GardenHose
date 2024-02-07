@@ -45,6 +45,12 @@ internal partial class MainMenuFrame : GameFrame
         GHEngine.Game.IsMouseVisible = true;
     }
 
+    public override void OnEnd()
+    {
+        _userInterfaceManager.OnEnd();
+        _backgroundManager.OnEnd();
+    }
+
     public override void Update(IProgramTime time)
     {
         base.Update(time);

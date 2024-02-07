@@ -125,8 +125,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
             _mainpart = value;
             _mainpart.Entity = this;
+            UpdateAllPositionsAndRotations();
             ResetPartInfo();
-            SetPositionAndRotation(Position, Rotation);
         }
     }
 
@@ -211,8 +211,9 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
         // Linear.
-        Vector2 LinearForceUnit = GHMath.NormalizeOrDefault(Position - location);
-        Vector2 LinearAcceleration = LinearForceUnit * (Vector2.Dot(LinearForceUnit, force) / Mass);
+        //Vector2 LinearForceUnit = GHMath.NormalizeOrDefault(Position - location);
+        //Vector2 LinearAcceleration = LinearForceUnit * (Vector2.Dot(LinearForceUnit, force) / Mass);
+        Vector2 LinearAcceleration = force / Mass;
 
         // Rotational.
         float AngularAcceleration = 0f;
@@ -242,6 +243,11 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Vector2 NormalizedMotionDirection = Vector2.Normalize(GHMath.PerpVectorClockwise(PositionToPoint));
 
         return NormalizedMotionDirection * AngularSpeed;
+    }
+
+    internal void UpdateAllPositionsAndRotations()
+    {
+        SetPositionAndRotation(Position, Rotation);
     }
 
 

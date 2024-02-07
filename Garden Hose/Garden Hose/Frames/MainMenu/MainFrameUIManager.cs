@@ -112,6 +112,7 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
 
     private void OnPlayClickEvent(object? sender, EventArgs args)
     {
+        SetMainButtonClickability(false);
         GameFrameManager.LoadNextFrame(new InGameFrame("In-Game"), 
             () => GameFrameManager.JumpToNextFrame());
     }
@@ -126,5 +127,13 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
     internal override void OnStart()
     {
         CreateButtons();
+    }
+
+    internal override void OnEnd()
+    {
+        _play.IsFunctional = false;
+        _editor.IsFunctional = false;
+        _options.IsFunctional = false;
+        _exit.IsFunctional = false;
     }
 }

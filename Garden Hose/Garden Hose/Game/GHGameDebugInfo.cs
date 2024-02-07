@@ -1,24 +1,31 @@
 ﻿using GardenHose.Game.World;
+using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Item.Text;
 using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
 
 namespace GardenHose.Game;
 
-internal class GHGameDebugInfo
+internal class GHGameDebugInfo : IDrawableItem
 {
+    // Fields.
+    public bool IsVisible { get; set; }
+    public Effect? Shader { get; set; }
+
+
     // Internal fields.
     internal bool IsDebugTextEnabled { get; set; } = false;
     internal bool IsDebugOverlaysEnabled { get; set; } = false;
     internal float UpdateTimeSeconds { get; set; } = 0.5f;
     internal float TickTime { get; private set; } = 0f;
     internal float FPS { get; private set; } = 0f;
-
+    
 
     // Private fields.
     private readonly GHGame _game;
@@ -30,7 +37,6 @@ internal class GHGameDebugInfo
     private FittedText _infoText;
 
     /* User input. */
-    private bool _isDebugKeysEnabled;
     private readonly IInputListener _debugTextToggleListener;
     private readonly IInputListener _debugOverlaysToggleListener;
 
@@ -47,8 +53,12 @@ internal class GHGameDebugInfo
         _gameTime = time ?? throw new ArgumentNullException(nameof(time));
 
         _debugTextToggleListener = KeyboardListenerCreator.SingleKey(KeyCondition.OnRelease, OnDebugTextKeyPressEvent, Keys.F3);
-        _debugOverlaysToggleListener = KeyboardListenerCreator.SingleKey(KeyCondition.OnRelease, OnDebugTextKeyPressEvent, Keys.F4);
-        _infoText = new(string.Empty, GH.GeeichFontLarge);
+        _debugOverlaysToggleListener = KeyboardListenerCreator.SingleKey(KeyCondition.OnRelease, OnDebugOverlaysKeyPressEvent, Keys.F4);
+        _infoText = new(string.Empty, GH.GeeichFont)
+        {
+            FittingSizePixels = Display.VirtualSize,
+            TextOrigin = Origin.TopLeft
+        };
     }
 
 
@@ -85,6 +95,7 @@ internal class GHGameDebugInfo
         }
 
         TickTime = _accumilatedTickTime / _tickCountSinceUpdate;
+
         FPS = Display.FPS;
 
         _timeSinceUpdate = 0f;
@@ -97,17 +108,6 @@ internal class GHGameDebugInfo
         throw new NotImplementedException();
     }
 
-    internal void Draw(IDrawInfo info)
-    {
-        if (!IsDebugTextEnabled) return;
-
-        _infoText.Text = $"GH Version {GH.GameVersion}\n" +
-            $"FPS: {FPS.ToString("0.00")}\n" +
-            $"Entity Count: {_world.EntityCount}\n" +
-            $"Tick Time: {TickTime}sec ({(TickTime / _gameTime.MaxPassedWorldTime).ToString("0.00")}% of allowed)\n" +
-            $"IsFallingBegind: {_game.GameTime.IsRunningSlowly}";
-    }
-
     // Private methods.
     private void OnDebugTextKeyPressEvent(object? sender, EventArgs args)
     {
@@ -118,5 +118,16 @@ internal class GHGameDebugInfo
     {
         IsDebugOverlaysEnabled = !IsDebugOverlaysEnabled;
         _game.World.IsDebugInfoDrawn = IsDebugOverlaysEnabled;
+    }
+
+    public void Draw(IDrawInfo info)
+    {
+        if (!IsDebugTextEnabled) return;
+
+        _infoText.Text = $"GH Version {GH.GameVersion}\n" +
+            $"FPS: {FPS.ToString("0.00")}\n" +
+            $"Entity Count: {_world.EntityCount}\n" +
+            $"Tick Time: {(TickTime * 1000f).ToString("0.0000")} ms ({(TickTime / _gameTime.MaxPassedWorldTime).ToString("0.000")}% of allowed)\n";
+        _infoText.Draw(info);
     }
 }

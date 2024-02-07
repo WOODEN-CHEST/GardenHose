@@ -4,11 +4,10 @@ using GardenHoseEngine.Frame;
 using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
 using System;
-using GardenHose.Game.Background;
 using GardenHose.Game.World.Entities.Probe;
 using GardenHose.Game.World.Entities.Planet;
-using GardenHoseEngine.Frame.Item;
-using Microsoft.Xna.Framework.Graphics;
+using GardenHose.Game.GameAssetManager;
+using GardenHose.Game.World.Material;
 
 namespace GardenHose.Frames.InGame;
 
@@ -35,13 +34,13 @@ internal class InGameFrame : GameFrame
             Planet = Planet,
             PlayerShip = new ProbeEntity() { Position = new Vector2(0f, 550f), Rotation = MathF.PI },
             StartingEntities = new Entity[] { },
-            Background = new(BackgroundImage.Default)
+            Background = new(GHGameAnimationName.Background_Default)
             {
                 SmallStarCount = 200,
                 MediumStarCount = 30,
                 BigStarCount = 8
             },
-            AmbientMaterial = GardenHose.Game.World.Material.WorldMaterial.Void
+            AmbientMaterial = WorldMaterial.Void
         };
         Game = new(this, StartupSettings);
     }

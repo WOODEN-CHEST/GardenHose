@@ -331,6 +331,7 @@ internal class ProbeSystem : ISpaceshipSystem
     public void Tick()
     {
         HandleManualThrusterInput();
+
         if (AutopilotState == ProbeAutopilotState.Disabled)
         {
             return;
@@ -343,9 +344,6 @@ internal class ProbeSystem : ISpaceshipSystem
     {
         
     }
-
-    [TickedFunction(false)]
-    public void SequentialTick(bool isPlayerTick) { }
 
     public void Load(GHGameAssetManager assetManager)
     {

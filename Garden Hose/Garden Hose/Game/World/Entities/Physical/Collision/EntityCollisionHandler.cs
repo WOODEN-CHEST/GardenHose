@@ -5,6 +5,7 @@ using GardenHoseEngine;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -180,6 +181,33 @@ internal class EntityCollisionHandler
         Entity.World!.AddPhysicalEntityToWorldPart(Entity);
     }
 
+    internal void CreateBoundingBox()
+    {
+        BoundingRadius = 0f;
+
+        if (Entity.MainPart == null)
+        {
+            return;
+        }
+
+        List<Vector2> Points = GetAllPointsInCollisionBounds();
+        if (Points.Count == 0)
+        {
+            return;
+        }
+
+        float FurthestDistance = 0f;
+        foreach (Vector2 Point in Points)
+        {
+            if ((Entity.Position - Point).Length() > FurthestDistance)
+            {
+                FurthestDistance = (Entity.Position - Point).Length();
+            }
+        }
+
+        BoundingRadius = FurthestDistance;
+    }
+
 
     // Protected methods.
     /* Collision testing. */
@@ -269,7 +297,7 @@ internal class EntityCollisionHandler
         else if ((selfBound.Type == CollisionBoundType.Ball) && (targetBound.Type == CollisionBoundType.Rectangle))
         {
             return GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound, (BallCollisionBound)selfBound,
-                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
+                targetPartPosition, selfPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
         }
         else if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Ball))
         {
@@ -390,33 +418,6 @@ internal class EntityCollisionHandler
         return CollisionPoints;
     }
 
-    internal void CreateBoundingBox()
-    {
-        BoundingRadius = 0f;
-
-        if (Entity.MainPart == null)
-        {
-            return;
-        }
-
-        List<Vector2> Points = GetAllPointsInCollisionBounds();
-        if (Points.Count == 0)
-        {
-            return;
-        }
-
-        Vector2 FurthestPoint = Points[0];
-        foreach (Vector2 point in Points)
-        {
-            if (point.LengthSquared() > FurthestPoint.LengthSquared())
-            {
-                FurthestPoint = point;
-            }
-        }
-
-        BoundingRadius = FurthestPoint.Length();
-    }
-
 
     /* Parts. */
     protected void OnPartCollision(CollisionEventArgs collisionArgs)
@@ -476,7 +477,7 @@ internal class EntityCollisionHandler
 
         foreach (PartLink Link in collisionArgs.Case.SelfPart.SubPartLinks)
         {
-            StrayEntity Stray = new(Entity.World!, Link.LinkedPart);
+            StrayEntity Stray = StrayEntity.MovePartToStrayEntity(Link.LinkedPart);
 
             Entity.World!.AddEntity(Stray);
         }
@@ -488,7 +489,7 @@ internal class EntityCollisionHandler
     {
         PhysicalEntity OldEntity = Entity;
 
-        StrayEntity Stray = new(Entity.World!, collisionArgs.Case.SelfPart);
+        StrayEntity Stray = StrayEntity.MovePartToStrayEntity(collisionArgs.Case.SelfPart);
 
         Stray.CollisionHandler.AddCollisionIgnorable(OldEntity);
         Entity.World!.AddEntity(Stray);

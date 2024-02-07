@@ -268,8 +268,6 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         
     }
 
-
-
     public override void Draw(IDrawInfo info)
     {
         if (!IsVisible) return;
