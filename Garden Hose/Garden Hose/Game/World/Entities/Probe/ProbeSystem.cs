@@ -332,6 +332,7 @@ internal class ProbeSystem : ISpaceshipSystem
     {
         HandleManualThrusterInput();
 
+        return;
         if (AutopilotState == ProbeAutopilotState.Disabled)
         {
             return;

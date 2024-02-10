@@ -2,7 +2,9 @@
 using GardenHose.Game.World.Entities.Stray;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
+using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -146,24 +148,36 @@ internal class EntityCollisionHandler
             return;
         }
 
+
         // Prepare variables.
         Vector2 PushOutDirection = GetPushOutDirection(collisionCase.TargetEntity);
         const int STEP_COUNT = 8;
         float STEP_DISTANCE = 10f;
+        int StepsTaken = 0;
+        const int MAX_STEPS = 1000;
 
         // Push out of other entity.
         do
         {
             Entity.Position += PushOutDirection * STEP_DISTANCE;
+            StepsTaken++;
         }
-        while (TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
-            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0);
+        while ((TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
+            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0)
+            && (StepsTaken <= MAX_STEPS));
+
+        if (StepsTaken > MAX_STEPS)
+        {
+            throw new InvalidOperationException("Collision algorithm failed to push out an entity after taking the maximum amount of steps allowed. " +
+                "\nThis should not ever happen.\n Crashing game to avoid further issues. CollisionCase details:" +
+                $"SelfPos: {collisionCase.SelfEntity.Position}; TargetPos: {collisionCase.TargetEntity.Position}");
+        }
 
         // Push closer as much as possible.
         for (int Step = 0; Step < STEP_COUNT; Step++)
         {
             Vector2 PreviousPosition = Entity.Position;
-            STEP_DISTANCE /= 2f;
+            STEP_DISTANCE *= 0.5f;
 
             Entity.Position -= PushOutDirection * STEP_DISTANCE;
 
@@ -241,7 +255,7 @@ internal class EntityCollisionHandler
         foreach (ICollisionBound TargetBound in targetPart.CollisionBounds)
         {
             //Test bounding radius.
-            if (Vector2.Distance(Entity.Position + selfBound.Offset, 
+            if (Vector2.Distance(Entity.Position + selfBound.Offset,
                 targetPart.Position + TargetBound.Offset) > selfBound.BoundingRadius + TargetBound.BoundingRadius)
             {
                 continue;
@@ -297,7 +311,7 @@ internal class EntityCollisionHandler
         else if ((selfBound.Type == CollisionBoundType.Ball) && (targetBound.Type == CollisionBoundType.Rectangle))
         {
             return GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound, (BallCollisionBound)selfBound,
-                targetPartPosition, selfPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
+                targetPartPosition, selfPartPosition, targetPartCombinedRotation, selfPartCombinedRotation);
         }
         else if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Ball))
         {
@@ -326,7 +340,7 @@ internal class EntityCollisionHandler
     {
         // Prepare variables.
         Edge[] SelfRectEdges = selfRect.GetEdges(selfPartPosition, selfPartCombinedRotation);
-        Edge[] TargetRectEdges = targetRect.GetEdges(selfPartPosition, selfPartCombinedRotation);
+        Edge[] TargetRectEdges = targetRect.GetEdges(targetPartPosition, targetPartCombinedRotation);
         EquationRay[] TargetRectRays =
         {
             new EquationRay(TargetRectEdges[0]),
@@ -390,7 +404,8 @@ internal class EntityCollisionHandler
             {
                 foreach (Vector2 Point in Points)
                 {
-                    if (RectEdges[EdgeIndex].IsPointInEdgeArea(Point))
+                    if (RectEdges[EdgeIndex].IsPointInEdgeArea(Point)
+                        && (Vector2.Distance(Point, ballPartPosition + ball.Offset) <= ball.Radius))
                     {
                         CollisionPoints ??= new();
                         CollisionPoints.Add(Point);
@@ -549,22 +564,35 @@ internal class EntityCollisionHandler
         Vector2 MotionAtPoint = collisionCase.SelfMotion + collisionCase.SelfRotationalMotionAtPoint;
         Vector2 EntityBMotionAtPoint = collisionCase.TargetMotion + collisionCase.TargetRotationalMotionAtPoint;
 
-        // Surface normal not actually surface normal but rather direction from one entity to other, but produces convincing results so who cares.
-        Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
-        float AlignedYMotion = Vector2.Dot(MotionAtPoint, collisionCase.SurfaceNormal);
-        float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
-        float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, collisionCase.SurfaceNormal);
-
         float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness
             + collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
-        float CombinedFrictionCoef = (collisionCase.SelfPart.MaterialInstance.Material.Friction
-            + collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
+        Vector2 ForceApplied = -collisionCase.SurfaceNormal * (MotionAtPoint - EntityBMotionAtPoint).Length() * Entity.Mass;
 
-        float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Entity.Mass,
-            EntityBAlignedYMotion, collisionCase.TargetEntity.Mass, CombinedBounciness);
+        float ForceX = Vector2.Dot(ForceApplied, )
 
-        Vector2 NewMotion = (collisionCase.SurfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
-        Vector2 ForceApplied = Entity.Mass * (NewMotion - MotionAtPoint);
+
+
+
+
+
+
+        //ForceApplied += ForceApplied * CombinedBounciness;
+
+        //Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
+        //float AlignedYMotion = Vector2.Dot(MotionAtPoint, collisionCase.SurfaceNormal);
+        //float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
+        //float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, collisionCase.SurfaceNormal);
+
+        //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness
+        //    + collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
+        //float CombinedFrictionCoef = (collisionCase.SelfPart.MaterialInstance.Material.Friction
+        //    + collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
+
+        //float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Entity.Mass,
+        //    EntityBAlignedYMotion, collisionCase.TargetEntity.Mass, CombinedBounciness);
+
+        //Vector2 NewMotion = (collisionCase.SurfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
+        //Vector2 ForceApplied = Entity.Mass * (NewMotion - MotionAtPoint);
 
 
         // Apply forces.

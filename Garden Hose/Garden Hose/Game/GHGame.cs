@@ -64,6 +64,7 @@ internal class GHGame
         IsRunning = true;
         World.Start();
         _debugInfo.OnGameStart();
+        GameTime.Speed = 1f;
     }
 
     internal void Update(IProgramTime time)
