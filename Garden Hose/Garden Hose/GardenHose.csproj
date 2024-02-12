@@ -22,13 +22,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="assets\Office\**" />
-    <Compile Remove="Game\World\Entities\Test\**" />
     <Compile Remove="UI\Buttons\Connector\Slider\**" />
     <EmbeddedResource Remove="assets\Office\**" />
-    <EmbeddedResource Remove="Game\World\Entities\Test\**" />
     <EmbeddedResource Remove="UI\Buttons\Connector\Slider\**" />
     <None Remove="assets\Office\**" />
-    <None Remove="Game\World\Entities\Test\**" />
     <None Remove="UI\Buttons\Connector\Slider\**" />
   </ItemGroup>
   <ItemGroup>

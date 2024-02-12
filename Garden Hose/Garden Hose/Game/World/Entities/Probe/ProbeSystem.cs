@@ -330,7 +330,10 @@ internal class ProbeSystem : ISpaceshipSystem
     [TickedFunction(false)]
     public void Tick()
     {
-        HandleManualThrusterInput();
+        if (Ship.Pilot ==  SpaceshipPilot.Player)
+        {
+            HandleManualThrusterInput();
+        }
 
         return;
         if (AutopilotState == ProbeAutopilotState.Disabled)

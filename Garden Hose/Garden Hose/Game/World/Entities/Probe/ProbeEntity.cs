@@ -60,7 +60,6 @@ internal class ProbeEntity : SpaceshipEntity
         MainPart = Base;
 
         IsInvulnerable = false;
-        Pilot = SpaceshipPilot.Player;
     }
 
 

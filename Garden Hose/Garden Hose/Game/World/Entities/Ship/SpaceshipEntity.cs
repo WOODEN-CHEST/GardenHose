@@ -3,8 +3,6 @@ using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine;
 using GardenHoseEngine.IO;
-using GardenHoseEngine.Screen;
-using System.Numerics;
 
 namespace GardenHose.Game.World.Entities.Ship;
 

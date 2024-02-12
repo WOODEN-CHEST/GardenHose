@@ -7,10 +7,12 @@ using GardenHose.Game.World.Player;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 // Import everything.
 
 namespace GardenHose.Game.World;
@@ -66,9 +68,6 @@ public class GameWorld : IIDProvider
     private readonly List<Entity> _entitiesCreated = new();
     private readonly List<Entity> _entitiesRemoved = new();
 
-    /* Camera. */
-    
-
     /* Debug. */
     private bool _isDebugInfoEnabled = false;
 
@@ -78,6 +77,8 @@ public class GameWorld : IIDProvider
     private const int WORLD_PART_SIZE = 128; // 2^7.
     private const int WORLD_PART_COUNT = 32;
     private readonly List<PhysicalEntity>[,] _worldParts = new List<PhysicalEntity>[WORLD_PART_COUNT, WORLD_PART_COUNT];
+    private readonly ConcurrentQueue<List<PhysicalEntity>> _worldPartTests;
+    private int _completedTests;
     
 
 
@@ -124,16 +125,19 @@ public class GameWorld : IIDProvider
 
 
         // Handle collisions.
+        DateTime Start = DateTime.Now;
+        int TestsDone = 0;
         for (int Row = 0; Row < WORLD_PART_COUNT; Row++)
         {
             for (int Column = 0;  Column < WORLD_PART_COUNT; Column++)
             {
-                TestCollisionInWorldPart(_worldParts[Row, Column]);
+                TestsDone += TestCollisionInWorldPart(_worldParts[Row, Column]);
                 _worldParts[Row, Column].Clear();
             }
         }
         HandleEntityCollisionCases(gameTime);
         _collisionCases.Clear();
+        TimeSpan Elapsed = Start - DateTime.Now;
 
         // Create and remove entities.
         AddNewEntities();
@@ -214,13 +218,15 @@ public class GameWorld : IIDProvider
     internal void AddPhysicalEntityToWorldPart(PhysicalEntity entity)
     {
         int HALF_WORLD_PART_COUNT = WORLD_PART_COUNT / 2;
-        int LowerX = Math.Max(0, ((int)(entity.Position.X - entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
-        int LowerY = Math.Max(0, ((int)(entity.Position.Y - entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int LowerX = Math.Clamp(((int)(entity.Position.X - entity.CollisionHandler.BoundingRadius) / WORLD_PART_POWER) + HALF_WORLD_PART_COUNT,
+            0, WORLD_PART_COUNT - 1);
+        int LowerY = Math.Clamp(((int)(entity.Position.Y - entity.CollisionHandler.BoundingRadius) / WORLD_PART_POWER) + HALF_WORLD_PART_COUNT,
+            0, WORLD_PART_COUNT - 1);
 
-        int UpperX = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.X + entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
-        int UpperY = Math.Min(WORLD_PART_COUNT - 1,
-            ((int)(entity.Position.Y + entity.CollisionHandler.BoundingRadius) >> WORLD_PART_POWER) + HALF_WORLD_PART_COUNT);
+        int UpperX = Math.Clamp(((int)(entity.Position.X + entity.CollisionHandler.BoundingRadius) / WORLD_PART_POWER) + HALF_WORLD_PART_COUNT
+            , 0, WORLD_PART_COUNT - 1);
+        int UpperY = Math.Clamp(((int)(entity.Position.Y + entity.CollisionHandler.BoundingRadius) / WORLD_PART_POWER) + HALF_WORLD_PART_COUNT,
+            0, WORLD_PART_COUNT - 1);
 
         for (int i = LowerX; i <= UpperX; i++)
         {
@@ -256,6 +262,7 @@ public class GameWorld : IIDProvider
         // Entities.
         AddEntity(settings.PlayerShip);
         Player = new(this, settings.PlayerShip);
+        settings.PlayerShip.Pilot = World.Entities.Ship.SpaceshipPilot.Player;
 
         foreach (var Entity in settings.StartingEntities)
         {
@@ -402,12 +409,14 @@ public class GameWorld : IIDProvider
 
 
     /* Collision. */
-    private void TestCollisionInWorldPart(List<PhysicalEntity> entities)
+    private int TestCollisionInWorldPart(List<PhysicalEntity> entities)
     {
+        int TestsDone = 0;
         for (int FirstIndex = 0; FirstIndex < entities.Count; FirstIndex++)
         {
             for (int SecondIndex = FirstIndex + 1; SecondIndex < entities.Count; SecondIndex++)
             {
+                TestsDone++;
                 if (!entities[FirstIndex].CollisionHandler.TestCollisionAgainstEntity(
                     entities[SecondIndex], out CollisionCase[] collisions))
                 {
@@ -416,6 +425,8 @@ public class GameWorld : IIDProvider
                 _collisionCases.AddRange(collisions);
             }
         }
+
+        return TestsDone;
     }
 
 

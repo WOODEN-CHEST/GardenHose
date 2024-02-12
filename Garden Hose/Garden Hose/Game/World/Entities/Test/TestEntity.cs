@@ -1,7 +1,5 @@
-﻿using GardenHose.Game.AssetManager;
-using GardenHose.Game.World.Entities.Physical;
+﻿using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
-using GardenHose.Game.World.Entities.Physical.Events;
 using GardenHose.Game.World.Material;
 using Microsoft.Xna.Framework;
 
@@ -24,48 +22,9 @@ internal class TestEntity : PhysicalEntity
     // Private fields
 
     // Constructors
-    public TestEntity(GameWorld? world) : base(EntityType.Test, world)
+    public TestEntity() : base(EntityType.Test)
     {
-        IsDebugInfoDrawn = true;
-
-        TestEntityPart NewMainPart =
-            new(new ICollisionBound[]
-            {
-                new RectangleCollisionBound(new Vector2(20f, 20f), new Vector2(0f, 0f))
-            },
-            WorldMaterial.Test, this);
-
-        TestEntityPart SidePart1 = new(new ICollisionBound[]
-            { new RectangleCollisionBound(new Vector2(20f, 20f), new Vector2(0f, 0f)) }, WorldMaterial.Test, this);
-
-        TestEntityPart SidePart2 = new(new ICollisionBound[] { new RectangleCollisionBound(new Vector2(20f, 20f)) },
-            WorldMaterial.Test, this);
-
-        TestEntityPart SidePart3 = new(new ICollisionBound[] { new RectangleCollisionBound(new Vector2(20f, 20f)) },
-
-            WorldMaterial.Test, this);
-        TestEntityPart SidePart4 = new(new ICollisionBound[] { new RectangleCollisionBound(new Vector2(20f, 20f)) },
-
-            WorldMaterial.Test, this);
-
-        NewMainPart.LinkPart(SidePart1, new Vector2(30f, 0f));
-        NewMainPart.LinkPart(SidePart2, new Vector2(0f, -30f));
-        NewMainPart.LinkPart(SidePart3, new Vector2(0f, -60f));
-        NewMainPart.LinkPart(SidePart4, new Vector2(-30f, 0f));
-
-        MainPart = NewMainPart;
+        MainPart = new PhysicalEntityPart(new ICollisionBound[] { new RectangleCollisionBound(new Vector2(10f)) }, WorldMaterial.Test, this);
+        IsCommonMathCalculated = false;
     }
-
-    public TestEntity() : this(null) { }
-
-
-    // Inherited methods.
-    internal override void Load(GHGameAssetManager assetManager)
-    {
-
-    }
-
-    internal override void OnPartDamage(PartDamageEventArgs args) { }
-
-    internal override void OnPartDestroy(PartDamageEventArgs args) { }
 }

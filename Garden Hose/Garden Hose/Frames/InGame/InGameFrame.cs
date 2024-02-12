@@ -8,6 +8,9 @@ using GardenHose.Game.World.Entities.Probe;
 using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Material;
+using GardenHose.Game.World.Entities.Test;
+using System.Collections.Generic;
+using GardenHose.Game.World.Entities.Physical;
 
 namespace GardenHose.Frames.InGame;
 
@@ -29,11 +32,20 @@ internal class InGameFrame : GameFrame
 
         WorldPlanetEntity Planet = WorldPlanetEntity.TestPlanet;
 
+        List<PhysicalEntity> Ents = new();
+        for (int i = 0; i < 60; i++)
+        {
+            for (int j = 0; j < 60; j++)
+            {
+                Ents.Add(new TestEntity() { Position = new Vector2(i * 20, j * 20) });
+            }
+        }
+
         GameWorldSettings StartupSettings = new()
         {
-            Planet = Planet,
-            PlayerShip = new ProbeEntity() { Position = new Vector2(0f, 550f), Rotation = MathF.PI },
-            StartingEntities = new Entity[] { },
+            Planet = null,
+            PlayerShip = new ProbeEntity() { Position = new Vector2(-100f, 550f), Rotation = MathF.PI },
+            StartingEntities = Ents.ToArray(),//new Entity[] { new TestEntity() },
             Background = new(GHGameAnimationName.Background_Default)
             {
                 SmallStarCount = 200,

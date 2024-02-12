@@ -127,7 +127,8 @@ internal class GHGameDebugInfo : IDrawableItem
         _infoText.Text = $"GH Version {GH.GameVersion}\n" +
             $"FPS: {FPS.ToString("0.00")}\n" +
             $"Entity Count: {_world.EntityCount}\n" +
-            $"Tick Time: {(TickTime * 1000f).ToString("0.0000")} ms ({(TickTime / _gameTime.MaxPassedWorldTime).ToString("0.000")}% of allowed)\n";
+            $"Tick Time: {(TickTime * 1000f).ToString("0.0000")}" +
+            $" ms ({(TickTime / _gameTime.MaxPassedWorldTime * 100f).ToString("0.000")}% of allowed)\n";
         _infoText.Draw(info);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-
+using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -89,7 +89,7 @@ internal record class CollisionCase
             SelfPart,
             TargetBound,
             SelfBound,
-            SurfaceNormal,
-            CollisionPoints);
+            -SurfaceNormal,
+            CollisionPoints.ToArray());
     }
 }

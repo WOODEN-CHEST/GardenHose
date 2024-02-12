@@ -2,12 +2,9 @@
 using GardenHose.Game.World.Entities.Stray;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
-using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -148,7 +145,6 @@ internal class EntityCollisionHandler
             return;
         }
 
-
         // Prepare variables.
         Vector2 PushOutDirection = GetPushOutDirection(collisionCase.TargetEntity);
         const int STEP_COUNT = 8;
@@ -275,20 +271,13 @@ internal class EntityCollisionHandler
             }
 
             // Build case.
-            Vector2 CollisionNormal = Entity.Position - targetEntity.Position;
-            if (CollisionNormal.LengthSquared() is 0f or -0f)
-            {
-                CollisionNormal = -Vector2.UnitY;
-            }
-            CollisionNormal.Normalize();
-
             CollisionCase Case = new(Entity,
                 targetEntity,
                 selfPart,
                 targetPart,
                 selfBound,
                 TargetBound,
-                CollisionNormal,
+                GHMath.NormalizeOrDefault(Entity.Position - targetEntity.Position),
                 CollisionPoints);
 
             cases.Add(Case);
@@ -561,39 +550,24 @@ internal class EntityCollisionHandler
 
     private void OnHardCollision(CollisionCase collisionCase)
     {
-        Vector2 MotionAtPoint = collisionCase.SelfMotion + collisionCase.SelfRotationalMotionAtPoint;
-        Vector2 EntityBMotionAtPoint = collisionCase.TargetMotion + collisionCase.TargetRotationalMotionAtPoint;
+        // Complex.
+        //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness +
+        //    collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
+        float CombinedFriction = (collisionCase.SelfPart.MaterialInstance.Material.Friction +
+            collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
+        Vector2 RelativeMotion = Entity.Motion + collisionCase.SelfRotationalMotionAtPoint 
+            - collisionCase.TargetMotion - collisionCase.TargetRotationalMotionAtPoint;
 
-        float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness
-            + collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
-        Vector2 ForceApplied = -collisionCase.SurfaceNormal * (MotionAtPoint - EntityBMotionAtPoint).Length() * Entity.Mass;
+        float MinMass = Math.Min(Entity.Mass, collisionCase.TargetEntity.Mass); // What the hell are these physics.
 
-        float ForceX = Vector2.Dot(ForceApplied, )
+        Vector2 RelativeXForce = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal) * Vector2.Dot(
+            GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal), -RelativeMotion) * CombinedFriction;
 
+        Vector2 RelativeYForce = collisionCase.SurfaceNormal * Vector2.Dot(-RelativeMotion, collisionCase.SurfaceNormal)
+            * MinMass;//* (1.0f + cCombinedBounciness);
+                      //TODO: finish bounciness implementation. Why not done: Values above 1.0f cause physics instability.
 
-
-
-
-
-
-        //ForceApplied += ForceApplied * CombinedBounciness;
-
-        //Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
-        //float AlignedYMotion = Vector2.Dot(MotionAtPoint, collisionCase.SurfaceNormal);
-        //float AlignedXMotion = Vector2.Dot(MotionAtPoint, Surface);
-        //float EntityBAlignedYMotion = Vector2.Dot(EntityBMotionAtPoint, collisionCase.SurfaceNormal);
-
-        //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness
-        //    + collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
-        //float CombinedFrictionCoef = (collisionCase.SelfPart.MaterialInstance.Material.Friction
-        //    + collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
-
-        //float MotionY = CalculateSpeedOnAxis(AlignedYMotion, Entity.Mass,
-        //    EntityBAlignedYMotion, collisionCase.TargetEntity.Mass, CombinedBounciness);
-
-        //Vector2 NewMotion = (collisionCase.SurfaceNormal * MotionY) + (Surface * AlignedXMotion * CombinedFrictionCoef);
-        //Vector2 ForceApplied = Entity.Mass * (NewMotion - MotionAtPoint);
-
+        Vector2 ForceApplied = RelativeXForce + RelativeYForce;
 
         // Apply forces.
         Entity.ApplyForce(ForceApplied, collisionCase.AverageCollisionPoint);
@@ -602,14 +576,6 @@ internal class EntityCollisionHandler
         CollisionEventArgs CollisionArgs = new(collisionCase, ForceApplied.Length());
         OnPartCollision(CollisionArgs);
         Collision?.Invoke(this, CollisionArgs);
-    }
-
-    protected float CalculateSpeedOnAxis(float v1, float m1, float v2, float m2, float cor)
-    {
-        // So there's supposed to be some stuff done here with momentum conservation v1m + v2m = v1`m + v2`m,
-        // but it just doesn't seem to work and I cannot get the calculations to make sense no matter what.
-        // So here I just stole some formula from the Internet and I don't know how it works (Since my calculations give different results)
-        return (m1 * v1 + m2 * v2 + m2 * (v2 - v1)) / (m1 + m2) * cor;
     }
 
 
