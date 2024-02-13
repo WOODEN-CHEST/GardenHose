@@ -55,6 +55,6 @@ internal struct BallCollisionBound : ICollisionBound
 
     public Vector2 GetFinalPosition(Vector2 partPosition, float partRotation)
     {
-        return Vector2.Transform(partPosition + Offset, Matrix.CreateRotationZ(partRotation));
+        return Vector2.Transform(Offset, Matrix.CreateRotationZ(partRotation)) + partPosition;
     }
 }

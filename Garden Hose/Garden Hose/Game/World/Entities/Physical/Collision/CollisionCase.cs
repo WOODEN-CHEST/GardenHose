@@ -37,6 +37,7 @@ internal record class CollisionCase
     internal Vector2 AverageCollisionPoint { get; private init; }
 
     internal Vector2 SurfaceNormal { get; init; }
+    internal Vector2 InverseSurfaceNormal { get; init; }
 
 
     // Constructors.
@@ -47,6 +48,7 @@ internal record class CollisionCase
         ICollisionBound selfBound,
         ICollisionBound targetBound,
         Vector2 surfaceNormal,
+        Vector2 inverseSurfaceNormal,
         Vector2[] collisionPoints)
     {
         SelfEntity = selfEntity ?? throw new ArgumentNullException(nameof(selfEntity));
@@ -57,11 +59,7 @@ internal record class CollisionCase
         TargetBound = targetBound;
 
         SurfaceNormal = surfaceNormal;
-        if (float.IsNaN(surfaceNormal.LengthSquared()) || (surfaceNormal.X + surfaceNormal.Y is 0f or -0f)
-            || (!float.IsFinite(surfaceNormal.LengthSquared())))
-        {
-            SurfaceNormal = -Vector2.UnitY;
-        }
+        InverseSurfaceNormal = inverseSurfaceNormal;
 
         CollisionPoints = collisionPoints ?? throw new ArgumentNullException(nameof(collisionPoints));
         Vector2 CollisionPoint = Vector2.Zero;
@@ -89,7 +87,8 @@ internal record class CollisionCase
             SelfPart,
             TargetBound,
             SelfBound,
-            -SurfaceNormal,
+            InverseSurfaceNormal,
+            SurfaceNormal,
             CollisionPoints.ToArray());
     }
 }

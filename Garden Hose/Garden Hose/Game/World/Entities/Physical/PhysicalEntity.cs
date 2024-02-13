@@ -5,7 +5,6 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework.Graphics;
 using GardenHoseEngine;
 using GardenHoseEngine.Screen;
-using GardenHose.Game.World.Material;
 using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -21,7 +20,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal fields.
     internal sealed override bool IsPhysical => true;
-    internal EntityCollisionHandler CollisionHandler { get; private init; }
+    internal EntityCollisionHandler CollisionHandler { get; init; }
     internal bool IsInvulnerable { get; set; } = false;
 
 
@@ -106,6 +105,10 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     }
 
     internal bool IsAttractable { get; set; } = true;
+    internal bool IsForceApplicable { get; set; } = true;
+    internal bool IsPositionLocked { get; set; } = false;
+    internal bool IsRotationLocked { get; set; } = false;
+
 
     /* Common math. */
     internal bool IsCommonMathCalculated { get; set; } = true;
@@ -210,9 +213,12 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     /* Physics. */
     internal virtual void ApplyForce(Vector2 force, Vector2 location)
     {
+        if (!IsForceApplicable)
+        {
+            return;
+        }
+
         // Linear.
-        //Vector2 LinearForceUnit = GHMath.NormalizeOrDefault(Position - location);
-        //Vector2 LinearAcceleration = LinearForceUnit * (Vector2.Dot(LinearForceUnit, force) / Mass);
         Vector2 LinearAcceleration = force / Mass;
 
         // Rotational.
@@ -265,8 +271,17 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     [TickedFunction(false)]
     protected virtual void StepMotion(GHGameTime time)
     {
-        Vector2 NewPosition = _position + (Motion * time.WorldTime.PassedTimeSeconds);
-        float NewRotation = _rotation + (AngularMotion * time.WorldTime.PassedTimeSeconds);
+        Vector2 NewPosition = _position;
+        if (!IsPositionLocked)
+        {
+            NewPosition += (Motion * time.WorldTime.PassedTimeSeconds);
+        }
+
+        float NewRotation = Rotation;
+        if (!IsRotationLocked)
+        {
+            NewRotation += AngularMotion * time.WorldTime.PassedTimeSeconds;
+        }
         SetPositionAndRotation(NewPosition, NewRotation);
     }
 

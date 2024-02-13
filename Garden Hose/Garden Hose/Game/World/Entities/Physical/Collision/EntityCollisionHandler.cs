@@ -5,6 +5,7 @@ using GardenHoseEngine;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -69,12 +70,18 @@ internal class EntityCollisionHandler
 
     internal void AddCollidedEntity(PhysicalEntity entity)
     {
-        _entitiesCollidedWith.Add(entity);
+        lock (_entitiesCollidedWith)
+        {
+            _entitiesCollidedWith.Add(entity);
+        }
     }
 
     internal virtual bool IsEntityCollidedWith(PhysicalEntity targetEntity)
     {
-        return _entitiesCollidedWith.Contains(targetEntity);
+        lock (_entitiesCollidedWith)
+        {
+            return _entitiesCollidedWith.Contains(targetEntity);
+        }
     }
 
     internal void ClearCollidedEntities()
@@ -123,6 +130,111 @@ internal class EntityCollisionHandler
         return false;
     }
 
+    internal virtual void TestPartAgainstEntity(List<CollisionCase> cases, PhysicalEntityPart selfPart, PhysicalEntity targetEntity)
+    {
+        if ((selfPart.CollisionBounds.Length == 0) || (selfPart.MaterialInstance.State == WorldMaterialState.Gas))
+        {
+            return;
+        }
+
+        foreach (ICollisionBound CollisionBound in selfPart.CollisionBounds)
+        {
+            foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
+            {
+                TestBoundAgainstPart(cases, selfPart, CollisionBound, TargetPart, targetEntity);
+            }
+        }
+    }
+
+    internal void TestBoundAgainstPart(List<CollisionCase> cases,
+        PhysicalEntityPart selfPart,
+        ICollisionBound selfBound,
+        PhysicalEntityPart targetPart,
+        PhysicalEntity targetEntity)
+    {
+        if ((targetPart.CollisionBounds.Length == 0) || (targetPart.MaterialInstance.State == WorldMaterialState.Gas))
+        {
+            return;
+        }
+
+        foreach (ICollisionBound TargetBound in targetPart.CollisionBounds)
+        {
+            //Test bounding radius.
+            if (Vector2.Distance(selfPart.Position + selfBound.Offset,
+                targetPart.Position + TargetBound.Offset) > selfBound.BoundingRadius + TargetBound.BoundingRadius)
+            {
+                continue;
+            }
+
+            // Get collision data.
+            (Vector2[] CollisionPoints, Vector2 SurfaceNormal, Vector2 InverseSurfaceNormal) CollisionData = TestBoundAgainstBound(selfBound,
+                TargetBound,
+                selfPart.Position,
+                targetPart.Position,
+                selfPart.CombinedRotation,
+                targetPart.CombinedRotation);
+
+            if (CollisionData.CollisionPoints.Length == 0)
+            {
+                continue;
+            }
+
+            // Build case.
+            CollisionCase Case = new(Entity,
+                targetEntity,
+                selfPart,
+                targetPart,
+                selfBound,
+                TargetBound,
+                CollisionData.SurfaceNormal,
+                CollisionData.InverseSurfaceNormal,
+                CollisionData.CollisionPoints);
+
+            cases.Add(Case);
+        }
+    }
+
+    internal virtual (Vector2[] CollisionPoints, Vector2 SurfaceNormal, Vector2 InverseSurfaceNormal) TestBoundAgainstBound(
+        ICollisionBound selfBound,
+        ICollisionBound targetBound,
+        Vector2 selfPartPosition,
+        Vector2 targetPartPosition,
+        float selfPartCombinedRotation,
+        float targetPartCombinedRotation)
+    {
+        if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Rectangle))
+        {
+            return GetCollisionPointsRectToRect((RectangleCollisionBound)selfBound, (RectangleCollisionBound)targetBound,
+                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
+        }
+        else if ((selfBound.Type == CollisionBoundType.Ball) && (targetBound.Type == CollisionBoundType.Rectangle))
+        {
+            (Vector2[] Points, Vector2 Normal, Vector2 InverseNormal) CollisionData = 
+                GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound, (BallCollisionBound)selfBound,
+                targetPartPosition, selfPartPosition, targetPartCombinedRotation, selfPartCombinedRotation);
+            Vector2 TempVector = CollisionData.Normal;
+            CollisionData.Normal = CollisionData.InverseNormal;
+            CollisionData.InverseNormal = TempVector;
+            return CollisionData;
+        }
+        else if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Ball))
+        {
+            return GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound, (BallCollisionBound)targetBound,
+                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
+        }
+        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Ball)
+        {
+            return GetCollisionPointsBallToBall((BallCollisionBound)selfBound, (BallCollisionBound)targetBound,
+                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
+        }
+        else
+        {
+            throw new NotSupportedException("Unknown bound types, cannot test collision. " +
+               $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
+               $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
+        }
+    }
+
     internal virtual void OnCollision(CollisionCase collisionCase, GHGameTime time)
     {
         if (!IsCollisionReactionEnabled) return;
@@ -159,7 +271,8 @@ internal class EntityCollisionHandler
             StepsTaken++;
         }
         while ((TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
-            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0)
+            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation)
+            .CollisionPoints.Length != 0)
             && (StepsTaken <= MAX_STEPS));
 
         if (StepsTaken > MAX_STEPS)
@@ -178,7 +291,8 @@ internal class EntityCollisionHandler
             Entity.Position -= PushOutDirection * STEP_DISTANCE;
 
             if (TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
-            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation).Length != 0)
+            collisionCase.TargetPart.Position, collisionCase.SelfPart.CombinedRotation, collisionCase.TargetPart.CombinedRotation)
+                .CollisionPoints.Length != 0)
             {
                 Entity.Position = PreviousPosition;
             }
@@ -221,106 +335,7 @@ internal class EntityCollisionHandler
 
     // Protected methods.
     /* Collision testing. */
-    protected virtual void TestPartAgainstEntity(List<CollisionCase> cases, PhysicalEntityPart selfPart, PhysicalEntity targetEntity)
-    {
-        if ((selfPart.CollisionBounds.Length == 0) || (selfPart.MaterialInstance.State == WorldMaterialState.Gas))
-        {
-            return;
-        }
-
-        foreach (ICollisionBound CollisionBound in selfPart.CollisionBounds)
-        {
-            foreach (PhysicalEntityPart TargetPart in targetEntity.Parts)
-            {
-                TestBoundAgainstPart(cases, selfPart, CollisionBound, TargetPart, targetEntity);
-            }
-        }
-    }
-
-    protected void TestBoundAgainstPart(List<CollisionCase> cases,
-        PhysicalEntityPart selfPart, 
-        ICollisionBound selfBound,
-        PhysicalEntityPart targetPart,
-        PhysicalEntity targetEntity)
-    {
-        if ((targetPart.CollisionBounds.Length == 0) || (targetPart.MaterialInstance.State == WorldMaterialState.Gas))
-        {
-            return;
-        }
-
-        foreach (ICollisionBound TargetBound in targetPart.CollisionBounds)
-        {
-            //Test bounding radius.
-            if (Vector2.Distance(Entity.Position + selfBound.Offset,
-                targetPart.Position + TargetBound.Offset) > selfBound.BoundingRadius + TargetBound.BoundingRadius)
-            {
-                continue;
-            }
-
-            // Get collision data.
-            Vector2[] CollisionPoints = TestBoundAgainstBound(selfBound, 
-                TargetBound, 
-                selfPart.Position, 
-                targetPart.Position,
-                selfPart.CombinedRotation,
-                targetPart.CombinedRotation);
-
-            if (CollisionPoints.Length == 0)
-            {
-                continue;
-            }
-
-            // Build case.
-            CollisionCase Case = new(Entity,
-                targetEntity,
-                selfPart,
-                targetPart,
-                selfBound,
-                TargetBound,
-                GHMath.NormalizeOrDefault(Entity.Position - targetEntity.Position),
-                CollisionPoints);
-
-            cases.Add(Case);
-        }
-    }
-
-    protected virtual Vector2[] TestBoundAgainstBound(
-        ICollisionBound selfBound,
-        ICollisionBound targetBound, 
-        Vector2 selfPartPosition,
-        Vector2 targetPartPosition,
-        float selfPartCombinedRotation,
-        float targetPartCombinedRotation)
-    {
-        if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Rectangle))
-        {
-            return GetCollisionPointsRectToRect((RectangleCollisionBound)selfBound, (RectangleCollisionBound)targetBound,
-                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
-        }
-        else if ((selfBound.Type == CollisionBoundType.Ball) && (targetBound.Type == CollisionBoundType.Rectangle))
-        {
-            return GetCollisionPointsRectToBall((RectangleCollisionBound)targetBound, (BallCollisionBound)selfBound,
-                targetPartPosition, selfPartPosition, targetPartCombinedRotation, selfPartCombinedRotation);
-        }
-        else if ((selfBound.Type == CollisionBoundType.Rectangle) && (targetBound.Type == CollisionBoundType.Ball))
-        {
-            return GetCollisionPointsRectToBall((RectangleCollisionBound)selfBound, (BallCollisionBound)targetBound,
-                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
-        }
-        else if (selfBound.Type == CollisionBoundType.Ball && targetBound.Type == CollisionBoundType.Ball)
-        {
-            return GetCollisionPointsBallToBall((BallCollisionBound)selfBound, (BallCollisionBound)targetBound,
-                selfPartPosition, targetPartPosition, selfPartCombinedRotation, targetPartCombinedRotation);
-        }
-        else
-        {
-            throw new NotSupportedException("Unknown bound types, cannot test collision. " +
-               $"Bound type 1: \"{selfBound}\" (int value of {(int)selfBound.Type}), " +
-               $"Bound type 2: \"{targetBound}\" (int value of {(int)targetBound.Type}), ");
-        }
-    }
-
-    protected virtual Vector2[] GetCollisionPointsRectToRect(RectangleCollisionBound selfRect,
+    protected virtual (Vector2[], Vector2, Vector2) GetCollisionPointsRectToRect(RectangleCollisionBound selfRect,
         RectangleCollisionBound targetRect,
         Vector2 selfPartPosition,
         Vector2 targetPartPosition,
@@ -337,7 +352,7 @@ internal class EntityCollisionHandler
             new EquationRay(TargetRectEdges[2]),
             new EquationRay(TargetRectEdges[3]),
         };
-        List<Vector2>? CollisionPoints = null;
+        List<(Vector2 Point, Edge TargetEdge, Edge SourceEdge)>? CollisionPoints = null;
 
 
         // Find collision points.
@@ -354,15 +369,30 @@ internal class EntityCollisionHandler
                     && TargetRectEdges[TargetEdgeIndex].IsPointInEdgeArea(CollisionPoint.Value))
                 {
                     CollisionPoints ??= new();
-                    CollisionPoints.Add(CollisionPoint.Value);
+                    CollisionPoints.Add((CollisionPoint.Value, TargetRectEdges[TargetEdgeIndex], SelfRectEdges[SelfEdgeIndex]));
                 }
             }
         }
 
-        return CollisionPoints?.ToArray() ?? Array.Empty<Vector2>();
+        if (CollisionPoints == null)
+        {
+            return (Array.Empty<Vector2>(), -Vector2.UnitY, Vector2.UnitY);
+        }
+
+        Vector2 SurfaceNormal = Vector2.Zero;
+        Vector2 InverseSurfaceNormal = Vector2.Zero;
+        foreach (var CollisionPoint in CollisionPoints)
+        {
+            SurfaceNormal += CollisionPoint.TargetEdge.Normal;
+            InverseSurfaceNormal += CollisionPoint.SourceEdge.Normal;
+        }
+        SurfaceNormal /= CollisionPoints.Count;
+        InverseSurfaceNormal /= CollisionPoints.Count;
+
+        return (CollisionPoints.Select((Data) => Data.Point).ToArray(), SurfaceNormal, InverseSurfaceNormal);
     }
 
-    protected virtual Vector2[] GetCollisionPointsRectToBall(
+    protected virtual (Vector2[], Vector2, Vector2) GetCollisionPointsRectToBall(
         RectangleCollisionBound rect,
         BallCollisionBound ball,
         Vector2 rectPartPosition,
@@ -371,7 +401,7 @@ internal class EntityCollisionHandler
         float ballPartCombinedRotation)
     {
         // Prepare variables.
-        List<Vector2>? CollisionPoints = null;
+        List<(Vector2 Point, Edge RectEdge)>? CollisionPoints = null;
 
         Edge[] RectEdges = rect.GetEdges(rectPartPosition, rectPartCombinedRotation);
         EquationRay[] RectRays =
@@ -397,17 +427,33 @@ internal class EntityCollisionHandler
                         && (Vector2.Distance(Point, ballPartPosition + ball.Offset) <= ball.Radius))
                     {
                         CollisionPoints ??= new();
-                        CollisionPoints.Add(Point);
+                        CollisionPoints.Add((Point, RectEdges[EdgeIndex]));
                     }
                 }
             }
         }
 
         // Return intersection points.
-        return CollisionPoints?.ToArray() ?? Array.Empty<Vector2>();
+        Vector2 SurfaceNormal = GHMath.NormalizeOrDefault(
+            rect.GetFinalPosition(rectPartPosition, rectPartCombinedRotation)
+            - ball.GetFinalPosition(ballPartPosition, ballPartCombinedRotation));
+
+        if (CollisionPoints == null)
+        {
+            return (Array.Empty<Vector2>(), SurfaceNormal, -SurfaceNormal);
+        }
+
+        Vector2 InverseSurfaceNormal = Vector2.Zero;
+        foreach (var CollisionPoint in CollisionPoints)
+        {
+            InverseSurfaceNormal += CollisionPoint.RectEdge.Normal;
+        }
+        InverseSurfaceNormal /= CollisionPoints.Count;
+
+        return (CollisionPoints.Select((Data) => Data.Point).ToArray(), SurfaceNormal, InverseSurfaceNormal);
     }
 
-    protected virtual Vector2[] GetCollisionPointsBallToBall(
+    protected virtual (Vector2[], Vector2, Vector2) GetCollisionPointsBallToBall(
         BallCollisionBound ball1,
         BallCollisionBound ball2,
         Vector2 ball1PartPosition,
@@ -415,11 +461,15 @@ internal class EntityCollisionHandler
         float ball1PartCombinedRotation,
         float ball2PartCombinedRotation)
     {
-        Circle PrimaryCircle = new(ball1.Radius, ball1.GetFinalPosition(ball1PartPosition, ball1PartCombinedRotation));
-        Circle SecondaryCircle = new(ball2.Radius, ball2.GetFinalPosition(ball2PartPosition, ball2PartCombinedRotation));
+        Vector2 Ball1FinalPosition = ball1.GetFinalPosition(ball1PartPosition, ball1PartCombinedRotation);
+        Vector2 Ball2FinalPosition = ball2.GetFinalPosition(ball2PartPosition, ball2PartCombinedRotation);
+
+        Circle PrimaryCircle = new(ball1.Radius, Ball1FinalPosition);
+        Circle SecondaryCircle = new(ball2.Radius, Ball2FinalPosition);
 
         Vector2[] CollisionPoints = Circle.GetIntersections(PrimaryCircle, SecondaryCircle);
-        return CollisionPoints;
+        Vector2 CollisionNormal = GHMath.NormalizeOrDefault(Ball1FinalPosition - Ball2FinalPosition);
+        return (CollisionPoints, CollisionNormal, -CollisionNormal);
     }
 
 
@@ -550,7 +600,6 @@ internal class EntityCollisionHandler
 
     private void OnHardCollision(CollisionCase collisionCase)
     {
-        // Complex.
         //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness +
         //    collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
         float CombinedFriction = (collisionCase.SelfPart.MaterialInstance.Material.Friction +

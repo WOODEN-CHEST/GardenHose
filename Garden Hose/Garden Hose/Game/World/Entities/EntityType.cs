@@ -9,5 +9,6 @@ public enum EntityType
     Test,
     Particle,
     Stray,
-    Probe
+    Probe,
+    BuildingPlaceholder
 }

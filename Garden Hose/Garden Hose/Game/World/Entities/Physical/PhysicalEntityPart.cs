@@ -1,6 +1,8 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Stray;
 using GardenHose.Game.World.Material;
+using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
@@ -79,12 +81,12 @@ internal class PhysicalEntityPart
             }
 
             _collisionBounds = value;
-            Entity.ResetPartInfo();
+            Entity?.ResetPartInfo();
             CollisionBoundChange?.Invoke(this, _collisionBounds);
         }
     }
 
-    internal bool IsMainPart => Entity?.MainPart == this;
+    internal bool IsMainPart => Entity!.MainPart == this;
 
     internal virtual PartLink[] SubPartLinks { get; private set; } = Array.Empty<PartLink>();
 
@@ -253,6 +255,8 @@ internal class PhysicalEntityPart
         {
             AttractEntities(time);
         }
+
+        ApplyCentrifugalForce();
     }
 
 
@@ -314,7 +318,7 @@ internal class PhysicalEntityPart
 
             PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
 
-            if (!PhysicalWorldEntity.IsAttractable) continue;
+            if (!PhysicalWorldEntity.IsAttractable || !PhysicalWorldEntity.IsForceApplicable) continue;
 
             const float ARBITRARY_ATTRACTION_INCREASE = 1000f;
             float AttractionStrength = (MaterialInstance.Material.Attraction * ARBITRARY_ATTRACTION_INCREASE
@@ -325,16 +329,30 @@ internal class PhysicalEntityPart
                 AttractionStrength = 0f;
             }
 
-            Vector2 AddedMotion = Position - PhysicalWorldEntity.Position;
-            if (AddedMotion.LengthSquared() is 0f or -0f)
-            {
-                AddedMotion = -Vector2.UnitY;
-            }
-            AddedMotion.Normalize();
-
-            AddedMotion *= AttractionStrength;
-
+            Vector2 AddedMotion = GHMath.NormalizeOrDefault(Position - PhysicalWorldEntity.Position) * AttractionStrength;
             PhysicalWorldEntity.Motion += AddedMotion;
+        }
+    }
+
+    protected virtual void ApplyCentrifugalForce()
+    {
+        if (IsMainPart || !Entity!.IsForceApplicable)
+        {
+            return;
+        }
+
+        float Radius = Vector2.Distance(Position, Entity.Position);
+        if (Radius is 0f or -0f)
+        {
+            Radius = 1f;
+        }
+
+        const float ARBITRARY_FORCE_UPSCALE = 35f;
+        float Force = (Mass * Entity.GetAngularMotionAtPoint(Position).Length() *  ARBITRARY_FORCE_UPSCALE) / Radius;
+
+        if (Force > ParentLink!.LinkStrength)
+        {
+            Entity.World!.AddEntity(StrayEntity.MovePartToStrayEntity(this));
         }
     }
 }

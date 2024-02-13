@@ -1,9 +1,12 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Planet.Buildings;
 using GardenHose.Game.World.Material;
+using GardenHoseEngine;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace GardenHose.Game.World.Entities.Planet;
 
@@ -48,6 +51,13 @@ internal partial class WorldPlanetEntity : PhysicalEntity
     internal override float Mass => 5.972e24f;
 
 
+    /* Buildings. */
+    internal float TotalResources { get; }
+    internal float TotalPlanetTokens { get; }
+    internal float TotalShipTokens { get; }
+    internal float Population { get; }
+
+
     // Private fields.
     private PartSprite? _atmosphere;
     private float _atmosphereThickness;
@@ -61,9 +71,12 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         PartSprite? atmosphere) 
         : base(EntityType.Planet)
     {
+        CollisionHandler = new PlanetCollisionHandler(this);
+
         Radius = radius;
         DrawLayer = DrawLayer.Bottom;
         MainPart = new PhysicalEntityPart(new ICollisionBound[] { new BallCollisionBound(Radius) }, material, this);
+        MainPart.LinkPart(new Starport(null), new Vector2(0f, -Radius));
 
         if (sprites == null)
         {
@@ -83,10 +96,49 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         }
         AtmosphereThickness = 20f;
 
-        CollisionHandler.IsCollisionReactionEnabled = false;
-        IsInvulnerable = true;
         IsAttractable = false;
+        IsForceApplicable = false;
+        IsPositionLocked = true;
+        IsRotationLocked = true;
     }
+
+
+    // Internal methods.
+    internal float GetPositionAsRotation(Vector2 position)
+    {
+        Vector2 RelativePosition = position - Position;
+        return MathF.Atan2(RelativePosition.X, RelativePosition.Y);
+    }
+
+    internal Vector2 GetPositionAboveSurface(Vector2 position, float height)
+    {
+        return GHMath.NormalizeOrDefault(position - Position) * (Radius + height);
+    }
+
+    internal bool IsBuildingPlaceable(PhysicalEntity buildingEntity)
+    {
+        List<CollisionCase> Cases = new();
+        foreach (PartLink Link in MainPart.SubPartLinks)
+        {
+            PhysicalEntityPart Part = Link.LinkedPart;
+            foreach (ICollisionBound Bound in Part.CollisionBounds)
+            {
+                CollisionHandler.TestBoundAgainstPart(Cases, Part, Bound, buildingEntity.MainPart, buildingEntity);
+                if (Cases.Count > 0)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    internal void TryPlaceBuilding()
+    {
+        throw new NotImplementedException();
+    }
+
 
 
     // Private methods.

@@ -127,6 +127,6 @@ internal struct RectangleCollisionBound : ICollisionBound
 
     public Vector2 GetFinalPosition(Vector2 partPosition, float partRotation)
     {
-        throw new NotImplementedException();
+        return Vector2.Transform(Offset, Matrix.CreateRotationZ(partRotation)) + partPosition;
     }
 }

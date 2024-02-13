@@ -33,19 +33,19 @@ internal class InGameFrame : GameFrame
         WorldPlanetEntity Planet = WorldPlanetEntity.TestPlanet;
 
         List<PhysicalEntity> Ents = new();
-        for (int i = 0; i < 60; i++)
-        {
-            for (int j = 0; j < 60; j++)
-            {
-                Ents.Add(new TestEntity() { Position = new Vector2(i * 20, j * 20) });
-            }
-        }
+        //for (int i = 0; i < 20; i++)
+        //{
+        //    for (int j = 0; j < 20; j++)
+        //    {
+        //        Ents.Add(new TestEntity() { Position = new Vector2(i * 20, j * 20) });
+        //    }
+        //}
 
         GameWorldSettings StartupSettings = new()
         {
-            Planet = null,
+            Planet = Planet,
             PlayerShip = new ProbeEntity() { Position = new Vector2(-100f, 550f), Rotation = MathF.PI },
-            StartingEntities = Ents.ToArray(),//new Entity[] { new TestEntity() },
+            StartingEntities = Ents.ToArray(),
             Background = new(GHGameAnimationName.Background_Default)
             {
                 SmallStarCount = 200,

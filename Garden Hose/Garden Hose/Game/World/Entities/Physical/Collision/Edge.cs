@@ -1,10 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+﻿using GardenHoseEngine;
+using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
@@ -16,6 +13,8 @@ internal struct Edge
     internal Vector2 Step => EndVertex - StartVertex;
     internal Vector2 MiddleVertex => StartVertex + (Step * 0.5f);
     internal float Length => Vector2.Distance(StartVertex, EndVertex);
+    internal Vector2 NormalizedVector => GHMath.NormalizeOrDefault(EndVertex - StartVertex);
+    internal Vector2 Normal => GHMath.PerpVectorCounterClockwise(NormalizedVector);
 
 
     // Constructors.

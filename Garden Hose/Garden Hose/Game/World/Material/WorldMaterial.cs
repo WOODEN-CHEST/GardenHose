@@ -1,6 +1,5 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Particle;
-using GardenHoseEngine.Audio;
 using GardenHoseEngine.Collections;
 
 namespace GardenHose.Game.World.Material;
@@ -61,27 +60,16 @@ internal class WorldMaterial
     // Fields.
     /* Properties. */
     internal required float Density { get; set; }
-
     internal required float Strength { get; set; }
-
     internal required float Resistance { get; set; }
-
     internal required float HeatCapacity { get; set; }
-
     internal required float HeatTransferRate { get; set; }
-
     internal required float MeltingPoint { get; set; }
-
     internal required float BoilingPoint { get; set; }
-
     internal required float Friction { get; set; }
-
     internal required float Bounciness { get; set; }
-
     internal required float Magnetism { get; set; }
-
     internal required float Conductivity { get; set; }
-
     internal required float Attraction { get; set; }
 
 
