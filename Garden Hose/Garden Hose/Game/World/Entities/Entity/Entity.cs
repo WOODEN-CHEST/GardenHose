@@ -1,9 +1,10 @@
 ﻿using GardenHose.Game.GameAssetManager;
+using GardenHose.Game.World.Entities.Physical;
 using System;
 
 namespace GardenHose.Game.World.Entities;
 
-internal abstract class Entity
+internal abstract class Entity : ICloneable
 {
     // Internal fields.
     internal ulong ID { get; set; }
@@ -32,6 +33,18 @@ internal abstract class Entity
     {
         EntityDelete?.Invoke(this, EventArgs.Empty);
         World?.RemoveEntity(this);
+    }
+
+
+    // Protected methods.
+    protected virtual object CopyInfoToNewObject(Entity newEntity)
+    {
+        newEntity.ID = ID;
+        newEntity.IsTicked = IsTicked;
+        newEntity.World = World;
+        newEntity.EntityDelete = EntityDelete;
+
+        return newEntity;
     }
 
 

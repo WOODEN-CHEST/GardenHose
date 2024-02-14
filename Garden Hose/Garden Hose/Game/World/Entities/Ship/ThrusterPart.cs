@@ -30,8 +30,8 @@ internal class ThrusterPart : PhysicalEntityPart
         }
     }
 
-    internal float ThrusterThrottleChangeSpeed { get; init; }
-    internal float ThrusterPower { get; init; }
+    internal float ThrusterThrottleChangeSpeed { get; private set; }
+    internal float ThrusterPower { get; private set; }
     internal float ForceDirection { get; set; } = 0f;
 
 
@@ -78,7 +78,7 @@ internal class ThrusterPart : PhysicalEntityPart
     internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity)
         : base(bounds, material, entity) { }
 
-    internal ThrusterPart(WorldMaterial material, PhysicalEntity entity) : this(Array.Empty<ICollisionBound>(), material, entity) { }
+    internal ThrusterPart(WorldMaterial material, PhysicalEntity? entity) : this(Array.Empty<ICollisionBound>(), material, entity) { }
 
 
     // Internal methods.
@@ -128,5 +128,29 @@ internal class ThrusterPart : PhysicalEntityPart
     {
         base.Tick(time);
         ThrusterTick(time);
+    }
+
+    protected override object CopyInfoToNewObject(PhysicalEntityPart newPart)
+    {
+        base.CopyInfoToNewObject(newPart);
+
+        ThrusterPart Thruster = (ThrusterPart)newPart;
+        Thruster.IsThrusterOn = IsThrusterOn;
+        Thruster.TargetThrusterThrottle = TargetThrusterThrottle;
+        Thruster.CurrentThrusterThrottle = CurrentThrusterThrottle;
+        Thruster.ThrusterThrottleChangeSpeed = ThrusterThrottleChangeSpeed;
+        Thruster.ThrusterPower = ThrusterPower;
+        Thruster.ForceDirection = ForceDirection;
+        Thruster.Fuel = Fuel;
+        Thruster.MaxFuel = MaxFuel;
+        Thruster.FuleUsageRate = FuleUsageRate;
+        Thruster.IsFuelUsed = IsFuelUsed;
+
+        return newPart;
+    }
+
+    public override object Clone()
+    {
+        return CopyInfoToNewObject(new ThrusterPart(MaterialInstance.Material, Entity));
     }
 }

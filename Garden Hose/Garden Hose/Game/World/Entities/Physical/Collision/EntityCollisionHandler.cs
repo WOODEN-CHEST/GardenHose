@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Physical.Collision;
 
-internal class EntityCollisionHandler
+internal class EntityCollisionHandler : ICloneable
 {
     // Internal fields.
     internal PhysicalEntity Entity { get; private init; }
@@ -586,6 +586,18 @@ internal class EntityCollisionHandler
             Entity);
     }
 
+    protected virtual object CopyInfoToNewObject(EntityCollisionHandler handler)
+    {
+        handler.BoundingRadius = BoundingRadius;
+        handler.IsCollisionEnabled = IsCollisionEnabled;
+        handler.IsCollisionReactionEnabled = IsCollisionReactionEnabled;
+        handler.PartDestroy = PartDestroy;
+        handler.PartDamage = PartDamage;
+        handler.PartBreakOff = PartBreakOff;
+
+        return handler;
+    }
+
 
     /* Collisions. */
     private void OnSoftCollision(CollisionCase collisionCase, GHGameTime time)
@@ -693,5 +705,13 @@ internal class EntityCollisionHandler
         PhysicalEntity DeletedEntity = (PhysicalEntity)sender!;
         RemoveCollisionIgnorable(DeletedEntity);
         DeletedEntity.EntityDelete -= OnCollisionIgnorableEntityDeleteEvent;
+    }
+
+
+
+    // Inherited methods.
+    public object Clone()
+    {
+        return CopyInfoToNewObject(new EntityCollisionHandler(Entity));
     }
 }

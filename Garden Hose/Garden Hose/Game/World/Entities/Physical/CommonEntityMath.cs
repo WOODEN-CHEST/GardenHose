@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
-internal class CommonEntityMath
+internal class CommonEntityMath : ICloneable
 {
     // Internal static fields.
     internal static readonly Vector2 DEFAULT_NONZERO_VECTOR = -Vector2.UnitY;
@@ -63,8 +63,25 @@ internal class CommonEntityMath
             float UpAngleAtPosition = MathF.Atan2(Entity.Position.X, -Entity.Position.Y);
             Vector2 Direction = Vector2.Transform(-Vector2.UnitY, Matrix.CreateRotationZ(Entity.Rotation - UpAngleAtPosition));
             Roll = MathF.Atan2(Direction.X, -Direction.Y);
-            RollOneSecInFuture = Roll + Entity.AngularMotion; // May cause weird values.
+            RollOneSecInFuture = Roll + Entity.AngularMotion; // May cause weird values (roll is [-pi;pi],
+                                                              // but high angular motion may bring out of this range).
         }
-        
+    }
+
+    public object Clone()
+    {
+        return new CommonEntityMath(Entity)
+        {
+            DirPlanetToEntity = DirPlanetToEntity,
+            DirPlanetToEntityNormal = DirPlanetToEntityNormal,
+            DirPlanetToEntityNormalNeg = DirPlanetToEntityNormalNeg,
+            DistanceToPlanet = DistanceToPlanet,
+            PlanetRelativeXSpeed = PlanetRelativeXSpeed,
+            PlanetRelativeYSpeed = PlanetRelativeYSpeed,
+            Altitude = Altitude,
+            AltitudeOneSecInFuture = AltitudeOneSecInFuture,
+            Roll = Roll,
+            RollOneSecInFuture = RollOneSecInFuture
+        };
     }
 }

@@ -5,12 +5,12 @@ using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
+using System;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal class PartSprite
+internal class PartSprite : ICloneable
 {
     // Internal fields.
     internal GHGameAnimationName UndamagedName { get; private init; }
@@ -175,5 +175,21 @@ internal class PartSprite
             _damagedSprite.Effects = _effects;
             _heavilyDamagedSprite.Effects = _effects;
         }
+    }
+
+
+    // Inherited methods.
+    public object Clone()
+    {
+        return new PartSprite(UndamagedName, SlightlyDamagedName, DamagedName, HeavilyDamagedName)
+        {
+            Offset = Offset,
+            Rotation = Rotation,
+            Size = Size,
+            ColorMask = ColorMask,
+            Opacity = Opacity,
+            Brightness = Brightness,
+            Effects = Effects,
+        };
     }
 }

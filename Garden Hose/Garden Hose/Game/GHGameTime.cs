@@ -1,8 +1,9 @@
 ﻿using GardenHoseEngine.Frame;
+using System;
 
 namespace GardenHose.Game;
 
-internal class GHGameTime
+internal class GHGameTime : ICloneable
 {
     // Internal fields.
     internal const float DEFULT_MIN_PASSED_WORLD_TIME = 1f / 720f;
@@ -12,7 +13,7 @@ internal class GHGameTime
     internal float MinPassedWorldTime { get; private init; } = DEFULT_MIN_PASSED_WORLD_TIME;
     internal float MaxPassedWorldTime { get; private init; } = DEFULT_MAX_PASSED_WORLD_TIME;
     internal IProgramTime ProgramTime { get; private set; }
-    internal WorldTime WorldTime { get; } = new WorldTime();
+    internal WorldTime WorldTime { get; private set; } = new WorldTime();
     internal bool IsRunningSlowly { get; private set; } = false;
 
 
@@ -58,5 +59,21 @@ internal class GHGameTime
         WorldTime.TotalTimeSeconds += WorldTime.PassedTimeSeconds;
 
         return true;
+    }
+
+
+    // Inherited methods.
+    public object Clone()
+    {
+        return new GHGameTime()
+        {
+            Speed = Speed,
+            MinPassedWorldTime = MinPassedWorldTime,
+            MaxPassedWorldTime = MaxPassedWorldTime,
+            ProgramTime = ProgramTime,
+            WorldTime = new() { PassedTimeSeconds = WorldTime.PassedTimeSeconds, TotalTimeSeconds = WorldTime.TotalTimeSeconds },
+            IsRunningSlowly = IsRunningSlowly,
+            _timeSinceLastUpdateSeconds = _timeSinceLastUpdateSeconds
+        };
     }
 }

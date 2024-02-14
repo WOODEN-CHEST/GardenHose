@@ -21,7 +21,7 @@ internal class ParticlePart : PhysicalEntityPart
 
 
     // Constructors.
-    internal ParticlePart(ParticleEntity entity, ParticleSettings settings) 
+    internal ParticlePart(ParticleEntity? entity, ParticleSettings settings) 
         : base(settings.Material, entity)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -52,5 +52,22 @@ internal class ParticlePart : PhysicalEntityPart
         _particleSprite.Opacity = ((ParticleEntity)Entity!).FadeStatus;
         _particleSprite.Size = _baseSize * _scale;
         base.Draw(info);
+    }
+
+    protected override object CopyInfoToNewObject(PhysicalEntityPart newPart)
+    {
+        base.CopyInfoToNewObject(newPart);
+
+        ParticlePart Particle = (ParticlePart)newPart;
+        Particle._scale = _scale;
+        Particle._baseSize = _baseSize;
+        Particle._scaleChangeSpeed = _scaleChangeSpeed;
+
+        return newPart;
+    }
+
+    public override object Clone()
+    {
+        return CopyInfoToNewObject(new ParticlePart(Entity as ParticleEntity, _settings));
     }
 }

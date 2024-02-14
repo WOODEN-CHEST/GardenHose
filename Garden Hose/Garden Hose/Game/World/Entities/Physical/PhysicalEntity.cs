@@ -20,7 +20,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal fields.
     internal sealed override bool IsPhysical => true;
-    internal EntityCollisionHandler CollisionHandler { get; init; }
+    internal EntityCollisionHandler CollisionHandler { get; private set; }
     internal bool IsInvulnerable { get; set; } = false;
 
 
@@ -112,7 +112,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     /* Common math. */
     internal bool IsCommonMathCalculated { get; set; } = true;
-    internal CommonEntityMath CommonMath { get; private init;  }
+    internal CommonEntityMath CommonMath { get; private set;  }
 
 
     /* Parts. */
@@ -166,7 +166,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Drawing. */
-    internal virtual DrawLayer DrawLayer { get; set; } = DrawLayer.Bottom;
+    internal virtual DrawLayer DrawLayer { get; private set; } = DrawLayer.Bottom;
     internal bool IsDebugInfoDrawn { get; set; } = false;
 
 
@@ -283,6 +283,34 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             NewRotation += AngularMotion * time.WorldTime.PassedTimeSeconds;
         }
         SetPositionAndRotation(NewPosition, NewRotation);
+    }
+    
+    protected override object CopyInfoToNewObject(Entity newEntity)
+    {
+        base.CopyInfoToNewObject(newEntity);
+
+        PhysicalEntity Physical = (PhysicalEntity)newEntity;
+
+        Physical.CollisionHandler = (EntityCollisionHandler)CollisionHandler.Clone();
+
+        Physical.IsVisible = IsVisible;
+        Physical.Shader = Shader;
+        Physical.DrawLayer = DrawLayer;
+
+        Physical.IsInvulnerable = IsInvulnerable;
+        Physical.IsCommonMathCalculated = IsCommonMathCalculated;
+        Physical.IsForceApplicable = IsForceApplicable;
+        Physical.IsAttractable = IsAttractable;
+        Physical.IsPositionLocked = IsPositionLocked;
+        Physical.IsRotationLocked = IsRotationLocked;
+
+        Physical.Position = Position;
+        Physical.Rotation = Rotation;
+        Physical.Motion = Motion;
+        Physical.AngularMotion = AngularMotion;
+        Physical.CommonMath = (CommonEntityMath)CommonMath.Clone();
+
+        return newEntity;
     }
 
 

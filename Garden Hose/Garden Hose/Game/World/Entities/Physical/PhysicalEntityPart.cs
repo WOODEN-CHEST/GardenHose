@@ -7,12 +7,12 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal class PhysicalEntityPart
+internal class PhysicalEntityPart : ICloneable
 {
     // Fields.
     internal virtual PhysicalEntity? Entity
@@ -99,11 +99,8 @@ internal class PhysicalEntityPart
     internal PartSprite[] Sprites => _sprites.ToArray();
 
     /* Events. */
-    internal event EventHandler<CollisionEventArgs>? Collision;
 
     internal event EventHandler<ICollisionBound[]?>? CollisionBoundChange;
-
-    internal event EventHandler<PartLink?>? ParentChange;
 
     internal event EventHandler<PartLink[]?>? SubPartChange;
 
@@ -135,6 +132,8 @@ internal class PhysicalEntityPart
         CollisionBounds = collisionBounds ?? Array.Empty<ICollisionBound>();
         MaterialInstance = material;
     }
+
+    private PhysicalEntityPart() { }
 
 
     // Internal methods.
@@ -354,5 +353,40 @@ internal class PhysicalEntityPart
         {
             Entity.World!.AddEntity(StrayEntity.MovePartToStrayEntity(this));
         }
+    }
+
+    protected virtual object CopyInfoToNewObject(PhysicalEntityPart newPart)
+    {
+        newPart.SelfRotation = SelfRotation;
+        newPart.AngularMotion = AngularMotion;
+        newPart.Position = Position;
+
+
+        newPart.CollisionBounds = CollisionBounds.ToArray();
+
+        newPart.MaterialInstance = new(MaterialInstance);
+
+        newPart.CollisionBoundChange = CollisionBoundChange;
+        newPart.SubPartChange = SubPartChange;
+
+        foreach (PartLink Link in SubPartLinks)
+        {
+            LinkPart((PhysicalEntityPart)Link.LinkedPart.Clone(), Link.LinkDistance, Link.LinkStrength);
+        }
+
+        foreach (PartSprite Sprite in Sprites)
+        {
+            newPart.AddSprite((PartSprite)Sprite.Clone());
+        }
+
+        newPart.Entity = Entity;
+        return newPart;
+    }
+
+
+    // Inherited methods.
+    public virtual object Clone()
+    {
+        return CopyInfoToNewObject(new PhysicalEntityPart());
     }
 }

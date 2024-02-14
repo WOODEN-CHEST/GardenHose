@@ -52,8 +52,6 @@ internal sealed class WorldMaterialInstance
 
     internal WorldMaterialState State { get; private set; }
 
-    internal float Charge { get; set; } = (Random.Shared.NextSingle() * 2f - 1f) * 100f;
-
 
     // Private float.
     private float _temperature;
@@ -66,6 +64,15 @@ internal sealed class WorldMaterialInstance
         Material = material ?? throw new ArgumentNullException(nameof(material));
         Temperature = DEFAULT_TEMPERATURE;
         CurrentStrength = Material.Strength;
+    }
+
+    internal WorldMaterialInstance(WorldMaterialInstance materialInstance)
+    {
+        Material = materialInstance.Material;
+        Temperature = materialInstance.Temperature;
+        CurrentStrength = materialInstance.CurrentStrength;
+        State = materialInstance.State;
+        Stage = materialInstance.Stage;
     }
 
 
