@@ -41,10 +41,6 @@ public class GameWorld : IIDProvider
     internal WorldPlayer Player { get; private set; }
 
 
-    /* Camera. */
-    
-
-
     /* Debug. */
     internal bool IsDebugInfoDrawn
     {
@@ -140,8 +136,7 @@ public class GameWorld : IIDProvider
         TimeSpan Elapsed = Start - DateTime.Now;
 
         // Create and remove entities.
-        AddNewEntities();
-        RemoveOldEntities();
+        ForceEntityExistanceUpdate();
     }
 
     /* Entities. */
@@ -211,6 +206,12 @@ public class GameWorld : IIDProvider
         }
 
         return WorldEntity as EntityType;
+    }
+
+    internal void ForceEntityExistanceUpdate()
+    {
+        AddNewEntities();
+        RemoveOldEntities();
     }
 
 

@@ -76,7 +76,6 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         Radius = radius;
         DrawLayer = DrawLayer.Bottom;
         MainPart = new PhysicalEntityPart(new ICollisionBound[] { new BallCollisionBound(Radius) }, material, this);
-        MainPart.LinkPart(new Starport(null), new Vector2(0f, -Radius));
 
         if (sprites == null)
         {
@@ -115,7 +114,12 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         return GHMath.NormalizeOrDefault(position - Position) * (Radius + height);
     }
 
-    internal bool IsBuildingPlaceable(PhysicalEntity buildingEntity)
+    internal Vector2 GetPositionAboveSurface(float rotation, float height)
+    {
+        return Vector2.TransformNormal(new Vector2(0f, -1f), Matrix.CreateRotationZ(rotation)) * (Radius + height);
+    }
+
+    internal bool IsBuildingPlaceable(BuildingPlaceholderEntity buildingEntity)
     {
         List<CollisionCase> Cases = new();
         foreach (PartLink Link in MainPart.SubPartLinks)
@@ -134,9 +138,18 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         return true;
     }
 
-    internal void TryPlaceBuilding()
+    internal bool TryPlaceBuilding(BuildingPlaceholderEntity buildingEntity)
     {
-        throw new NotImplementedException();
+        if (!IsBuildingPlaceable(buildingEntity))
+        {
+            return false;
+        }
+
+        PlanetBuilding Building = (PlanetBuilding)buildingEntity.MainPart;
+        MainPart.LinkPart(Building, buildingEntity.Position - Position);
+        Building.SelfRotation = buildingEntity.Rotation;
+
+        return true;
     }
 
 

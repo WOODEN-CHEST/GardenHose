@@ -38,7 +38,7 @@ internal class PhysicalEntityPart
         set
         {
             _selfRotation = value;
-            SetPositionAndRotation(Position, CombinedRotation); // Forces sub-parts to update.
+            SetPositionAndRotation(Position, CombinedRotation - SelfRotation); // Forces sub-parts to update.
         }
     }
 

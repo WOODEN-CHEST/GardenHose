@@ -160,8 +160,9 @@ internal class EntityCollisionHandler
         foreach (ICollisionBound TargetBound in targetPart.CollisionBounds)
         {
             //Test bounding radius.
-            if (Vector2.Distance(selfPart.Position + selfBound.Offset,
-                targetPart.Position + TargetBound.Offset) > selfBound.BoundingRadius + TargetBound.BoundingRadius)
+            if (Vector2.Distance(selfBound.GetFinalPosition(selfPart.Position, selfPart.CombinedRotation),
+                TargetBound.GetFinalPosition(targetPart.Position, targetPart.CombinedRotation)) 
+                > selfBound.BoundingRadius + TargetBound.BoundingRadius)
             {
                 continue;
             }
@@ -237,7 +238,10 @@ internal class EntityCollisionHandler
 
     internal virtual void OnCollision(CollisionCase collisionCase, GHGameTime time)
     {
-        if (!IsCollisionReactionEnabled) return;
+        if (!IsCollisionReactionEnabled || collisionCase.SelfPart.MaterialInstance.Stage == WorldMaterialStage.Destroyed)
+        {
+            return;
+        }
 
         if (collisionCase.SelfPart.MaterialInstance.State != WorldMaterialState.Solid
             || collisionCase.TargetPart.MaterialInstance.State != WorldMaterialState.Solid)
@@ -258,7 +262,7 @@ internal class EntityCollisionHandler
         }
 
         // Prepare variables.
-        Vector2 PushOutDirection = GetPushOutDirection(collisionCase.TargetEntity);
+        Vector2 PushOutDirection = collisionCase.SurfaceNormal;
         const int STEP_COUNT = 8;
         float STEP_DISTANCE = 10f;
         int StepsTaken = 0;
@@ -386,8 +390,13 @@ internal class EntityCollisionHandler
             SurfaceNormal += CollisionPoint.TargetEdge.Normal;
             InverseSurfaceNormal += CollisionPoint.SourceEdge.Normal;
         }
-        SurfaceNormal /= CollisionPoints.Count;
-        InverseSurfaceNormal /= CollisionPoints.Count;
+        SurfaceNormal = GHMath.NormalizeOrDefault(SurfaceNormal);
+        InverseSurfaceNormal = GHMath.NormalizeOrDefault(InverseSurfaceNormal);
+
+        if (Math.Abs(SurfaceNormal.Length() - 1f) > 0.05f || Math.Abs(InverseSurfaceNormal.Length() - 1f) > 0.05f)
+        {
+
+        }
 
         return (CollisionPoints.Select((Data) => Data.Point).ToArray(), SurfaceNormal, InverseSurfaceNormal);
     }
@@ -448,7 +457,7 @@ internal class EntityCollisionHandler
         {
             InverseSurfaceNormal += CollisionPoint.RectEdge.Normal;
         }
-        InverseSurfaceNormal /= CollisionPoints.Count;
+        InverseSurfaceNormal = GHMath.NormalizeOrDefault(InverseSurfaceNormal);
 
         return (CollisionPoints.Select((Data) => Data.Point).ToArray(), SurfaceNormal, InverseSurfaceNormal);
     }
@@ -677,18 +686,6 @@ internal class EntityCollisionHandler
                 throw new NotImplementedException("Getting collision bound points is not supported for bound type" +
                     $"of \"{bound.Type}\" (int value of {(int)bound.Type})");
         }
-    }
-
-    private Vector2 GetPushOutDirection(PhysicalEntity otherEntity)
-    {
-        Vector2 Direction = Entity.Position - otherEntity.Position;
-
-        if (Direction.Length() is 0f or -0f)
-        {
-            Direction = -Vector2.UnitY;
-        }
-
-        return Vector2.Normalize(Direction);
     }
 
     private void OnCollisionIgnorableEntityDeleteEvent(object? sender, EventArgs args)

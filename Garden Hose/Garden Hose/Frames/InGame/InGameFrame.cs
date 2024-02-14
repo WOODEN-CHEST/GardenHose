@@ -1,16 +1,16 @@
 ﻿using GardenHose.Game;
 using GardenHose.Game.World;
 using GardenHoseEngine.Frame;
-using GardenHose.Game.World.Entities;
 using Microsoft.Xna.Framework;
 using System;
 using GardenHose.Game.World.Entities.Probe;
 using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Material;
-using GardenHose.Game.World.Entities.Test;
 using System.Collections.Generic;
 using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Planet.Buildings;
+using GardenHose.Game.World.Entities.Test;
 
 namespace GardenHose.Frames.InGame;
 
@@ -31,20 +31,25 @@ internal class InGameFrame : GameFrame
         base.Load();
 
         WorldPlanetEntity Planet = WorldPlanetEntity.TestPlanet;
+        Planet.TryPlaceBuilding(new BuildingPlaceholderEntity(new Starport())
+        {
+            Position = Planet.GetPositionAboveSurface(MathHelper.PiOver4, 0f),
+            Rotation = MathHelper.PiOver4
+        });
 
         List<PhysicalEntity> Ents = new();
-        //for (int i = 0; i < 20; i++)
+        //for (int i = 0; i < 30; i++)
         //{
-        //    for (int j = 0; j < 20; j++)
+        //    for (int j = 0; j < 30; j++)
         //    {
-        //        Ents.Add(new TestEntity() { Position = new Vector2(i * 20, j * 20) });
+        //        Ents.Add(new TestEntity() { Position = new Vector2(i * 25, j * 25) });
         //    }
         //}
 
         GameWorldSettings StartupSettings = new()
         {
             Planet = Planet,
-            PlayerShip = new ProbeEntity() { Position = new Vector2(-100f, 550f), Rotation = MathF.PI },
+            PlayerShip = new ProbeEntity() { Position = new Vector2(800f, 0f), Rotation = MathF.PI * 0.5f },
             StartingEntities = Ents.ToArray(),
             Background = new(GHGameAnimationName.Background_Default)
             {

@@ -13,14 +13,21 @@ internal class Starport : PlanetBuilding
 
 
     // Constructors.
-    public Starport(PhysicalEntity? entity)
+    public Starport()
         : base(new ICollisionBound[]
         {
             new RectangleCollisionBound(ReceiverThingySize, new Vector2(-70f, (-ReceiverThingySize.Y) * 0.5f - (GroundSize.Y * 0.5f))),
             new RectangleCollisionBound(ReceiverThingySize, new Vector2(-30f, (-ReceiverThingySize.Y) * 0.5f - (GroundSize.Y * 0.5f))),
             new RectangleCollisionBound(GroundSize, new Vector2(0f, (-GroundSize.Y) * 0.5f))
-        }, WorldMaterial.Test, entity)
+        }, WorldMaterial.Test, null)
     {
 
+    }
+
+
+    // Inherited methods.
+    internal override void SetPositionAndRotation(Vector2 position, float rotation)
+    {
+        base.SetPositionAndRotation(position, rotation);
     }
 }
