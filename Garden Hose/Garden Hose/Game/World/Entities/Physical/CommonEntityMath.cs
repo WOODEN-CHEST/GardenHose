@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
-internal class CommonEntityMath : ICloneable
+internal class CommonEntityMath
 {
     // Internal static fields.
     internal static readonly Vector2 DEFAULT_NONZERO_VECTOR = -Vector2.UnitY;
@@ -68,20 +68,24 @@ internal class CommonEntityMath : ICloneable
         }
     }
 
-    public object Clone()
+    internal CommonEntityMath CreateClone(PhysicalEntity entity)
     {
-        return new CommonEntityMath(Entity)
-        {
-            DirPlanetToEntity = DirPlanetToEntity,
-            DirPlanetToEntityNormal = DirPlanetToEntityNormal,
-            DirPlanetToEntityNormalNeg = DirPlanetToEntityNormalNeg,
-            DistanceToPlanet = DistanceToPlanet,
-            PlanetRelativeXSpeed = PlanetRelativeXSpeed,
-            PlanetRelativeYSpeed = PlanetRelativeYSpeed,
-            Altitude = Altitude,
-            AltitudeOneSecInFuture = AltitudeOneSecInFuture,
-            Roll = Roll,
-            RollOneSecInFuture = RollOneSecInFuture
-        };
+        return CopyDataToObject(new CommonEntityMath(entity));
+    }
+
+    internal CommonEntityMath CopyDataToObject(CommonEntityMath math)
+    {
+        math.DirPlanetToEntity = DirPlanetToEntity;
+        math.DirPlanetToEntityNormal = DirPlanetToEntityNormal;
+        math.DirPlanetToEntityNormalNeg = DirPlanetToEntityNormalNeg;
+        math.DistanceToPlanet = DistanceToPlanet;
+        math.PlanetRelativeXSpeed = PlanetRelativeXSpeed;
+        math.PlanetRelativeYSpeed = PlanetRelativeYSpeed;
+        math.Altitude = Altitude;
+        math.AltitudeOneSecInFuture = AltitudeOneSecInFuture;
+        math.Roll = Roll;
+        math.RollOneSecInFuture = RollOneSecInFuture;
+
+        return math;
     }
 }

@@ -1,12 +1,9 @@
 ﻿using GardenHose.Game.World.Entities;
-using GardenHose.Game.World.Entities.Physical;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace GardenHose.Game.World;
+
 
 internal class WorldState
 {
@@ -22,17 +19,21 @@ internal class WorldState
     {
         GameTime = (GHGameTime)world.Game.GameTime.Clone();
 
+        LivingEntities = new Entity[world.LivingEntities.Length];
+        CloneEntitiesIntoCollection(world.LivingEntities, LivingEntities);
+        EntitiesCreated = new Entity[world.EntitiesCreated.Length];
+        CloneEntitiesIntoCollection(world.EntitiesCreated, EntitiesCreated);
+        EntitiesRemoved = new Entity[world.EntitiesRemoved.Length];
+        CloneEntitiesIntoCollection(world.EntitiesRemoved, EntitiesRemoved);
     }
 
 
     // Private methods.
     private void CloneEntitiesIntoCollection(ReadOnlySpan<Entity> entitySpan, Entity[] targetCollection)
     {
-        targetCollection = new Entity[entitySpan.Length];
-
         for (int i = 0; i < entitySpan.Length; i++)
         {
-            targetCollection[i] = (Entity)entitySpan[i].Clone();
+            targetCollection[i] = entitySpan[i].CreateClone();
         }
     }
 }

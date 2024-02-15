@@ -131,6 +131,45 @@ internal class PartSprite : ICloneable
         };
     }
 
+    internal PartSprite CreateClone()
+    {
+        return CopyDataToObject(new PartSprite(UndamagedName, SlightlyDamagedName, DamagedName, HeavilyDamagedName));
+    }
+
+    internal PartSprite CopyDataToObject(PartSprite sprite)
+    {
+        sprite.Offset = Offset;
+        sprite.Rotation = Rotation;
+        sprite.Size = Size;
+        sprite.ColorMask = ColorMask;
+        sprite.Opacity = Opacity;
+        sprite.Brightness = Brightness;
+        sprite.Effects = Effects;
+        sprite._undamagedSprite = (SpriteItem)_undamagedSprite.Clone();
+        sprite._slightlyDamagedSprite = (SpriteItem)_slightlyDamagedSprite.Clone();
+        sprite._damagedSprite = (SpriteItem)_damagedSprite.Clone();
+        sprite._heavilyDamagedSprite = (SpriteItem)_heavilyDamagedSprite.Clone();
+
+        if (_activeSprite == _undamagedSprite)
+        {
+            sprite._activeSprite = sprite._undamagedSprite;
+        }
+        else if (_activeSprite == _slightlyDamagedSprite)
+        {
+            sprite._activeSprite = sprite._slightlyDamagedSprite;
+        }
+        else if (_activeSprite == _damagedSprite)
+        {
+            sprite._activeSprite = sprite._damagedSprite;
+        }
+        else if (_activeSprite == _heavilyDamagedSprite)
+        {
+            sprite._activeSprite = sprite._heavilyDamagedSprite;
+        }
+
+        return sprite;
+    }
+
 
     // Private methods.
     private void ApplyColorMask()
@@ -181,15 +220,6 @@ internal class PartSprite : ICloneable
     // Inherited methods.
     public object Clone()
     {
-        return new PartSprite(UndamagedName, SlightlyDamagedName, DamagedName, HeavilyDamagedName)
-        {
-            Offset = Offset,
-            Rotation = Rotation,
-            Size = Size,
-            ColorMask = ColorMask,
-            Opacity = Opacity,
-            Brightness = Brightness,
-            Effects = Effects,
-        };
+        
     }
 }

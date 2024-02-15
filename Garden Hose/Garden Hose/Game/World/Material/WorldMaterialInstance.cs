@@ -12,7 +12,7 @@ internal sealed class WorldMaterialInstance
 
 
     // Internal fields.
-    internal WorldMaterial Material { get; init; }
+    internal WorldMaterial Material { get; private set; }
 
     internal float Temperature
     {
@@ -66,15 +66,6 @@ internal sealed class WorldMaterialInstance
         CurrentStrength = Material.Strength;
     }
 
-    internal WorldMaterialInstance(WorldMaterialInstance materialInstance)
-    {
-        Material = materialInstance.Material;
-        Temperature = materialInstance.Temperature;
-        CurrentStrength = materialInstance.CurrentStrength;
-        State = materialInstance.State;
-        Stage = materialInstance.Stage;
-    }
-
 
     // Internal methods.
     internal void HeatByTouch(WorldMaterialInstance otherMaterial, GHGameTime time)
@@ -107,5 +98,21 @@ internal sealed class WorldMaterialInstance
         {
             CurrentStrength -= MELTING_DAMAGE * time.WorldTime.PassedTimeSeconds * ((Temperature - Material.MeltingPoint) * ARBITRARY_REDUCTION_VALUE);
         }
+    }
+
+    internal WorldMaterialInstance CreateClone()
+    {
+        return CopyDataToObject(new WorldMaterialInstance(Material));
+    }
+
+    internal WorldMaterialInstance CopyDataToObject(WorldMaterialInstance material)
+    {
+        material.Material = Material;
+        material.Temperature = Temperature;
+        material.CurrentStrength = CurrentStrength;
+        material.State = State;
+        material.Stage = Stage;
+
+        return material;
     }
 }

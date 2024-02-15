@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Item;
 
-public class SpriteItem : ColoredItem
+public class SpriteItem : ColoredItem, ICloneable
 {
     // Fields.
     [MemberNotNull(nameof(_activeAnimation))]
@@ -73,5 +73,23 @@ public class SpriteItem : ColoredItem
             Display.ToRealScale(TextureScale),
             Effects,
             IDrawableItem.DEFAULT_LAYER_DEPTH);
+    }
+
+    public virtual object Clone()
+    {
+        return new SpriteItem((AnimationInstance)_activeAnimation.Clone())
+        {
+            Size = Size,
+            Position = Position,
+            Rotation = Rotation,
+            Effects = Effects,
+            TextureScale = TextureScale,
+
+            IsVisible = IsVisible,
+            IsDrawingNeeded = IsDrawingNeeded,
+            Brightness = Brightness,
+            Opacity = Opacity,
+            Mask = Mask
+        };
     }
 }

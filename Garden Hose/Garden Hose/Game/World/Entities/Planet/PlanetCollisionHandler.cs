@@ -11,9 +11,7 @@ namespace GardenHose.Game.World.Entities.Planet;
 internal class PlanetCollisionHandler : EntityCollisionHandler
 {
     // Constructors.
-    internal PlanetCollisionHandler(PhysicalEntity entity) : base(entity)
-    {
-    }
+    internal PlanetCollisionHandler(PhysicalEntity entity) : base(entity) { }
 
 
     // Inherited methods.

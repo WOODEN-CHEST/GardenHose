@@ -54,9 +54,9 @@ internal class ParticlePart : PhysicalEntityPart
         base.Draw(info);
     }
 
-    protected override object CopyInfoToNewObject(PhysicalEntityPart newPart)
+    internal override PhysicalEntityPart CloneDataToObject(PhysicalEntityPart newPart, PhysicalEntity? entity)
     {
-        base.CopyInfoToNewObject(newPart);
+        base.CloneDataToObject(newPart, entity);
 
         ParticlePart Particle = (ParticlePart)newPart;
         Particle._scale = _scale;
@@ -66,8 +66,8 @@ internal class ParticlePart : PhysicalEntityPart
         return newPart;
     }
 
-    public override object Clone()
+    internal override PhysicalEntityPart CreateClone(PhysicalEntity? entity)
     {
-        return CopyInfoToNewObject(new ParticlePart(Entity as ParticleEntity, _settings));
+        return CloneDataToObject(new ParticlePart((ParticleEntity)entity!, _settings), entity);
     }
 }

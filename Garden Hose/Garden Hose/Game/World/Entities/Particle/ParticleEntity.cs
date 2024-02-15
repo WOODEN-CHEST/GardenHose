@@ -8,15 +8,14 @@ namespace GardenHose.Game.World.Entities.Particle;
 internal class ParticleEntity : PhysicalEntity
 {
     // Internal fields.
-    bool IsKilledByPlanets { get; set; } = true;
     internal float Lifetime { get; set; }
     internal float TimeAlive { get; set; } = 0f;
     internal float FadeStatus { get; private set; } = 0f;
 
 
     // Private fields.
-    private readonly float _fadeInSpeed;
-    private readonly float _fadeOutSpeed;
+    private float _fadeInSpeed;
+    private float _fadeOutSpeed;
     private const float FADED_OUT = 0f;
     private const float FADED_IN = 1f;
 
@@ -48,6 +47,8 @@ internal class ParticleEntity : PhysicalEntity
         IsInvulnerable = true;
         IsCommonMathCalculated = false;
     }
+
+    private ParticleEntity() : base(EntityType.Particle) { }
 
 
     // Internal static methods.
@@ -111,5 +112,27 @@ internal class ParticleEntity : PhysicalEntity
         {
             Delete();
         }
+    }
+
+
+    // Inherited methods.
+    internal override Entity CloneDataToObject(Entity newEntity)
+    {
+        base.CloneDataToObject(newEntity);
+
+        ParticleEntity Particle = (ParticleEntity)newEntity;
+
+        Particle.Lifetime = Lifetime;
+        Particle.TimeAlive = TimeAlive;
+        Particle.FadeStatus = FadeStatus;
+        Particle._fadeInSpeed = _fadeInSpeed;
+        Particle._fadeOutSpeed = _fadeOutSpeed;
+
+        return Particle;
+    }
+
+    internal override Entity CreateClone()
+    {
+        return CloneDataToObject(new ParticleEntity());
     }
 }

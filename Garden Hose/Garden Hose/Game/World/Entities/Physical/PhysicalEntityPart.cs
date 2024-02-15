@@ -7,12 +7,13 @@ using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal class PhysicalEntityPart : ICloneable
+internal class PhysicalEntityPart
 {
     // Fields.
     internal virtual PhysicalEntity? Entity
@@ -24,6 +25,11 @@ internal class PhysicalEntityPart : ICloneable
             foreach (PartLink Link in SubPartLinks)
             {
                 Link.LinkedPart.Entity = value;
+            }
+
+            if (Entity != null && IsMainPart)
+            {
+                SetPositionAndRotation(Entity.Position, Entity.Rotation);
             }
         }
     }
@@ -66,6 +72,7 @@ internal class PhysicalEntityPart : ICloneable
 
 
     /* Collision bounds and parts. */
+    [MemberNotNull(nameof(_collisionBounds))]
     internal virtual ICollisionBound[] CollisionBounds
     {
         get => _collisionBounds;
@@ -115,16 +122,16 @@ internal class PhysicalEntityPart : ICloneable
 
 
     // Constructors.
-    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, WorldMaterial material, PhysicalEntity? entity)
+    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, WorldMaterial material, PhysicalEntity? entity)
         : this(collisionBounds, material.CreateInstance(), entity) { }
 
     internal PhysicalEntityPart(WorldMaterial material, PhysicalEntity? entity)
-        : this(null, material, entity) { }
+        : this(Array.Empty<ICollisionBound>(), material, entity) { }
 
     internal PhysicalEntityPart(WorldMaterialInstance material, PhysicalEntity? entity)
-        : this(null, material, entity) { }
+        : this(Array.Empty<ICollisionBound>(), material, entity) { }
 
-    internal PhysicalEntityPart(ICollisionBound[]? collisionBounds, 
+    internal PhysicalEntityPart(ICollisionBound[] collisionBounds, 
         WorldMaterialInstance material,
         PhysicalEntity? entity)
     {
@@ -132,8 +139,6 @@ internal class PhysicalEntityPart : ICloneable
         CollisionBounds = collisionBounds ?? Array.Empty<ICollisionBound>();
         MaterialInstance = material;
     }
-
-    private PhysicalEntityPart() { }
 
 
     // Internal methods.
@@ -146,6 +151,37 @@ internal class PhysicalEntityPart : ICloneable
             Sprite.Load(assetManager);
             Sprite.SetActiveSprite(MaterialInstance.Stage);
         }
+    }
+
+    internal virtual PhysicalEntityPart CreateClone(PhysicalEntity? parentEntity)
+    {
+        return CloneDataToObject(new PhysicalEntityPart(Array.Empty<ICollisionBound>(), MaterialInstance.Material, parentEntity), parentEntity);
+    }
+
+    internal virtual PhysicalEntityPart CloneDataToObject(PhysicalEntityPart part, PhysicalEntity? parentEntity)
+    {
+        part.SelfRotation = SelfRotation;
+        part.AngularMotion = AngularMotion;
+        part.Position = Position;
+
+        part.CollisionBounds = CollisionBounds.ToArray();
+        part.MaterialInstance = MaterialInstance.CreateClone();
+        part.CollisionBoundChange = CollisionBoundChange;
+        part.SubPartChange = SubPartChange;
+
+        part.Entity = null;
+        foreach (PartLink Link in SubPartLinks)
+        {
+            LinkPart(Link.LinkedPart.CreateClone(null), Link.LinkDistance, Link.LinkStrength);
+        }
+        part.Entity = Entity;
+
+        foreach (PartSprite Sprite in Sprites)
+        {
+            part.AddSprite((PartSprite)Sprite.Clone());
+        }
+
+        return part;
     }
 
     /* Parts. */
@@ -353,40 +389,5 @@ internal class PhysicalEntityPart : ICloneable
         {
             Entity.World!.AddEntity(StrayEntity.MovePartToStrayEntity(this));
         }
-    }
-
-    protected virtual object CopyInfoToNewObject(PhysicalEntityPart newPart)
-    {
-        newPart.SelfRotation = SelfRotation;
-        newPart.AngularMotion = AngularMotion;
-        newPart.Position = Position;
-
-
-        newPart.CollisionBounds = CollisionBounds.ToArray();
-
-        newPart.MaterialInstance = new(MaterialInstance);
-
-        newPart.CollisionBoundChange = CollisionBoundChange;
-        newPart.SubPartChange = SubPartChange;
-
-        foreach (PartLink Link in SubPartLinks)
-        {
-            LinkPart((PhysicalEntityPart)Link.LinkedPart.Clone(), Link.LinkDistance, Link.LinkStrength);
-        }
-
-        foreach (PartSprite Sprite in Sprites)
-        {
-            newPart.AddSprite((PartSprite)Sprite.Clone());
-        }
-
-        newPart.Entity = Entity;
-        return newPart;
-    }
-
-
-    // Inherited methods.
-    public virtual object Clone()
-    {
-        return CopyInfoToNewObject(new PhysicalEntityPart());
     }
 }

@@ -4,7 +4,7 @@ using System;
 
 namespace GardenHose.Game.World.Entities;
 
-internal abstract class Entity : ICloneable
+internal abstract class Entity
 {
     // Internal fields.
     internal ulong ID { get; set; }
@@ -35,9 +35,9 @@ internal abstract class Entity : ICloneable
         World?.RemoveEntity(this);
     }
 
+    internal abstract Entity CreateClone();
 
-    // Protected methods.
-    protected virtual object CopyInfoToNewObject(Entity newEntity)
+    internal virtual object CloneDataToObject(Entity newEntity)
     {
         newEntity.ID = ID;
         newEntity.IsTicked = IsTicked;

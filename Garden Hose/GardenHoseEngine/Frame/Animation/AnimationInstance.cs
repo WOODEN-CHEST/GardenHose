@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GardenHoseEngine.Frame.Animation;
 
-public sealed class AnimationInstance
+public sealed class AnimationInstance : ICloneable
 {
     // Fields.
     public Rectangle? TextureRegion { get; set; } = null;
@@ -135,5 +135,21 @@ public sealed class AnimationInstance
             _secondsSinceFrameSwitch -= _secondsPerFrame;
             IncrementFrame();
         }
+    }
+
+    public object Clone()
+    {
+        return new AnimationInstance(_animation)
+        {
+            IsLooped = IsLooped,
+            TextureRegion = TextureRegion,
+            FPS = FPS,
+            FrameIndex = FrameIndex,
+            FrameStep = FrameStep,
+            AnimationFinished = AnimationFinished,
+            _isAnimating = _isAnimating,
+            _secondsSinceFrameSwitch = _secondsSinceFrameSwitch,
+            _secondsPerFrame = _secondsPerFrame
+        };
     }
 }

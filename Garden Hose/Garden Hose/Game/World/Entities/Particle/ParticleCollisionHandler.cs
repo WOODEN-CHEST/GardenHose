@@ -31,4 +31,16 @@ internal class ParticleCollisionHandler : EntityCollisionHandler
 
         base.OnCollision(collisionCase, time);
     }
+
+    internal override EntityCollisionHandler CreateClone(PhysicalEntity newEntity)
+    {
+        return CreateClone(newEntity);
+    }
+
+    internal override EntityCollisionHandler CloneDataToObject(EntityCollisionHandler handler)
+    {
+        base.CloneDataToObject(handler);
+        ((ParticleCollisionHandler)handler).IsKilledByPlanets = IsKilledByPlanets;
+        return handler;
+    }
 }
