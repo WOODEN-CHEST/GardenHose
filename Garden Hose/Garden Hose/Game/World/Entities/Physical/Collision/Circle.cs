@@ -63,7 +63,7 @@ internal struct Circle
         // Get roots.
         if (Discriminant < 0)
         {
-            return new Vector2[0];
+            return Array.Empty<Vector2>();
         }
         else if (Discriminant is 0f or -0f)
         {

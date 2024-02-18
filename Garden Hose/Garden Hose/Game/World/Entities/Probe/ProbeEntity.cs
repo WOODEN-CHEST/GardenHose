@@ -23,6 +23,8 @@ internal class ProbeEntity : SpaceshipEntity
 
 
     //  Private static fields.
+    private const float OXYGEN_DRAIN_SPEED = 1.5f;
+
     /* Hit-box */
     private static Vector2 s_bodyHitboxSize = new(30f, 28f);
     private static Vector2 s_headHitboxSize = new(s_bodyHitboxSize.X, 15f);
@@ -43,9 +45,9 @@ internal class ProbeEntity : SpaceshipEntity
 
         // A lot of magic numbers here are just offsets which were not calculated but just eyed until it looked right.
         Base.LinkPart(HeadPart, new(0f, (-s_bodyHitboxSize.Y * 0.5f) - (s_headHitboxSize.Y * 0.5f) + 1.25f), 30_000f);
-        Base.LinkPart(RightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 30_000);
-        Base.LinkPart(LeftThrusterPart, -RightThrusterPart.ParentLink!.LinkDistance, 30_000f);
-        Base.LinkPart(MainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 30_000);
+        Base.LinkPart(RightThrusterPart, new(s_bodyHitboxSize.X * 0.5f + s_sideThrusterHitboxSize.X * 0.5f - 2.5f, 0f), 50_000);
+        Base.LinkPart(LeftThrusterPart, -RightThrusterPart.ParentLink!.LinkDistance, 50_000f);
+        Base.LinkPart(MainThrusterPart, new(0f, s_bodyHitboxSize.Y * 0.5f + s_mainThrusterHitboxSize.X * 0.5f - 13.5f), 50_000);
 
         MainPart = Base;
 
@@ -77,19 +79,16 @@ internal class ProbeEntity : SpaceshipEntity
 
     private static ThrusterPart CreateSideThrusterPart(PhysicalEntity entity, bool isRightPart)
     {
-        const float THRUSTER_POWER = 7993f;
-        const float THRUSTER_FUEL = 10_000_000f;
-        const float THRUSTER_FUEL_EFFICIENCY = 3.16f;
-        const float THRUSTER_CHANGE_SPEED = 9.8f;
+        const float FUEL = 8_000_000f;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_sideThrusterHitboxSize) },
             WorldMaterial.Test, entity)
         {
-            ThrusterPower = THRUSTER_POWER,
-            ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
-            MaxFuel = THRUSTER_FUEL,
-            Fuel = THRUSTER_FUEL,
-            FuelUsageRate = THRUSTER_FUEL_EFFICIENCY,
+            ThrusterPower = 14993f,
+            ThrusterThrottleChangeSpeed = 9.8f,
+            MaxFuel = FUEL,
+            Fuel = FUEL,
+            FuelUsageRate = 3.16f,
             ForceDirection = 0f
         };
 
@@ -104,19 +103,16 @@ internal class ProbeEntity : SpaceshipEntity
 
     private static ThrusterPart CreateMainThrusterPart(PhysicalEntity entity)
     {
-        const float THRUSTER_POWER = 23412;
-        const float THRUSTER_FUEL = 20_000_000f;
-        const float THRUSTER_FUEL_EFFICIENCY = 2.51f;
-        const float THRUSTER_CHANGE_SPEED = 5.8f;
+        const float FUEL = 17_000_000;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_mainThrusterHitboxSize) },
             WorldMaterial.Test, entity)
         {
-            ThrusterPower = THRUSTER_POWER,
-            ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
-            MaxFuel = THRUSTER_FUEL,
-            Fuel = THRUSTER_FUEL,
-            FuelUsageRate = THRUSTER_FUEL_EFFICIENCY,
+            ThrusterPower = 31443,
+            ThrusterThrottleChangeSpeed = 5.8f,
+            MaxFuel = FUEL,
+            Fuel = FUEL,
+            FuelUsageRate = 2.51f,
             ForceDirection = 0f
         };
 
@@ -140,5 +136,42 @@ internal class ProbeEntity : SpaceshipEntity
     internal override Entity CreateClone()
     {
         throw new NotImplementedException();
+    }
+
+    internal override void Tick(GHGameTime time)
+    {
+        base.Tick(time);
+
+        if ((HeadPart == null) && (Oxygen > MIN_OXYGEN))
+        {
+            Oxygen -= time.WorldTime.TotalTimeSeconds * OXYGEN_DRAIN_SPEED;
+        }
+    }
+
+    internal override void OnCollision(CollisionEventArgs args)
+    {
+        base.OnCollision(args);
+
+        if ((args.Case.SelfPart.MaterialInstance.Stage != WorldMaterialStage.Destroyed) && (args.Case.SelfPart.Entity == this))
+        {
+            return;
+        }
+
+        if (args.Case.SelfPart == HeadPart)
+        {
+            HeadPart = null;
+        }
+        else if (args.Case.SelfPart == MainThrusterPart)
+        {
+            MainThrusterPart = null;
+        }
+        else if (args.Case.SelfPart == LeftThrusterPart)
+        {
+            LeftThrusterPart = null;
+        }
+        else if (args.Case.SelfPart == RightThrusterPart)
+        {
+            RightThrusterPart = null;
+        }
     }
 }

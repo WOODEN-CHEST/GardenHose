@@ -44,6 +44,8 @@ internal class ProbeSystem : ISpaceshipSystem
 
     private readonly ProbeErrorHandler _errorHandler;
     private readonly ProbeRollPanel _rollPanel;
+    private readonly ProbeMeter _speedometer;
+    private readonly ProbeMeter _altimeter;
 
 
     // Constructors.
@@ -52,6 +54,10 @@ internal class ProbeSystem : ISpaceshipSystem
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
         _errorHandler = new ProbeErrorHandler();
         _rollPanel = new ProbeRollPanel();
+        _speedometer = new(0f, 90f, GHGameAnimationName.Ship_Probe_MeterMarkingS, GHGameAnimationName.Ship_Probe_MeterDigitsS,
+            (probe) => probe.Motion.Length() * 0.25f);
+        _altimeter = new(0f, 450f, GHGameAnimationName.Ship_Probe_MeterMarkingA, GHGameAnimationName.Ship_Probe_MeterDigitsA,
+            (probe) => probe.CommonMath.Altitude);
     }
 
 
@@ -220,6 +226,8 @@ internal class ProbeSystem : ISpaceshipSystem
 
         _errorHandler.Draw(info);
         _rollPanel.Draw(info);
+        _speedometer.Draw(info);
+        _altimeter.Draw(info);
     }
 
     /* Navigating. */
@@ -264,6 +272,9 @@ internal class ProbeSystem : ISpaceshipSystem
         }
 
         _rollPanel.Tick(_probe);
+        _errorHandler.Tick(_probe);
+        _speedometer.Tick(_probe);
+        _altimeter.Tick(_probe);
 
         if (Ship.Pilot ==  SpaceshipPilot.Player)
         {
@@ -280,8 +291,16 @@ internal class ProbeSystem : ISpaceshipSystem
     {
         _errorHandler.Load(assetManager);
         _rollPanel.Load(assetManager);
+        _speedometer.Load(assetManager);
+        _altimeter.Load(assetManager);
 
-        _rollPanel.Position = Display.VirtualSize - (ProbeRollPanel.PANEL_SIZE * 0.5f) - new Vector2(10f);
+        Vector2 Padding = new(10f);
+        _rollPanel.Position = Display.VirtualSize - (ProbeRollPanel.PANEL_SIZE * 0.5f) - Padding;
+        _errorHandler.Position = Display.VirtualSize - (ProbeErrorHandler.PANEL_SIZE * 0.5f) - Padding * 2f
+            - new Vector2(0f, ProbeRollPanel.PANEL_SIZE.Y);
+        _speedometer.Position = _rollPanel.Position - (ProbeRollPanel.PANEL_SIZE * 0.5f) 
+            - (ProbeMeter.PANEL_SIZE * 0.5f) - new Vector2(10f, 0f);
+        _altimeter.Position = _speedometer.Position - ProbeMeter.PANEL_SIZE - new Vector2(10f, 0f);
     }
 
     public void OnPilotChange(SpaceshipPilot newPilot)

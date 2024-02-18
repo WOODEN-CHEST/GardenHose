@@ -53,7 +53,7 @@ internal class PhysicalEntityPart
 
     internal virtual float AngularMotion { get; set; }
 
-    public virtual float Mass
+    internal virtual float Mass
     {
         get
         {

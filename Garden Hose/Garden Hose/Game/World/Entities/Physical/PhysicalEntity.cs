@@ -255,6 +255,8 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         SetPositionAndRotation(Position, Rotation);
     }
 
+    internal virtual void OnCollision(CollisionEventArgs args) { }
+
 
     /* Part events. */
     internal void ResetPartInfo()

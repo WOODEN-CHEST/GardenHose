@@ -13,7 +13,6 @@ internal class FuelLeakLocation
     // Internal fields.
     internal Vector2 Offset { get; set; }
     internal float TimeSinceLastLeak { get; set; } = 0f;
-    internal const float TIME_PER_LEAK = 0.5f;
 
 
     // Constructors.

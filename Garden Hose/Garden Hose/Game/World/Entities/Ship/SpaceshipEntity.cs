@@ -3,6 +3,7 @@ using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine;
 using GardenHoseEngine.IO;
+using System;
 
 namespace GardenHose.Game.World.Entities.Ship;
 
@@ -22,10 +23,22 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     }
 
     internal abstract ISpaceshipSystem ShipSystem { get; set; }
+    internal virtual float Oxygen
+    {
+        get => _oxygen;
+        set
+        {
+            _oxygen = Math.Clamp(value, MIN_OXYGEN, MAX_OXYGEN);
+        }
+    }
+
+    internal const float MIN_OXYGEN = 0f;
+    internal const float MAX_OXYGEN = 1f;
 
 
     // Private fields.
     private SpaceshipPilot _pilot = SpaceshipPilot.None;
+    private float _oxygen = MAX_OXYGEN;
 
 
     // Constructors.

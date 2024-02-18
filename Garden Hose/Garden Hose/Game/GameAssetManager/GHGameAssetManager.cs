@@ -49,7 +49,7 @@ internal class GHGameAssetManager
         /* Planet. */
         _animations.Add(GHGameAnimationName.Planet_Atmosphere_Default, new(0f, Origin.Center, "game/planets/atmosphere/default"));
 
-        _animations.Add(GHGameAnimationName.Planet_GasSurface_1,  new(
+        _animations.Add(GHGameAnimationName.Planet_GasSurface_1, new(
             0f, Origin.Center, "game/planets/layers/gassurface1"));
 
         _animations.Add(GHGameAnimationName.Planet_GasOverlay_1, new(
@@ -77,13 +77,13 @@ internal class GHGameAssetManager
             0f, Origin.Center, "game/planets/layers/clouds4"));
 
         _animations.Add(GHGameAnimationName.Planet_Clouds_5, new(
-            0f, Origin.Center, "game/planets/layers/clouds5"));  
+            0f, Origin.Center, "game/planets/layers/clouds5"));
 
 
         /* Particles. */
         _animations.Add(GHGameAnimationName.Particle_Test, new(
-            4f, Origin.Center, "game/particles/test/0", "game/particles/test/1", "game/particles/test/2", 
-            "game/particles/test/3","game/particles/test/4", "game/particles/test/5", "game/particles/test/6", 
+            4f, Origin.Center, "game/particles/test/0", "game/particles/test/1", "game/particles/test/2",
+            "game/particles/test/3", "game/particles/test/4", "game/particles/test/5", "game/particles/test/6",
             "game/particles/test/7", "game/particles/test/8", "game/particles/test/9"));
 
         _animations.Add(GHGameAnimationName.Particle_Fuel1, new(0f, Origin.Center, "game/particles/fuel/1"));
@@ -117,7 +117,7 @@ internal class GHGameAssetManager
         _animations.Add(GHGameAnimationName.Ship_Probe_MainThruster, new(
             0f, Origin.Center, "game/ships/probe/main_thruster"));
 
-        _animations.Add(GHGameAnimationName.Ship_Probe_SideThruster,new (
+        _animations.Add(GHGameAnimationName.Ship_Probe_SideThruster, new(
             0f, Origin.Center, "game/ships/probe/side_thruster"));
 
         _animations.Add(GHGameAnimationName.Ship_Probe_RollPanel, new(
@@ -135,7 +135,50 @@ internal class GHGameAssetManager
         _animations.Add(GHGameAnimationName.Ship_Probe_RollIndicatorShadow, new(
            0f, Origin.TopRight, "game/ships/probe/roll_indicator_shadow"));
 
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorPanel, new(
+           0f, Origin.Center, "game/ships/probe/error_panel"));
 
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorGlass, new(
+           0f, Origin.Center, "game/ships/probe/error_panel_glass"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorLT, new(
+           0f, Origin.Center, "game/ships/probe/error_indicator_lt"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorMT, new(
+           0f, Origin.Center, "game/ships/probe/error_indicator_mt"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorRT, new(
+           0f, Origin.Center, "game/ships/probe/error_indicator_rt"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorOxygen, new(
+           0f, Origin.Center, "game/ships/probe/error_indicator_oxygen"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorFuel, new(
+           0f, Origin.Center, "game/ships/probe/error_indicator_fuel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorLeak, new(
+          0f, Origin.Center, "game/ships/probe/error_indicator_leak"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ErrorSpin, new(
+          0f, Origin.Center, "game/ships/probe/error_indicator_spin"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_Meter, new(
+          0f, Origin.Center, "game/ships/probe/meter"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_MeterIndicator, new(
+          0f, Origin.CenterRight, "game/ships/probe/meter_indicator"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_MeterMarkingA, new(
+          0f, Origin.Center, "game/ships/probe/meter_marking_a"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_MeterMarkingS, new(
+          0f, Origin.Center, "game/ships/probe/meter_marking_s"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_MeterDigitsA, new(
+          0f, Origin.Center, "game/ships/probe/meter_digits_altitude"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_MeterDigitsS, new(
+          0f, Origin.Center, "game/ships/probe/meter_digits_speed"));
     }
 
     private void CreateSoundEntries() { }

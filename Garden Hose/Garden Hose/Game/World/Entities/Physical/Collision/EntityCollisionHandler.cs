@@ -290,6 +290,11 @@ internal class EntityCollisionHandler
         do
         {
             Entity.Position += PushOutDirection * STEP_DISTANCE;
+
+            if (StepsTaken >= 10)
+            {
+
+            }
             StepsTaken++;
         }
         while ((TestBoundAgainstBound(collisionCase.SelfBound, collisionCase.TargetBound, collisionCase.SelfPart.Position,
@@ -495,8 +500,19 @@ internal class EntityCollisionHandler
         Circle SecondaryCircle = new(ball2.Radius, Ball2FinalPosition);
 
         Vector2[] CollisionPoints = Circle.GetIntersections(PrimaryCircle, SecondaryCircle);
+        List<Vector2> FoundCollisionPoints = new(2);
+
+        foreach (Vector2 Point in CollisionPoints)
+        {
+            if (Vector2.Distance(Point, Ball1FinalPosition) <= ball1.Radius 
+                && Vector2.Distance(Point, Ball2FinalPosition) <= ball2.Radius)
+            {
+                FoundCollisionPoints.Add(Point);
+            }
+        }
+
         Vector2 CollisionNormal = GHMath.NormalizeOrDefault(Ball1FinalPosition - Ball2FinalPosition);
-        return (CollisionPoints, CollisionNormal, -CollisionNormal);
+        return (FoundCollisionPoints.ToArray(), CollisionNormal, -CollisionNormal);
     }
 
 
@@ -514,6 +530,7 @@ internal class EntityCollisionHandler
         if (!collisionArgs.Case.SelfEntity.IsInvulnerable)
         {
             DamagePart(collisionArgs);
+            collisionArgs.Case.SelfEntity.OnCollision(collisionArgs);
             collisionArgs.Case.SelfPart.OnCollision(collisionArgs);
         }
     }

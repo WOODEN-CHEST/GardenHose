@@ -7,11 +7,11 @@ namespace GardenHose.Game.World.Entities.Probe;
 internal class ProbeRollPanel
 {
     // Internal static fields.
-    internal static readonly Vector2 PANEL_SIZE = new(150f, 150f);
-    internal static readonly Vector2 GLASS_SIZE = PANEL_SIZE * 0.905f;
-    internal static readonly Vector2 DISPLAY_SIZE = GLASS_SIZE;
-    internal static readonly Vector2 INDICATOR_SIZE = new(40f, 24.96f);
-    internal static readonly Vector2 INDICATOR_SHADOW_SIZE = INDICATOR_SIZE * 1.15f;
+    internal static Vector2 PANEL_SIZE { get; } = new(150f, 150f);
+    internal static Vector2 GLASS_SIZE { get; } = PANEL_SIZE * 0.905f;
+    internal static Vector2 DISPLAY_SIZE { get; } = GLASS_SIZE;
+    internal static Vector2 INDICATOR_SIZE { get; } = new(40f, 24.96f);
+    internal static Vector2 INDICATOR_SHADOW_SIZE { get; } = INDICATOR_SIZE * 1.15f;
 
 
     // Internal fields.
@@ -70,6 +70,6 @@ internal class ProbeRollPanel
         _indicatorShadow.Draw(info);
         _indicator.Draw(info);
         _panel.Draw(info);
-        //_glass.Draw(info);
+        _glass.Draw(info);
     }
 }

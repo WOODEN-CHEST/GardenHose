@@ -18,8 +18,8 @@ internal class ThrusterPart : PhysicalEntityPart
     {
         LifetimeMin = 6f,
         LifetimeMax = 12f,
-        SizeMin = new(7f),
-        SizeMax = new(14f),
+        SizeMin = new(4f),
+        SizeMax = new(8f),
         ScaleChangePerSecondMin = 0f,
         ScaleChangePerSecondMax = 0.05f,
         CollisionRadius = 9f,
@@ -57,6 +57,8 @@ internal class ThrusterPart : PhysicalEntityPart
     internal float ThrusterThrottleChangeSpeed { get; set; }
     internal float ThrusterPower { get; set; }
     internal float ForceDirection { get; set; } = 0f;
+    internal override float Mass => base.Mass + Fuel * FUEL_MASS;
+    internal const float FUEL_MASS = 0.000_01f;
 
 
     /* Fuel. */
@@ -99,7 +101,8 @@ internal class ThrusterPart : PhysicalEntityPart
     private readonly List<FuelLeakLocation> _fuelLeakLocations = new();
 
     private const float DEFALT_FUEL = 20_000_000f;
-    private const float FUEL_LOSS_PER_LEAK = 500_000f;
+    internal const float TIME_PER_LEAK = 0.2f;
+    private const float FUEL_LOSS_PER_LEAK = 1_000_000 * TIME_PER_LEAK;
 
 
     // Constructors.
@@ -142,7 +145,7 @@ internal class ThrusterPart : PhysicalEntityPart
             Vector2 ForceDirectionVector = Vector2.TransformNormal(-Vector2.UnitY, Matrix.CreateRotationZ(CombinedRotation + ForceDirection));
             Entity!.ApplyForce(ForceDirectionVector * CurrentThrusterThrottle * ThrusterPower * time.WorldTime.PassedTimeSeconds, Position);
 
-            if (!IsFuelUsed)
+            if (IsFuelUsed)
             {
                 Fuel -= CurrentThrusterThrottle * ThrusterPower * FuelUsageRate * time.WorldTime.PassedTimeSeconds;
             }
@@ -166,12 +169,12 @@ internal class ThrusterPart : PhysicalEntityPart
         foreach (FuelLeakLocation LeakLocation in _fuelLeakLocations)
         {
             LeakLocation.TimeSinceLastLeak += time.WorldTime.PassedTimeSeconds;
-            if (LeakLocation.TimeSinceLastLeak >= FuelLeakLocation.TIME_PER_LEAK)
+            if (LeakLocation.TimeSinceLastLeak >= TIME_PER_LEAK)
             {
                 Fuel -= FUEL_LOSS_PER_LEAK;
                 LeakLocation.TimeSinceLastLeak = 0f;
                 ParticleEntity.CreateParticles(Entity!.World!, FuelLeakParticle, new Range(1, 1), 
-                    LeakLocation.GetLocation(this), Entity.Motion - GHMath.NormalizeOrDefault(Entity.Motion) * 15f, 0.2f,
+                    LeakLocation.GetLocation(this), Entity.Motion - GHMath.NormalizeOrDefault(Entity.Motion) * 3f, 0.2f,
                     MathHelper.PiOver4, Entity);
             }
         }
