@@ -21,7 +21,7 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         }
     }
 
-    internal abstract ISpaceshipSystem ShipSystem { get; init; }
+    internal abstract ISpaceshipSystem ShipSystem { get; set; }
 
 
     // Private fields.
@@ -73,5 +73,15 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     {
         base.Load(assetManager);
         ShipSystem.Load(assetManager);
+    }
+
+    internal override Entity CloneDataToObject(Entity newEntity)
+    {
+        base.CloneDataToObject(newEntity);
+
+        SpaceshipEntity Spaceship = (SpaceshipEntity)newEntity;
+        Spaceship._pilot = Pilot;
+
+        return newEntity;
     }
 }

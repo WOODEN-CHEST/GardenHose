@@ -8,17 +8,18 @@ using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Physical;
 
-internal class CommonEntityMath
+internal sealed class CommonEntityMath
 {
     // Internal static fields.
     internal static readonly Vector2 DEFAULT_NONZERO_VECTOR = -Vector2.UnitY;
 
     // Internal fields.
     internal PhysicalEntity Entity { get; private init; }
+    internal bool IsCalculated { get; set; } = true;
 
     internal Vector2 DirPlanetToEntity { get; private set; } = DEFAULT_NONZERO_VECTOR;
     internal Vector2 DirPlanetToEntityNormal { get; private set; } = DEFAULT_NONZERO_VECTOR;
-    internal Vector2 DirPlanetToEntityNormalNeg { get; private set; } = DEFAULT_NONZERO_VECTOR;
+    internal Vector2 DirEntityToPlanetNormal { get; private set; } = DEFAULT_NONZERO_VECTOR;
     internal float DistanceToPlanet { get; private set; } = 0f;
     internal float PlanetRelativeXSpeed { get; private set; } = 0f;
     internal float PlanetRelativeYSpeed { get; private set; } = 0f;
@@ -40,17 +41,17 @@ internal class CommonEntityMath
     // Internal methods.
     internal void Calculate()
     {
+        if (!IsCalculated)
+        {
+            return;
+        }
+
         if (Entity.World!.Planet != null)
         {
-            DirPlanetToEntity = Entity.Position - Entity.World.Planet.Position;
-            if (DirPlanetToEntity.X + DirPlanetToEntity.Y is 0f or -0f)
-            {
-                DirPlanetToEntity = DEFAULT_NONZERO_VECTOR;
-            }
-            DirPlanetToEntity.Normalize();
+            DirPlanetToEntity = GHMath.NormalizeOrDefault(Entity.Position - Entity.World.Planet.Position);
 
             DirPlanetToEntityNormal = GHMath.PerpVectorClockwise(DirPlanetToEntity);
-            DirPlanetToEntityNormalNeg = -DirPlanetToEntityNormal;
+            DirEntityToPlanetNormal = -DirPlanetToEntityNormal;
 
             DistanceToPlanet = Vector2.Distance(Entity.Position, Entity.World.Planet.Position);
 
@@ -77,7 +78,7 @@ internal class CommonEntityMath
     {
         math.DirPlanetToEntity = DirPlanetToEntity;
         math.DirPlanetToEntityNormal = DirPlanetToEntityNormal;
-        math.DirPlanetToEntityNormalNeg = DirPlanetToEntityNormalNeg;
+        math.DirEntityToPlanetNormal = DirEntityToPlanetNormal;
         math.DistanceToPlanet = DistanceToPlanet;
         math.PlanetRelativeXSpeed = PlanetRelativeXSpeed;
         math.PlanetRelativeYSpeed = PlanetRelativeYSpeed;
@@ -85,6 +86,7 @@ internal class CommonEntityMath
         math.AltitudeOneSecInFuture = AltitudeOneSecInFuture;
         math.Roll = Roll;
         math.RollOneSecInFuture = RollOneSecInFuture;
+        math.IsCalculated = IsCalculated;
 
         return math;
     }

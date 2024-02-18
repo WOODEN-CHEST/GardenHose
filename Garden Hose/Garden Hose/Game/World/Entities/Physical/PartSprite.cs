@@ -10,7 +10,7 @@ using System;
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal class PartSprite : ICloneable
+internal class PartSprite
 {
     // Internal fields.
     internal GHGameAnimationName UndamagedName { get; private init; }
@@ -133,10 +133,10 @@ internal class PartSprite : ICloneable
 
     internal PartSprite CreateClone()
     {
-        return CopyDataToObject(new PartSprite(UndamagedName, SlightlyDamagedName, DamagedName, HeavilyDamagedName));
+        return CloneDataToObject(new PartSprite(UndamagedName, SlightlyDamagedName, DamagedName, HeavilyDamagedName));
     }
 
-    internal PartSprite CopyDataToObject(PartSprite sprite)
+    internal PartSprite CloneDataToObject(PartSprite sprite)
     {
         sprite.Offset = Offset;
         sprite.Rotation = Rotation;
@@ -214,12 +214,5 @@ internal class PartSprite : ICloneable
             _damagedSprite.Effects = _effects;
             _heavilyDamagedSprite.Effects = _effects;
         }
-    }
-
-
-    // Inherited methods.
-    public object Clone()
-    {
-        
     }
 }

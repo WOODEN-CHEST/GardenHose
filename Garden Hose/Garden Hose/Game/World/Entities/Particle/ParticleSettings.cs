@@ -1,6 +1,7 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine;
+using GardenHoseEngine.Collections;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -28,14 +29,14 @@ internal class ParticleSettings
     internal float FadeInTime { get; init;} = 0f;
     internal FloatColor ColorMaskMin { get; init; } = FloatColor.White;
     internal FloatColor ColorMaskMax { get; init; } = FloatColor.White;
-    internal GHGameAnimationName AnimationName { get; init; }
+    internal RandomSequence<GHGameAnimationName> AnimationNames { get; init; }
 
     
     // Constructors.
-    internal ParticleSettings(WorldMaterial material, GHGameAnimationName animationName)
+    internal ParticleSettings(WorldMaterial material, params GHGameAnimationName[] animationNames)
     {
         Material = material ?? throw new ArgumentNullException(nameof(material));
-        AnimationName = animationName;
+        AnimationNames = new RandomSequence<GHGameAnimationName>(animationNames);
     }
 
 

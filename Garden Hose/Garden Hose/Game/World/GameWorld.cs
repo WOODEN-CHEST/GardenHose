@@ -4,15 +4,12 @@ using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Planet;
 using GardenHose.Game.World.Material;
 using GardenHose.Game.World.Player;
-using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 // Import everything.
 
 namespace GardenHose.Game.World;
@@ -55,8 +52,7 @@ public class GameWorld : IIDProvider
 
     // Private fields
     /* Drawing Layers. */
-    private readonly ILayer _bottomLayer;
-    private readonly ILayer _topLayer;
+    private readonly ILayer _itemLayer;
 
     /* Entities. */
     private ulong _availableID = 1;
@@ -73,18 +69,15 @@ public class GameWorld : IIDProvider
     private const int WORLD_PART_SIZE = 128; // 2^7.
     private const int WORLD_PART_COUNT = 32;
     private readonly List<PhysicalEntity>[,] _worldParts = new List<PhysicalEntity>[WORLD_PART_COUNT, WORLD_PART_COUNT];
-    private readonly ConcurrentQueue<List<PhysicalEntity>> _worldPartTests;
-    private int _completedTests;
     
 
 
     // Constructors.
-    internal GameWorld(GHGame game, ILayer bottomLayer, ILayer topLayer, GameWorldSettings settings)
+    internal GameWorld(GHGame game, ILayer itemLayer, GameWorldSettings settings)
     {
         Game = game ?? throw new ArgumentNullException(nameof(game));
 
-        _bottomLayer = bottomLayer ?? throw new ArgumentNullException(nameof(bottomLayer));
-        _topLayer = topLayer ?? throw new ArgumentNullException(nameof(topLayer));
+        _itemLayer = itemLayer ?? throw new ArgumentNullException(nameof(itemLayer));
 
         for (int i = 0; i < WORLD_PART_COUNT; i++)
         {
@@ -150,22 +143,9 @@ public class GameWorld : IIDProvider
         }
 
         // Add entity to drawing layer.
-        PhysicalEntity? DrawableEntity = entity as PhysicalEntity;
-        if (DrawableEntity != null)
+        if (entity is PhysicalEntity DrawableEntity)
         {
-            if (DrawableEntity.DrawLayer == DrawLayer.Top)
-            {
-                _topLayer.AddDrawableItem(DrawableEntity);
-            }
-            else if (DrawableEntity.DrawLayer == DrawLayer.Bottom)
-            {
-                _bottomLayer.AddDrawableItem(DrawableEntity);
-            }
-            else
-            {
-                throw new EnumValueException(nameof(DrawableEntity.DrawLayer), nameof(DrawLayer),
-                    DrawableEntity.DrawLayer.ToString(), (int)DrawableEntity.DrawLayer);
-            }
+            _itemLayer.AddDrawableItem(DrawableEntity, DrawableEntity.ZIndex);
         }
 
         // Load entity's assets.
@@ -342,8 +322,7 @@ public class GameWorld : IIDProvider
             }
 
             PhysicalEntity PhysicalWorldEntity = (PhysicalEntity)WorldEntity;
-            _topLayer.RemoveDrawableItem(PhysicalWorldEntity);
-            _bottomLayer.RemoveDrawableItem(PhysicalWorldEntity);
+            _itemLayer.RemoveDrawableItem(PhysicalWorldEntity);
         }
         _entitiesRemoved.Clear();
     }

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GardenHose.Game.GameAssetManager;
+﻿namespace GardenHose.Game.GameAssetManager;
 
 internal enum GHGameAnimationName
 {
+    Special_SinglePixel,
+
     Planet_Atmosphere_Default,
     Planet_GasSurface_1,
     Planet_GasOverlay_1,
@@ -22,6 +18,11 @@ internal enum GHGameAnimationName
 
     Particle_Test,
 
+    Particle_Fuel1,
+    Particle_Fuel2,
+    Particle_Fuel3,
+    Particle_Fuel4,
+
     Background_Default,
     Background_Star_Small,
     Background_Star_Medium,
@@ -32,7 +33,9 @@ internal enum GHGameAnimationName
     Ship_Probe_SideThruster,
     Ship_Probe_MainThruster,
     Ship_Probe_RollPanel,
-    Ship_Probe_RollPanelIndicator,
-    Ship_Probe_ThrusterPanel,
-    Ship_Probe_ThrusterPanelButton,
+    Ship_Probe_RollGlass,
+    Ship_Probe_RollDisplay,
+    Ship_Probe_RollIndicator,
+    Ship_Probe_RollIndicatorShadow,
+
 }

@@ -29,6 +29,8 @@
     <None Remove="UI\Buttons\Connector\Slider\**" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Game\World\Entities\Probe\ProbeDashboard.cs" />
+    <Compile Remove="Game\World\Entities\Probe\ProbeThrusterPanel.cs" />
     <Compile Remove="UI\Buttons\Connector\ConnectorToggle.cs" />
     <Compile Remove="UI\Buttons\Connector\DropdownList.cs" />
     <Compile Remove="UI\Buttons\Connector\DropdownListOption.cs" />

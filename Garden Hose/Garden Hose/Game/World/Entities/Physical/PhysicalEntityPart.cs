@@ -29,7 +29,7 @@ internal class PhysicalEntityPart
 
             if (Entity != null && IsMainPart)
             {
-                SetPositionAndRotation(Entity.Position, Entity.Rotation);
+                 SetPositionAndRotation(Entity.Position, Entity.Rotation);
             }
         }
     }
@@ -44,6 +44,7 @@ internal class PhysicalEntityPart
         set
         {
             _selfRotation = value;
+            Entity?.ResetPartInfo();
             SetPositionAndRotation(Position, CombinedRotation - SelfRotation); // Forces sub-parts to update.
         }
     }
@@ -100,7 +101,7 @@ internal class PhysicalEntityPart
     internal virtual PartLink? ParentLink { get; private set; }
 
     /* Material. */
-    internal virtual WorldMaterialInstance MaterialInstance { get; set; }
+    internal virtual WorldMaterialInstance MaterialInstance { get; private init; }
 
     /* Drawing. */
     internal PartSprite[] Sprites => _sprites.ToArray();
@@ -140,6 +141,11 @@ internal class PhysicalEntityPart
         MaterialInstance = material;
     }
 
+    protected PhysicalEntityPart(WorldMaterialInstance materialInstance)
+    {
+        MaterialInstance = materialInstance;
+    }
+
 
     // Internal methods.
     internal virtual void Load(GHGameAssetManager assetManager)
@@ -153,9 +159,13 @@ internal class PhysicalEntityPart
         }
     }
 
+    internal virtual void OnCollision(CollisionEventArgs args) { }
+
+
+    /* Cloning. */
     internal virtual PhysicalEntityPart CreateClone(PhysicalEntity? parentEntity)
     {
-        return CloneDataToObject(new PhysicalEntityPart(Array.Empty<ICollisionBound>(), MaterialInstance.Material, parentEntity), parentEntity);
+        return CloneDataToObject(new PhysicalEntityPart(MaterialInstance.CreateClone()), parentEntity);
     }
 
     internal virtual PhysicalEntityPart CloneDataToObject(PhysicalEntityPart part, PhysicalEntity? parentEntity)
@@ -165,7 +175,6 @@ internal class PhysicalEntityPart
         part.Position = Position;
 
         part.CollisionBounds = CollisionBounds.ToArray();
-        part.MaterialInstance = MaterialInstance.CreateClone();
         part.CollisionBoundChange = CollisionBoundChange;
         part.SubPartChange = SubPartChange;
 
@@ -178,7 +187,7 @@ internal class PhysicalEntityPart
 
         foreach (PartSprite Sprite in Sprites)
         {
-            part.AddSprite((PartSprite)Sprite.Clone());
+            part.AddSprite(Sprite.CreateClone());
         }
 
         return part;
@@ -276,7 +285,10 @@ internal class PhysicalEntityPart
     [TickedFunction(false)]
     internal virtual void Tick(GHGameTime time)
     {
-        SelfRotation += AngularMotion * time.WorldTime.PassedTimeSeconds;
+        if (SelfRotation != 0f)
+        {
+            SelfRotation += AngularMotion * time.WorldTime.PassedTimeSeconds;
+        }
 
         foreach (PartLink Link in SubPartLinks)
         {
@@ -342,10 +354,11 @@ internal class PhysicalEntityPart
         _sprites.Remove(sprite);
     }
 
+
     // Protected methods.
     /* Physics. */
     [TickedFunction(false)]
-    protected void AttractEntities(GHGameTime time)
+    protected virtual void AttractEntities(GHGameTime time)
     {
         foreach (Entity WorldEntity in Entity!.World!.Entities)
         {

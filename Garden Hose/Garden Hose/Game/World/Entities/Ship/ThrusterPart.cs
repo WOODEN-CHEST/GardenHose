@@ -1,13 +1,37 @@
-﻿using GardenHose.Game.World.Entities.Physical;
+﻿using GardenHose.Game.GameAssetManager;
+using GardenHose.Game.World.Entities.Particle;
+using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Material;
+using GardenHoseEngine;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace GardenHose.Game.World.Entities.Ship;
 
 internal class ThrusterPart : PhysicalEntityPart
 {
+    // Internal static fields.
+    internal static ParticleSettings FuelLeakParticle { get; } = new(WorldMaterial.Test, GHGameAnimationName.Particle_Fuel1,
+        GHGameAnimationName.Particle_Fuel2, GHGameAnimationName.Particle_Fuel3, GHGameAnimationName.Particle_Fuel4)
+    {
+        LifetimeMin = 6f,
+        LifetimeMax = 12f,
+        SizeMin = new(7f),
+        SizeMax = new(14f),
+        ScaleChangePerSecondMin = 0f,
+        ScaleChangePerSecondMax = 0.05f,
+        CollisionRadius = 9f,
+        RotationMin = -MathF.PI,
+        RotationMax = MathF.PI,
+        AngularMotionMin = -MathF.PI * 0.25f,
+        AngularMotionMax = MathF.PI * 0.25f,
+        FadeInTime = 0.1f,
+        FadeOutTime = 3f
+    };
+
+
     // Internal fields.
     /* Thrusters. */
     internal bool IsThrusterOn { get; set; } = true;
@@ -30,8 +54,8 @@ internal class ThrusterPart : PhysicalEntityPart
         }
     }
 
-    internal float ThrusterThrottleChangeSpeed { get; private set; }
-    internal float ThrusterPower { get; private set; }
+    internal float ThrusterThrottleChangeSpeed { get; set; }
+    internal float ThrusterPower { get; set; }
     internal float ForceDirection { get; set; } = 0f;
 
 
@@ -55,10 +79,11 @@ internal class ThrusterPart : PhysicalEntityPart
         }
     }
 
-    internal float FuleUsageRate { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
+    internal float FuelUsageRate { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
     internal bool IsFuelUsed { get; set; } = true;
-    internal float PotentialFuelTime => MaxFuel / (FuleUsageRate * ThrusterPower);
-    internal float EstimatedFuelTimeLeft => Fuel / (FuleUsageRate * ThrusterPower);
+    internal float PotentialFuelTime => MaxFuel / (FuelUsageRate * ThrusterPower);
+    internal float EstimatedFuelTimeLeft => Fuel / (FuelUsageRate * ThrusterPower);
+    internal bool IsLeaking => _fuelLeakLocations.Count > 0;
 
 
     /* Events. */
@@ -71,7 +96,10 @@ internal class ThrusterPart : PhysicalEntityPart
     private float _fuel = DEFALT_FUEL;
     private float _maxFuel = DEFALT_FUEL;
 
+    private readonly List<FuelLeakLocation> _fuelLeakLocations = new();
+
     private const float DEFALT_FUEL = 20_000_000f;
+    private const float FUEL_LOSS_PER_LEAK = 500_000f;
 
 
     // Constructors.
@@ -116,7 +144,7 @@ internal class ThrusterPart : PhysicalEntityPart
 
             if (!IsFuelUsed)
             {
-                Fuel -= CurrentThrusterThrottle * ThrusterPower * FuleUsageRate * time.WorldTime.PassedTimeSeconds;
+                Fuel -= CurrentThrusterThrottle * ThrusterPower * FuelUsageRate * time.WorldTime.PassedTimeSeconds;
             }
         }
     }
@@ -128,13 +156,32 @@ internal class ThrusterPart : PhysicalEntityPart
     {
         base.Tick(time);
         ThrusterTick(time);
+
+
+        if (Fuel <= 0f)
+        {
+            return;
+        }
+
+        foreach (FuelLeakLocation LeakLocation in _fuelLeakLocations)
+        {
+            LeakLocation.TimeSinceLastLeak += time.WorldTime.PassedTimeSeconds;
+            if (LeakLocation.TimeSinceLastLeak >= FuelLeakLocation.TIME_PER_LEAK)
+            {
+                Fuel -= FUEL_LOSS_PER_LEAK;
+                LeakLocation.TimeSinceLastLeak = 0f;
+                ParticleEntity.CreateParticles(Entity!.World!, FuelLeakParticle, new Range(1, 1), 
+                    LeakLocation.GetLocation(this), Entity.Motion - GHMath.NormalizeOrDefault(Entity.Motion) * 15f, 0.2f,
+                    MathHelper.PiOver4, Entity);
+            }
+        }
     }
 
-    protected override object CopyInfoToNewObject(PhysicalEntityPart newPart)
+    internal override PhysicalEntityPart CloneDataToObject(PhysicalEntityPart part, PhysicalEntity? parentEntity)
     {
-        base.CopyInfoToNewObject(newPart);
+        base.CloneDataToObject(part, parentEntity);
 
-        ThrusterPart Thruster = (ThrusterPart)newPart;
+        ThrusterPart Thruster = (ThrusterPart)part;
         Thruster.IsThrusterOn = IsThrusterOn;
         Thruster.TargetThrusterThrottle = TargetThrusterThrottle;
         Thruster.CurrentThrusterThrottle = CurrentThrusterThrottle;
@@ -143,14 +190,29 @@ internal class ThrusterPart : PhysicalEntityPart
         Thruster.ForceDirection = ForceDirection;
         Thruster.Fuel = Fuel;
         Thruster.MaxFuel = MaxFuel;
-        Thruster.FuleUsageRate = FuleUsageRate;
+        Thruster.FuelUsageRate = FuelUsageRate;
         Thruster.IsFuelUsed = IsFuelUsed;
 
-        return newPart;
+        return part;
     }
 
-    public override object Clone()
+    internal override PhysicalEntityPart CreateClone(PhysicalEntity? parentEntity)
     {
-        return CopyInfoToNewObject(new ThrusterPart(MaterialInstance.Material, Entity));
+        return CloneDataToObject(new ThrusterPart(MaterialInstance.Material, parentEntity), parentEntity);
+    }
+
+    internal override void OnCollision(CollisionEventArgs args)
+    {
+        base.OnCollision(args);
+
+        if (args.ForceApplied < args.Case.SelfPart.MaterialInstance.Material.Resistance)
+        {
+            return;
+        } 
+
+        if (Random.Shared.NextSingle() <= (args.ForceApplied / args.Case.SelfPart.MaterialInstance.Material.Strength))
+        {
+            _fuelLeakLocations.Add(new(this, args.Case.AverageCollisionPoint));
+        }
     }
 }

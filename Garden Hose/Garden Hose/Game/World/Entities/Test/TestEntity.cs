@@ -19,12 +19,17 @@ internal class TestEntity : PhysicalEntity
     }
 
 
-    // Private fields
-
     // Constructors
     public TestEntity() : base(EntityType.Test)
     {
         MainPart = new PhysicalEntityPart(new ICollisionBound[] { new RectangleCollisionBound(new Vector2(10f)) }, WorldMaterial.Test, this);
-        IsCommonMathCalculated = false;
+        CommonMath.IsCalculated = false;
+    }
+
+
+    // Inherited methods.
+    internal override Entity CreateClone()
+    {
+        return CloneDataToObject(new TestEntity());
     }
 }

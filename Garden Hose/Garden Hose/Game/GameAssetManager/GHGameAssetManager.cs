@@ -86,6 +86,11 @@ internal class GHGameAssetManager
             "game/particles/test/3","game/particles/test/4", "game/particles/test/5", "game/particles/test/6", 
             "game/particles/test/7", "game/particles/test/8", "game/particles/test/9"));
 
+        _animations.Add(GHGameAnimationName.Particle_Fuel1, new(0f, Origin.Center, "game/particles/fuel/1"));
+        _animations.Add(GHGameAnimationName.Particle_Fuel2, new(0f, Origin.Center, "game/particles/fuel/2"));
+        _animations.Add(GHGameAnimationName.Particle_Fuel3, new(0f, Origin.Center, "game/particles/fuel/3"));
+        _animations.Add(GHGameAnimationName.Particle_Fuel4, new(0f, Origin.Center, "game/particles/fuel/4"));
+
 
         /* Background. */
         _animations.Add(GHGameAnimationName.Background_Default, new(
@@ -118,15 +123,19 @@ internal class GHGameAssetManager
         _animations.Add(GHGameAnimationName.Ship_Probe_RollPanel, new(
             0f, Origin.Center, "game/ships/probe/roll_panel"));
 
-        _animations.Add(GHGameAnimationName.Ship_Probe_RollPanelIndicator, new(
-           0f, Origin.Center, "game/ships/probe/roll_panel_indicator"));
+        _animations.Add(GHGameAnimationName.Ship_Probe_RollGlass, new(
+           0f, Origin.Center, "game/ships/probe/roll_glass"));
 
-        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanel, new(
-           0f, Origin.Center, "game/ships/probe/thruster_panel"));
+        _animations.Add(GHGameAnimationName.Ship_Probe_RollDisplay, new(
+           0f, Origin.Center, "game/ships/probe/roll_display"));
 
-        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelButton, new(
-           0f, Origin.Center, "game/ships/probe/thruster_panel_button_m",
-           "game/ships/probe/thruster_panel_button_s", "game/ships/probe/thruster_panel_button_f"));
+        _animations.Add(GHGameAnimationName.Ship_Probe_RollIndicator, new(
+           0f, Origin.Center, "game/ships/probe/roll_indicator"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_RollIndicatorShadow, new(
+           0f, Origin.TopRight, "game/ships/probe/roll_indicator_shadow"));
+
+
     }
 
     private void CreateSoundEntries() { }

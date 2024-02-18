@@ -58,11 +58,8 @@ internal class ProbeDashboard
 
     internal void Draw(IDrawInfo info)
     {
-        float Roll = _system.RollRelativeToGround;
-        _rollPanel.Rotation = Roll;
         _rollPanel.Draw(info);
         _rollPanelIndicator.Draw(info);
-        _rollPanelText.Text = MathHelper.ToDegrees(Roll).ToString("0") + " deg";
         _rollPanelText.Draw(info);
     }
 }

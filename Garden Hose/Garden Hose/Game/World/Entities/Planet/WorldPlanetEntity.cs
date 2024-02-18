@@ -26,6 +26,8 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         new PartSprite(GHGameAnimationName.Planet_Atmosphere_Default) { ColorMask = new Color(161, 155, 130), Opacity = 0.6f });
 
 
+    internal const float DEFAULT_RESOURCES_PER_PLANET = 1000f;
+
     // Fields.
     internal float Radius
     {
@@ -51,10 +53,18 @@ internal partial class WorldPlanetEntity : PhysicalEntity
     internal override float Mass => 5.972e24f;
 
 
+
+
+
     /* Buildings. */
     internal float TotalResources { get; }
     internal float TotalPlanetTokens { get; }
+    internal float ResourcesPerPlanetToken { get; set; } = DEFAULT_RESOURCES_PER_PLANET;
     internal float TotalShipTokens { get; }
+    internal float SavedResources { get; }
+    internal float PartOfResourcesToSave { get; set; } = 0.1f;
+    internal float PartOfResourcesForPlanet { get; set; } = 0.5f;
+    internal float PartOfResourcesForShip => 1.0f - PartOfResourcesForPlanet;
     internal float Population { get; }
 
 
@@ -65,7 +75,7 @@ internal partial class WorldPlanetEntity : PhysicalEntity
 
 
     // Constructors.
-    public WorldPlanetEntity(float radius,
+    internal WorldPlanetEntity(float radius,
         WorldMaterial material,
         PartSprite[] sprites,
         PartSprite? atmosphere) 
@@ -74,7 +84,6 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         CollisionHandler = new PlanetCollisionHandler(this);
 
         Radius = radius;
-        DrawLayer = DrawLayer.Bottom;
         MainPart = new PhysicalEntityPart(new ICollisionBound[] { new BallCollisionBound(Radius) }, material, this);
 
         if (sprites == null)
@@ -99,6 +108,8 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         IsForceApplicable = false;
         IsPositionLocked = true;
         IsRotationLocked = true;
+
+        ZIndex = ZINDEX_PLANET;
     }
 
 
@@ -174,5 +185,10 @@ internal partial class WorldPlanetEntity : PhysicalEntity
         {
             Sprite.Size = new(Radius * 2f);
         }
+    }
+
+    internal override Entity CreateClone()
+    {
+        throw new NotImplementedException();
     }
 }

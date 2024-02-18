@@ -15,6 +15,11 @@ internal class BuildingPlaceholderEntity : PhysicalEntity
         IsTicked = false;
     }
 
+    internal override Entity CreateClone()
+    {
+        throw new NotSupportedException("Copying of placeholder entities is not supported and should never happen.");
+    }
+
 
     // Inherited methods.
     internal override void Tick(GHGameTime time)

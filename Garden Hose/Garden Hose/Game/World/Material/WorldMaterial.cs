@@ -56,6 +56,22 @@ internal class WorldMaterial
         Attraction = 0f
     };
 
+    internal static WorldMaterial Fuel { get; } = new()
+    {
+        Density = 0.02f,
+        Strength = 200_000f,
+        Resistance = 50f,
+        HeatCapacity = 800f,
+        HeatTransferRate = 12f,
+        MeltingPoint = 216f,
+        BoilingPoint = 341f,
+        Friction = 0.4f,
+        Bounciness = 0.15f,
+        Magnetism = 0f,
+        Conductivity = 0f,
+        Attraction = 0f
+    };
+
 
     // Fields.
     /* Properties. */
@@ -109,7 +125,10 @@ internal class WorldMaterial
 
         if (DamageParticles != null)
         {
-            assetManager.GetAnimation(DamageParticles.AnimationName);
+            foreach (GHGameAnimationName AnimName in DamageParticles.AnimationNames.Items)
+            {
+                assetManager.GetAnimation(AnimName);
+            }
         }
     }
 

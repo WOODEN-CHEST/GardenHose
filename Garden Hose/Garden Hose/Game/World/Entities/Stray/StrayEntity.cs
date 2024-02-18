@@ -31,12 +31,24 @@ internal class StrayEntity : PhysicalEntity
         Motion = MotionAtPartPoint;
         Position = PartPosition;
         Rotation = OriginalPartEntity.AngularMotion;
+
+        ZIndex = ZINDEX_STRAY;
     }
+
+    private StrayEntity() : base(EntityType.Stray) { }
 
 
     // Static methods.
     internal static StrayEntity MovePartToStrayEntity(PhysicalEntityPart partToStray)
     {
         return new(partToStray);
+    }
+
+
+
+    // Inherited methods.
+    internal override Entity CreateClone()
+    {
+        return CloneDataToObject(new StrayEntity());
     }
 }

@@ -9,8 +9,7 @@ namespace GardenHose.Game;
 internal class GHGame
 {
     // Fields.
-    public ILayer BottomItemLayer { get; private init; } = new Layer("items bottom");
-    public ILayer TopItemLayer { get; private init; } = new Layer("items top");
+    public ILayer ItemLayer { get; private init; } = new Layer("itemss");
     public ILayer UILayer { get; private init; } = new Layer("ui");
     public GameWorld World { get; private set; }
     public InGameFrame ParentFrame { get; private init; }
@@ -38,8 +37,7 @@ internal class GHGame
     internal GHGame(InGameFrame parentFrame, GameWorldSettings worldSettings)
     {
         ParentFrame = parentFrame ?? throw new ArgumentNullException(nameof(parentFrame));
-        ParentFrame.AddLayer(BottomItemLayer);
-        ParentFrame.AddLayer(TopItemLayer);
+        ParentFrame.AddLayer(ItemLayer);
         ParentFrame.AddLayer(UILayer);
 
         AssetManager = new(ParentFrame);
@@ -47,9 +45,9 @@ internal class GHGame
         Background = worldSettings.Background ?? throw new ArgumentNullException(nameof(worldSettings.Background));
         Background.Load(AssetManager);
         Background.CreateBackground();
-        BottomItemLayer.AddDrawableItem(Background);
+        ItemLayer.AddDrawableItem(Background, -1.0f);
 
-        World = new(this, BottomItemLayer, TopItemLayer, worldSettings);
+        World = new(this, ItemLayer, worldSettings);
 
         _debugInfo = new(this, World, GameTime);
         UILayer.AddDrawableItem(_debugInfo);

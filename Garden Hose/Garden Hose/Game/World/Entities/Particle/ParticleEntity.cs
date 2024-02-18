@@ -5,7 +5,7 @@ using System;
 
 namespace GardenHose.Game.World.Entities.Particle;
 
-internal class ParticleEntity : PhysicalEntity
+internal sealed class ParticleEntity : PhysicalEntity
 {
     // Internal fields.
     internal float Lifetime { get; set; }
@@ -21,7 +21,7 @@ internal class ParticleEntity : PhysicalEntity
 
 
     // Constructors.
-    protected ParticleEntity(ParticleSettings settings, Vector2 motion, Vector2 position) 
+    private ParticleEntity(ParticleSettings settings, Vector2 motion, Vector2 position) 
         : base(EntityType.Particle)
     {
         if (settings == null)
@@ -45,10 +45,18 @@ internal class ParticleEntity : PhysicalEntity
         }
 
         IsInvulnerable = true;
-        IsCommonMathCalculated = false;
+        CommonMath.IsCalculated = false;
+        CollisionHandler = new ParticleCollisionHandler(this);
+
+        ZIndex = ZINDEX_PARTICLE;
     }
 
-    private ParticleEntity() : base(EntityType.Particle) { }
+    private ParticleEntity() : base(EntityType.Particle)
+    {
+        CommonMath = new(this);
+        CollisionHandler = new ParticleCollisionHandler(this);
+        CommonMath.IsCalculated = false;
+    }
 
 
     // Internal static methods.
@@ -97,7 +105,7 @@ internal class ParticleEntity : PhysicalEntity
 
         TimeAlive += time.WorldTime.PassedTimeSeconds;
 
-        if (FadeStatus < FADED_IN)
+        if ((FadeStatus < FADED_IN) && (TimeAlive < Lifetime))
         {
             FadeStatus = Math.Clamp(FadeStatus + _fadeInSpeed * time.WorldTime.PassedTimeSeconds, FADED_OUT, FADED_IN);
             return;

@@ -18,9 +18,16 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     public virtual Effect? Shader { get; set; }
 
 
+    // Internal static fields.
+    internal const float ZINDEX_PLANET = 0.1f;
+    internal const float ZINDEX_STRAY = 0.45f;
+    internal const float ZINDEX_DEFAULT_OBJECT = 0.5f;
+    internal const float ZINDEX_PARTICLE = 0.75f;
+
+
     // Internal fields.
     internal sealed override bool IsPhysical => true;
-    internal EntityCollisionHandler CollisionHandler { get; private set; }
+    internal EntityCollisionHandler CollisionHandler { get; init; }
     internal bool IsInvulnerable { get; set; } = false;
 
 
@@ -71,11 +78,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     {
         get
         {
-            if (_cachedMass != null)
-            {
-                return _cachedMass.Value;
-            }
-
             float TotalMass = 0f;
 
             foreach (PhysicalEntityPart Part in Parts)
@@ -83,7 +85,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
                 TotalMass += Part.Mass;
             }
 
-            _cachedMass = TotalMass;
             return TotalMass;
         }
     }
@@ -111,8 +112,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Common math. */
-    internal bool IsCommonMathCalculated { get; set; } = true;
-    internal CommonEntityMath CommonMath { get; private set;  }
+    internal CommonEntityMath CommonMath { get; init; }
 
 
     /* Parts. */
@@ -166,7 +166,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
 
     /* Drawing. */
-    internal virtual DrawLayer DrawLayer { get; private set; } = DrawLayer.Bottom;
+    internal virtual float ZIndex { get; init; } = ZINDEX_DEFAULT_OBJECT;
     internal bool IsDebugInfoDrawn { get; set; } = false;
 
 
@@ -181,7 +181,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     private PhysicalEntityPart _mainpart;
 
     private PhysicalEntityPart[]? _cachedParts = null;
-    private float? _cachedMass = null;
 
     private Vector2 _position;
     private float _rotation;
@@ -261,7 +260,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     internal void ResetPartInfo()
     {
         _cachedParts = null;
-        _cachedMass = null;
         CollisionHandler.CreateBoundingBox();
     }
 
@@ -358,10 +356,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
     [TickedFunction(false)]
     internal override void Tick(GHGameTime time)
     {
-        if (IsCommonMathCalculated)
-        {
-            CommonMath.Calculate();
-        }
+        CommonMath.Calculate();
 
         StepMotion(time);
         CollisionHandler.SpacePartitionEntity();
@@ -384,21 +379,16 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
             DrawCenterOfMass(info);
         }
     }
-
     internal override Entity CloneDataToObject(Entity newEntity)
     {
         base.CloneDataToObject(newEntity);
 
         PhysicalEntity Physical = (PhysicalEntity)newEntity;
 
-        Physical.CollisionHandler = CollisionHandler.CreateClone(Physical);
-
         Physical.IsVisible = IsVisible;
         Physical.Shader = Shader;
-        Physical.DrawLayer = DrawLayer;
 
         Physical.IsInvulnerable = IsInvulnerable;
-        Physical.IsCommonMathCalculated = IsCommonMathCalculated;
         Physical.IsForceApplicable = IsForceApplicable;
         Physical.IsAttractable = IsAttractable;
         Physical.IsPositionLocked = IsPositionLocked;
@@ -408,7 +398,6 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
         Physical._rotation = Rotation;
         Physical._motion = Motion;
         Physical._angularMotion = AngularMotion;
-        Physical.CommonMath = CommonMath.CreateClone(Physical);
 
         Physical._cachedParts = null;
 

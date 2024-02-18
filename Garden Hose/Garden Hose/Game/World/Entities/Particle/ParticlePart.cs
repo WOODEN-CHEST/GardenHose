@@ -1,5 +1,6 @@
 ﻿using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Material;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
@@ -7,17 +8,17 @@ using System;
 namespace GardenHose.Game.World.Entities.Particle;
 
 
-internal class ParticlePart : PhysicalEntityPart
+internal sealed class ParticlePart : PhysicalEntityPart
 {
     // Private fields.
     private readonly ParticleSettings _settings;
 
-    private Vector2 _baseSize;
+    private readonly Vector2 _baseSize;
     private float _scale = 1f;
     private float _scaleChangeSpeed;
     private const float MIN_SCALE = 0f;
 
-    private PartSprite _particleSprite;
+    private readonly PartSprite _particleSprite;
 
 
     // Constructors.
@@ -33,8 +34,17 @@ internal class ParticlePart : PhysicalEntityPart
             CollisionBounds = new ICollisionBound[] { new BallCollisionBound(settings.CollisionRadius) };
         }
 
-        _particleSprite = new PartSprite(settings.AnimationName) { Size = _baseSize };
+        _particleSprite = new PartSprite(settings.AnimationNames.GetItem()) { Size = _baseSize };
         AddSprite(_particleSprite);
+    }
+
+    private ParticlePart(WorldMaterialInstance materialInstance, ParticleSettings settings, Vector2 baseSize, PartSprite sprite)
+        : base(materialInstance)
+    {
+        _settings = settings;
+        _baseSize = baseSize;
+        AddSprite(sprite);
+        _particleSprite = sprite;
     }
 
 
@@ -60,7 +70,6 @@ internal class ParticlePart : PhysicalEntityPart
 
         ParticlePart Particle = (ParticlePart)newPart;
         Particle._scale = _scale;
-        Particle._baseSize = _baseSize;
         Particle._scaleChangeSpeed = _scaleChangeSpeed;
 
         return newPart;
@@ -68,6 +77,7 @@ internal class ParticlePart : PhysicalEntityPart
 
     internal override PhysicalEntityPart CreateClone(PhysicalEntity? entity)
     {
-        return CloneDataToObject(new ParticlePart((ParticleEntity)entity!, _settings), entity);
+        return CloneDataToObject(new ParticlePart(MaterialInstance.CreateClone(),
+            _settings, _baseSize, _particleSprite.CreateClone()), entity);
     }
 }

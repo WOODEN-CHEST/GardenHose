@@ -514,6 +514,7 @@ internal class EntityCollisionHandler
         if (!collisionArgs.Case.SelfEntity.IsInvulnerable)
         {
             DamagePart(collisionArgs);
+            collisionArgs.Case.SelfPart.OnCollision(collisionArgs);
         }
     }
 
@@ -669,19 +670,19 @@ internal class EntityCollisionHandler
 
             foreach (ICollisionBound Bound in Part.CollisionBounds)
             {
-                Points.AddRange(GetCollisionBoundPoints(Bound, Part.Position));
+                Points.AddRange(GetCollisionBoundPoints(Bound, Part.Position, Part.SelfRotation));
             }
         }
 
         return Points;
     }
 
-    private Vector2[] GetCollisionBoundPoints(ICollisionBound bound, Vector2 partPosition)
+    private Vector2[] GetCollisionBoundPoints(ICollisionBound bound, Vector2 partPosition, float partRotation)
     {
         switch (bound.Type)
         {
             case CollisionBoundType.Rectangle:
-                return ((RectangleCollisionBound)bound).GetVertices(partPosition, 0f);
+                return ((RectangleCollisionBound)bound).GetVertices(partPosition, partRotation);
 
             case CollisionBoundType.Ball:
                 BallCollisionBound BallBound = (BallCollisionBound)bound;

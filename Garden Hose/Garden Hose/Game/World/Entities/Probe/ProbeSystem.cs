@@ -4,6 +4,7 @@ using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -14,13 +15,13 @@ namespace GardenHose.Game.World.Entities.Probe;
 internal class ProbeSystem : ISpaceshipSystem
 {
     // Fields.
-    public bool IsEnabled { get; set; } = true;
-
-    public SpaceshipEntity Ship => _probe;
-
     public bool IsVisible { get; set; } = true;
-
     public Effect? Shader { get; set; }
+
+    public bool IsEnabled { get; set; } = true;
+    public bool IsPowered { get; set; } = true;
+    public SpaceshipEntity Ship => _probe;
+    
 
 
     // Internal fields.
@@ -34,60 +35,23 @@ internal class ProbeSystem : ISpaceshipSystem
     internal const float FOLLOW_ROLL = MathHelper.PiOver4;
 
 
-
-    internal float RollRelativeToGround
-    {
-        get
-        {
-            if (_probe.World!.Planet == null)
-            {
-                return 0f;
-            }
-
-            if (_probe.Position == _probe.World!.Planet.Position)
-            {
-                return 0f;
-            }
-
-            // There definitely exists a better way to do this, but after hours of failing I gave up. This is just how it's gonna be.
-            float UpAngleAtPosition = MathF.Atan2(_probe.Position.X, -_probe.Position.Y);
-            Vector2 Direction = Vector2.Transform(-Vector2.UnitY, Matrix.CreateRotationZ(_probe.Rotation - UpAngleAtPosition));
-            return MathF.Atan2(Direction.X, -Direction.Y);
-        }
-    }
-
-    internal float AltitudeRelativeToGround
-    {
-        get
-        {
-            if (_probe.World!.Planet == null)
-            {
-                return float.PositiveInfinity;
-            }
-
-            return Vector2.Distance(_probe.Position, _probe.World!.Planet.Position) - _probe.World.Planet.Radius;
-        }
-    }
-
     internal ProbeAutopilotState AutopilotState { get; set; } = ProbeAutopilotState.FollowDirection;
     public Vector2 TargetNavigationPosition { get; set; }
 
 
     // Private fields.
-    private ProbeEntity _probe;
+    private readonly ProbeEntity _probe;
 
-
-    private ProbeDashboard _dashboard;
-    private ProbeThrusterPanel _thrusterPanel;
-
+    private readonly ProbeErrorHandler _errorHandler;
+    private readonly ProbeRollPanel _rollPanel;
 
 
     // Constructors.
     internal ProbeSystem(ProbeEntity probe)
     {
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
-        _dashboard = new(this);
-        _thrusterPanel = new(this);
+        _errorHandler = new ProbeErrorHandler();
+        _rollPanel = new ProbeRollPanel();
     }
 
 
@@ -99,12 +63,12 @@ internal class ProbeSystem : ISpaceshipSystem
         _probe.RightThrusterPart?.SetTargetThrottle(Ship.AngularMotion > 0f ? 1f : 0f);
     }
 
-    private void MaintainAltitude(float altitudeInFuture, float rollInFuture, float upwardsFactor, float relativeYSpeed)
+    private void MaintainAltitude(float upwardsFactor)
     {
-        if (altitudeInFuture > TARGET_ALTITUDE)
+        if (Ship.CommonMath.AltitudeOneSecInFuture > TARGET_ALTITUDE)
         {
             float TargetThrottle = ((Ship.Motion.Length() > MAX_FALLING_SPEED)
-                && (relativeYSpeed < 0f)) ? 1f : 0f;
+                && (Ship.CommonMath.PlanetRelativeYSpeed < 0f)) ? 1f : 0f;
             _probe.MainThrusterPart?.SetTargetThrottle(TargetThrottle);
             _probe.RightThrusterPart?.SetTargetThrottle(TargetThrottle);
             _probe.LeftThrusterPart?.SetTargetThrottle(TargetThrottle);
@@ -112,12 +76,12 @@ internal class ProbeSystem : ISpaceshipSystem
         }
 
         _probe.MainThrusterPart?.SetTargetThrottle(upwardsFactor);
-        if (rollInFuture > 0f)
+        if (Ship.CommonMath.RollOneSecInFuture > 0f)
         {
             _probe.RightThrusterPart?.SetTargetThrottle(1f);
             _probe.LeftThrusterPart?.SetTargetThrottle(0f);
         }
-        else if (rollInFuture < 0f)
+        else if (Ship.CommonMath.RollOneSecInFuture < 0f)
         {
             _probe.RightThrusterPart?.SetTargetThrottle(0f);
             _probe.LeftThrusterPart?.SetTargetThrottle(1f);
@@ -126,52 +90,30 @@ internal class ProbeSystem : ISpaceshipSystem
         return;
     }
 
-    private void RemainStationary()
+    private void RemainStationary(float upwardsFactor)
     {
-        if (_probe.World!.Planet == null)
-        {
-            return;
-        }
-
-        // Bunch of calculations to get required data.
-        float Altitude = AltitudeRelativeToGround;
-        float Roll = RollRelativeToGround;
-        float UpwardsFactor = (MathHelper.PiOver2 - Math.Abs(Roll)) / MathHelper.PiOver2;
-        Vector2 SurfaceNormal = Ship.Position - Ship.World!.Planet!.Position;
-        if (SurfaceNormal.LengthSquared() is 0f or -0f)
-        {
-            SurfaceNormal = Vector2.UnitX;
-        }
-        SurfaceNormal = Vector2.Normalize(SurfaceNormal);
-        Vector2 Surface = GHMath.PerpVectorClockwise(SurfaceNormal);
-        float RelativeXSpeed = Vector2.Dot(Surface, Ship.Motion);
-        float RelativeYSpeed = Vector2.Dot(SurfaceNormal, Ship.Motion);
-        float AltitudeOneSecondInFuture = Altitude + RelativeYSpeed;
-        float RollOneSecondInFuture = Roll + _probe.AngularMotion;
-
-        // Actual autopilot code.
         // First try to control the ship if it's in a spin.
         if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
         {
-            ControlShipInSpin(UpwardsFactor);
+            ControlShipInSpin(upwardsFactor);
             return;
         }
 
         // Then try to maintain altitude if stationary enough.
-        if (Math.Abs(RelativeXSpeed) < MAX_STATIONARY_SPEED) 
+        if (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < MAX_STATIONARY_SPEED) 
         {
-            MaintainAltitude(AltitudeOneSecondInFuture, RollOneSecondInFuture, UpwardsFactor, RelativeYSpeed);
+            MaintainAltitude(upwardsFactor);
             return;
         }
 
         // Otherwise try to reduce speed.
-        ThrusterPart? RollThruster = RelativeXSpeed > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
-        ThrusterPart? RollReductionThruster = RelativeXSpeed > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
-        float TargetRollMultiplier = MathF.Min(MathF.Abs(RelativeXSpeed) / 125f, 1.75f);
-        float TargetRoll = (RelativeXSpeed > 0f ? -SPEED_REDUCTION_ROLL : SPEED_REDUCTION_ROLL) * TargetRollMultiplier;
-        float OffsetFromTargetRoll = (RollOneSecondInFuture - TargetRoll) * Math.Sign(TargetRoll);
+        ThrusterPart? RollThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
+        ThrusterPart? RollReductionThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
+        float TargetRollMultiplier = MathF.Min(MathF.Abs(Ship.CommonMath.PlanetRelativeXSpeed) / 125f, 1.75f);
+        float TargetRoll = (Ship.CommonMath.PlanetRelativeXSpeed > 0f ? -SPEED_REDUCTION_ROLL : SPEED_REDUCTION_ROLL) * TargetRollMultiplier;
+        float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
 
-        _probe.MainThrusterPart?.SetTargetThrottle(TARGET_ALTITUDE / AltitudeOneSecondInFuture);
+        _probe.MainThrusterPart?.SetTargetThrottle(TARGET_ALTITUDE / Ship.CommonMath.AltitudeOneSecInFuture);
         if (OffsetFromTargetRoll > 0f)
         {
             RollReductionThruster?.SetTargetThrottle(1f);
@@ -184,44 +126,20 @@ internal class ProbeSystem : ISpaceshipSystem
         }
     }
 
-    private void FollowPoint(Vector2 point, Vector2 shipFixedLocation)
+    private void FollowPoint(Vector2 point, Vector2 shipFixedLocation, float upwardsFactor)
     {
-        // Pre-calculate required stuff.
-        float Altitude = AltitudeRelativeToGround;
-        float Roll = RollRelativeToGround;
-        float UpwardsFactor = (MathHelper.PiOver2 - Math.Abs(Roll)) / MathHelper.PiOver2;
-        Vector2 SurfaceNormal = Ship.Position - Ship.World!.Planet!.Position;
-        if (SurfaceNormal.LengthSquared() is 0f or -0f)
-        {
-            SurfaceNormal = Vector2.UnitX;
-        }
-        SurfaceNormal = Vector2.Normalize(SurfaceNormal);
-        Vector2 Surface = GHMath.PerpVectorClockwise(SurfaceNormal);
-        float RelativeXSpeed = Vector2.Dot(Surface, Ship.Motion);
-        float RelativeYSpeed = Vector2.Dot(SurfaceNormal, Ship.Motion);
-        float AltitudeOneSecondInFuture = Altitude + RelativeYSpeed;
-        float RollOneSecondInFuture = Roll + _probe.AngularMotion;
-
-
-        // Control spin.
-        if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
-        {
-            ControlShipInSpin(UpwardsFactor);
-            return;
-        }
-
         // More math.
         float TargetRotation = MathF.Atan2(point.X, -point.Y);
         Vector2 RelativeFixedShipLocation = Vector2.Transform(shipFixedLocation, Matrix.CreateRotationZ(-TargetRotation));
         float RelativeShipRotation = MathF.Atan2(RelativeFixedShipLocation.X, -RelativeFixedShipLocation.Y);
 
         float TargetRoll = RelativeShipRotation > 0f ? -FOLLOW_ROLL : FOLLOW_ROLL;
-        float OffsetFromTargetRoll = (RollOneSecondInFuture - TargetRoll) * Math.Sign(TargetRoll);
-        bool IsMovingTowardsPoint = -Math.Sign(RelativeShipRotation) == Math.Sign(RelativeXSpeed);
+        float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
+        bool IsMovingTowardsPoint = -Math.Sign(RelativeShipRotation) == Math.Sign(Ship.CommonMath.PlanetRelativeXSpeed);
 
         // Rest the ship if too high, moving towards the target and has the correct roll.
-        if ((AltitudeOneSecondInFuture > TARGET_ALTITUDE)
-            && (Roll <= FOLLOW_ROLL) && (IsMovingTowardsPoint))
+        if ((Ship.CommonMath.AltitudeOneSecInFuture > TARGET_ALTITUDE)
+            && (Ship.CommonMath.Roll <= FOLLOW_ROLL) && (IsMovingTowardsPoint))
         {
             _probe.MainThrusterPart?.SetTargetThrottle(0f);
             _probe.LeftThrusterPart?.SetTargetThrottle(0f);
@@ -230,9 +148,9 @@ internal class ProbeSystem : ISpaceshipSystem
         } 
         
         // Try to reduce altitude (Maintain altitude also reduces it if too high)
-        if ((Altitude > TARGET_ALTITUDE * 1.3f) && (Math.Abs(RelativeXSpeed) < 10f))
+        if ((Ship.CommonMath.Altitude > TARGET_ALTITUDE * 1.3f) && (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < 10f))
         {
-            MaintainAltitude(AltitudeOneSecondInFuture, RollOneSecondInFuture, UpwardsFactor, RelativeYSpeed);
+            MaintainAltitude(upwardsFactor);
             return;
         }
 
@@ -241,13 +159,13 @@ internal class ProbeSystem : ISpaceshipSystem
         {
             //RemainStationary();
             TargetRoll *= 2.5f;
-            OffsetFromTargetRoll = (RollOneSecondInFuture - TargetRoll) * Math.Sign(TargetRoll);
+            OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
         }
 
         ThrusterPart? RollThruster = RelativeShipRotation > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
         ThrusterPart? AntiRollThruster = RelativeShipRotation > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
 
-        _probe.MainThrusterPart?.SetTargetThrottle(AltitudeOneSecondInFuture <= TARGET_ALTITUDE || !IsMovingTowardsPoint ? 1f : 0f);
+        _probe.MainThrusterPart?.SetTargetThrottle(Ship.CommonMath.AltitudeOneSecInFuture <= TARGET_ALTITUDE || !IsMovingTowardsPoint ? 1f : 0f);
         if (OffsetFromTargetRoll < 0f)
         {
             RollThruster?.SetTargetThrottle(1f);
@@ -264,7 +182,7 @@ internal class ProbeSystem : ISpaceshipSystem
     {
         if (UserInput.KeyboardState.Current.IsKeyDown(Keys.Up))
         {
-            _thrusterPanel.SetAutopilotState(ProbeAutopilotState.Disabled);
+            AutopilotState = ProbeAutopilotState.Disabled;
             _probe.MainThrusterPart?.SetTargetThrottle(1f);
         }
         else if (AutopilotState == ProbeAutopilotState.Disabled)
@@ -274,7 +192,7 @@ internal class ProbeSystem : ISpaceshipSystem
 
         if (UserInput.KeyboardState.Current.IsKeyDown(Keys.Left))
         {
-            _thrusterPanel.SetAutopilotState(ProbeAutopilotState.Disabled);
+            AutopilotState = ProbeAutopilotState.Disabled;
             _probe.LeftThrusterPart?.SetTargetThrottle(1f);
         }
         else if (AutopilotState == ProbeAutopilotState.Disabled)
@@ -284,7 +202,7 @@ internal class ProbeSystem : ISpaceshipSystem
 
         if (UserInput.KeyboardState.Current.IsKeyDown(Keys.Right))
         {
-            _thrusterPanel.SetAutopilotState(ProbeAutopilotState.Disabled);
+            AutopilotState = ProbeAutopilotState.Disabled;
             _probe.RightThrusterPart?.SetTargetThrottle(1f);
         }
         else if (AutopilotState == ProbeAutopilotState.Disabled)
@@ -299,30 +217,40 @@ internal class ProbeSystem : ISpaceshipSystem
     public void Draw(IDrawInfo info)
     {
         if (!IsVisible) return;
-            
-        _dashboard.Draw(info);
-        _thrusterPanel.Draw(info);
+
+        _errorHandler.Draw(info);
+        _rollPanel.Draw(info);
     }
 
     /* Navigating. */
     public void NavigateToPosition(Vector2 position)
     {
-        Vector2 FixedShipLocation = Ship.Position - Ship.World!.Planet!.Position;
-        if (FixedShipLocation.LengthSquared() is 0f or -0f)
+        if (_probe.World!.Planet == null)
         {
-            FixedShipLocation = Vector2.UnitY;
+            return;
         }
-        FixedShipLocation = Vector2.Normalize(FixedShipLocation);
-        FixedShipLocation = FixedShipLocation * Ship.World.Planet.Radius;
 
-        if ((Vector2.Distance(position, FixedShipLocation) * Ship.World.Player.Camera.Zoom <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW) 
-            || AutopilotState == ProbeAutopilotState.StayStationary)
+
+        // Control spin.
+        float UpwardsFactor = (MathHelper.PiOver2 - Math.Abs(Ship.CommonMath.Roll)) / MathHelper.PiOver2;
+        if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
         {
-            RemainStationary();
+            ControlShipInSpin(UpwardsFactor);
+            return;
+        }
+
+        // Do target autopilot action.
+        Vector2 PlanetRelativeTargetLocation = Ship.World!.Planet!.GetPositionAboveSurface(TargetNavigationPosition, Ship.CommonMath.Altitude);
+
+        if ((AutopilotState == ProbeAutopilotState.StayStationary) ||
+            (Vector2.Distance(position, PlanetRelativeTargetLocation)
+            <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW))
+        {
+            RemainStationary(UpwardsFactor);
         }
         else
         {
-            FollowPoint(position, FixedShipLocation);
+            FollowPoint(position, PlanetRelativeTargetLocation, UpwardsFactor);
         }
     }
 
@@ -330,33 +258,34 @@ internal class ProbeSystem : ISpaceshipSystem
     [TickedFunction(false)]
     public void Tick()
     {
+        if (!IsPowered)
+        {
+            return;
+        }
+
+        _rollPanel.Tick(_probe);
+
         if (Ship.Pilot ==  SpaceshipPilot.Player)
         {
             HandleManualThrusterInput();
         }
 
-        return;
-        if (AutopilotState == ProbeAutopilotState.Disabled)
+        if (AutopilotState != ProbeAutopilotState.Disabled)
         {
-            return;
+            NavigateToPosition(TargetNavigationPosition);
         }
-
-        NavigateToPosition(TargetNavigationPosition);
-    }
-
-    public void ParallelTick(bool isPlayerTick)
-    {
-        
     }
 
     public void Load(GHGameAssetManager assetManager)
     {
-        _dashboard.Load(assetManager);
-        _thrusterPanel.Load(assetManager);
+        _errorHandler.Load(assetManager);
+        _rollPanel.Load(assetManager);
+
+        _rollPanel.Position = Display.VirtualSize - (ProbeRollPanel.PANEL_SIZE * 0.5f) - new Vector2(10f);
     }
 
     public void OnPilotChange(SpaceshipPilot newPilot)
     {
-        _thrusterPanel.SetInputListeners(newPilot != SpaceshipPilot.Player);
+
     }
 }

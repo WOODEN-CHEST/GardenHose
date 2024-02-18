@@ -4,6 +4,7 @@ using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Ship;
 using GardenHose.Game.World.Entities.Ship.System;
 using GardenHose.Game.World.Material;
+using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -13,14 +14,11 @@ namespace GardenHose.Game.World.Entities.Probe;
 internal class ProbeEntity : SpaceshipEntity
 {
     // Internal fields.
-    internal override ISpaceshipSystem ShipSystem { get; init; }
+    internal override ISpaceshipSystem ShipSystem { get; set; }
 
     internal PhysicalEntityPart? HeadPart { get; private set; }
-
     internal ThrusterPart? LeftThrusterPart { get; private set; }
-
     internal ThrusterPart? RightThrusterPart { get; private set; }
-
     internal ThrusterPart? MainThrusterPart { get; private set; }
 
 
@@ -30,14 +28,6 @@ internal class ProbeEntity : SpaceshipEntity
     private static Vector2 s_headHitboxSize = new(s_bodyHitboxSize.X, 15f);
     private static Vector2 s_sideThrusterHitboxSize = new(11f, 17f);
     private static Vector2 s_mainThrusterHitboxSize = new(s_bodyHitboxSize.X - 1f, 20f);
-
-
-    // Private fields.
-    /* Parts. */
-    
-
-    /* System. */
-
 
 
     // Constructors.
@@ -99,7 +89,7 @@ internal class ProbeEntity : SpaceshipEntity
             ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
-            FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
+            FuelUsageRate = THRUSTER_FUEL_EFFICIENCY,
             ForceDirection = 0f
         };
 
@@ -126,7 +116,7 @@ internal class ProbeEntity : SpaceshipEntity
             ThrusterThrottleChangeSpeed = THRUSTER_CHANGE_SPEED,
             MaxFuel = THRUSTER_FUEL,
             Fuel = THRUSTER_FUEL,
-            FuleUsageRate = THRUSTER_FUEL_EFFICIENCY,
+            FuelUsageRate = THRUSTER_FUEL_EFFICIENCY,
             ForceDirection = 0f
         };
 
@@ -139,11 +129,16 @@ internal class ProbeEntity : SpaceshipEntity
     // Inherited methods.
     protected override void AITick()
     {
-
+        throw new InvalidOperationException("A Probe cannot be AI ticked.");
     }
 
     protected override void PlayerTick()
     {
+        ShipSystem.TargetNavigationPosition = World!.Player.Camera.ToWorldPosition(UserInput.VirtualMousePosition.Current);
+    }
 
+    internal override Entity CreateClone()
+    {
+        throw new NotImplementedException();
     }
 }
