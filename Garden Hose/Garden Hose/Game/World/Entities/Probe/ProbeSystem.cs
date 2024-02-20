@@ -294,13 +294,21 @@ internal class ProbeSystem : ISpaceshipSystem
         _speedometer.Load(assetManager);
         _altimeter.Load(assetManager);
 
-        Vector2 Padding = new(10f);
-        _rollPanel.Position = Display.VirtualSize - (ProbeRollPanel.PANEL_SIZE * 0.5f) - Padding;
-        _errorHandler.Position = Display.VirtualSize - (ProbeErrorHandler.PANEL_SIZE * 0.5f) - Padding * 2f
-            - new Vector2(0f, ProbeRollPanel.PANEL_SIZE.Y);
-        _speedometer.Position = _rollPanel.Position - (ProbeRollPanel.PANEL_SIZE * 0.5f) 
-            - (ProbeMeter.PANEL_SIZE * 0.5f) - new Vector2(10f, 0f);
-        _altimeter.Position = _speedometer.Position - ProbeMeter.PANEL_SIZE - new Vector2(10f, 0f);
+        Vector2 PaddingX = new(10f, 0f);
+        Vector2 PaddingY = new(0f, 10f);
+
+        _speedometer.Position = Display.VirtualSize - (ProbeMeter.PANEL_SIZE * 0.5f) - PaddingX - PaddingY;
+        _altimeter.Position = _speedometer.Position - (ProbeMeter.PANEL_SIZE * new Vector2(1f, 0f)) - PaddingX;
+
+        _errorHandler.Position = new Vector2(_altimeter.Position.X - (ProbeMeter.PANEL_SIZE.X * 0.5f) - (ProbeErrorHandler.PANEL_SIZE.X * 0.5f),
+            Display.VirtualSize.Y - (ProbeErrorHandler.PANEL_SIZE.Y * 0.5f)) - PaddingX - PaddingY;
+
+        _rollPanel.Position = new Vector2(_altimeter.Position.X - (ProbeMeter.PANEL_SIZE.X * 0.5f) - (ProbeRollPanel.PANEL_SIZE.X * 0.5f), 
+            _errorHandler.Position.Y - (ProbeErrorHandler.PANEL_SIZE.Y * 0.5f) - (ProbeRollPanel.PANEL_SIZE.Y * 0.5f)) - PaddingX - PaddingY;
+
+
+
+
     }
 
     public void OnPilotChange(SpaceshipPilot newPilot)
