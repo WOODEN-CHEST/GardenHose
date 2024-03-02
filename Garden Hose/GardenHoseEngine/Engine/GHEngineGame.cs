@@ -29,15 +29,7 @@ public partial class GHEngineGame : Game
 
         // Create engine components.
         /* Display. */
-        Display.VirtualSize = GHEngine.StartupSettings!.VirtualSize;
-        Display.WindowSize = GHEngine.StartupSettings.WindowSize ?? Display.ScreenSize / 1.5f;
-        Display.FullScreenSize = Display.ScreenSize;
-        Display.SinglePixel = new(Display.GraphicsManager.GraphicsDevice, 1, 1);
-        Display.SinglePixel.SetData(new Color[] { Color.White });
-        Display.SharedLine = new();
-        Window.ClientSizeChanged += Display.OnWindowSizeChangeByUserEvent;
-        UserInput.AddListener(KeyboardListenerCreator.SingleKey(KeyCondition.OnPress,
-            Display.OnUserToggleFullscreenEvent, Keys.F11));
+        Display.Initialize(Window);
 
         /* User input. */
         Window.FileDrop += UserInput.OnFileDropEvent;
@@ -47,7 +39,7 @@ public partial class GHEngineGame : Game
         AudioEngine.DefaultEngine = new();
 
         /* Asset manager. */
-        AssetManager.Initialize(GHEngine.StartupSettings.AssetBasePath);
+        AssetManager.Initialize(GHEngine.StartupSettings!.AssetBasePath);
 
 
         // Set fields.

@@ -229,6 +229,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     {
         if (!IsFunctional) return;
 
+        _glowButton.Update(time);
         _isHovered = _glowButton.IsMouseOverButton;
 
         _connection = Math.Clamp(_connection + (_isHovered ? CONNECTION_SPEED_UP : CONNECTION_SPEED_DOWN) * time.PassedTimeSeconds,

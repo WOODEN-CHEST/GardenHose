@@ -64,15 +64,22 @@ internal class PlayerCamera : IWorldCamera
     {
         GamePlayer = player ?? throw new ArgumentNullException(nameof(player));
 
-        _zoomInListener = MouseListenerCreator.Scroll(true, ScrollDirection.Up, OnPlayerZoomInEvent);
-        _zoomOutListener = MouseListenerCreator.Scroll(true, ScrollDirection.Down, OnPlayerZoomOutEvent);
-        UserInput.AddListener(_zoomInListener);
-        UserInput.AddListener(_zoomOutListener);
+        _zoomInListener = IInputListener.CreateMouseScroll(true, ScrollDirection.Up);
+        _zoomOutListener = IInputListener.CreateMouseScroll(true, ScrollDirection.Down);
     }
 
     // Internal methods.
     internal void Tick(GHGameTime time)
     {
+        if (_zoomInListener.Listen())
+        {
+            TargetZoom = Math.Min(TargetZoom * ZOOM_AMOUNT, MAX_ZOOM);
+        }
+        else if (_zoomOutListener.Listen())
+        {
+            TargetZoom = Math.Max(TargetZoom / ZOOM_AMOUNT, MIN_ZOOM);
+        }
+
         Vector2 MouseOffsetFromCenter = (UserInput.VirtualMousePosition.Current - (Display.VirtualSize * 0.5f));
 
         // Position.
@@ -90,17 +97,6 @@ internal class PlayerCamera : IWorldCamera
         Zoom = (Zoom + Math.Min((TargetZoom - Zoom) * time.WorldTime.PassedTimeSeconds * ZOOM_SPEED, 1f)) * MouseOffsetZoom; 
     }
 
-
-    // Private methods.
-    private void OnPlayerZoomInEvent(object? sender, EventArgs args)
-    {
-        TargetZoom = Math.Min(TargetZoom * ZOOM_AMOUNT, MAX_ZOOM);
-    }
-
-    private void OnPlayerZoomOutEvent(object? sender, EventArgs args)
-    {
-        TargetZoom = Math.Max(TargetZoom / ZOOM_AMOUNT, MIN_ZOOM);
-    }
 
 
     // Inherited methods.

@@ -66,10 +66,9 @@ public class GameWorld : IIDProvider
     /* Collisions. */
     private List<CollisionCase> _collisionCases = new();
     private const int WORLD_PART_POWER = 7;
-    private const int WORLD_PART_SIZE = 128; // 2^7.
-    private const int WORLD_PART_COUNT = 32;
+    private const int WORLD_PART_SIZE = 128;
+    private const int WORLD_PART_COUNT = 4096 / WORLD_PART_SIZE;
     private readonly List<PhysicalEntity>[,] _worldParts = new List<PhysicalEntity>[WORLD_PART_COUNT, WORLD_PART_COUNT];
-    
 
 
     // Constructors.
@@ -126,7 +125,7 @@ public class GameWorld : IIDProvider
         }
         HandleEntityCollisionCases(gameTime);
         _collisionCases.Clear();
-        TimeSpan Elapsed = Start - DateTime.Now;
+        TimeSpan Elapsed = DateTime.Now - Start;
 
         // Create and remove entities.
         ForceEntityExistanceUpdate();

@@ -52,8 +52,8 @@ internal class GHGameDebugInfo : IDrawableItem
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _gameTime = time ?? throw new ArgumentNullException(nameof(time));
 
-        _debugTextToggleListener = KeyboardListenerCreator.SingleKey(KeyCondition.OnRelease, OnDebugTextKeyPressEvent, Keys.F3);
-        _debugOverlaysToggleListener = KeyboardListenerCreator.SingleKey(KeyCondition.OnRelease, OnDebugOverlaysKeyPressEvent, Keys.F4);
+        _debugTextToggleListener = IInputListener.CreateSingleKey(KeyCondition.OnRelease, Keys.F3);
+        _debugOverlaysToggleListener = IInputListener.CreateSingleKey(KeyCondition.OnRelease, Keys.F4);
         _infoText = new(string.Empty, GH.GeeichFont)
         {
             FittingSizePixels = Display.VirtualSize,
@@ -64,21 +64,20 @@ internal class GHGameDebugInfo : IDrawableItem
 
 
     // Internal methods.
-    internal void OnGameStart()
-    {
-        _debugOverlaysToggleListener.StartListening();
-        _debugTextToggleListener.StartListening();
-    }
-
-    internal void OnGameEnd()
-    {
-        _debugTextToggleListener?.StopListening();
-        _debugOverlaysToggleListener?.StopListening();
-    }
-
     internal void StartTickMeasure()
     {
         _tickTimeMeasurer.Reset();
+
+        if (_debugOverlaysToggleListener.Listen())
+        {
+            IsDebugOverlaysEnabled = !IsDebugOverlaysEnabled;
+            _game.World.IsDebugInfoDrawn = IsDebugOverlaysEnabled;
+        }
+        if (_debugTextToggleListener.Listen())
+        {
+            IsDebugTextEnabled = !IsDebugTextEnabled;
+        }
+
         _tickTimeMeasurer.Start();
     }
 
@@ -109,17 +108,6 @@ internal class GHGameDebugInfo : IDrawableItem
     }
 
     // Private methods.
-    private void OnDebugTextKeyPressEvent(object? sender, EventArgs args)
-    {
-        IsDebugTextEnabled = !IsDebugTextEnabled;
-    }
-
-    private void OnDebugOverlaysKeyPressEvent(object? sender, EventArgs args)
-    {
-        IsDebugOverlaysEnabled = !IsDebugOverlaysEnabled;
-        _game.World.IsDebugInfoDrawn = IsDebugOverlaysEnabled;
-    }
-
     public void Draw(IDrawInfo info)
     {
         if (!IsDebugTextEnabled) return;

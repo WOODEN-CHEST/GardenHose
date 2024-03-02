@@ -179,6 +179,48 @@ internal class GHGameAssetManager
 
         _animations.Add(GHGameAnimationName.Ship_Probe_MeterDigitsS, new(
           0f, Origin.Center, "game/ships/probe/meter_digits_speed"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanel, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelLightPanel, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel_light_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelLightPanelShadow, new(
+          0f, Origin.TopRight, "game/ships/probe/thruster_panel_light_panel_shadow"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelLightDisplay, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel_light_display"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelLightGlass, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel_light_glass"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelSwitchPanel, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel_switch_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelSwitchPanelShadow, new(
+          0f, Origin.TopRight, "game/ships/probe/thruster_panel_switch_panel_shadow"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelSwitch, new(
+          0f, Origin.Center, "game/ships/probe/thruster_panel_switch_off", "game/ships/probe/thruster_panel_switch_on"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanelSwitchShadow, new(
+          0f, Origin.TopRight, "game/ships/probe/thruster_panel_switch_off_shadow", "game/ships/probe/thruster_panel_switch_on_shadow"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_PowerPanel, new(
+          0f, Origin.Center, "game/ships/probe/power_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_PowerButton, new(
+          0f, Origin.Center, "game/ships/probe/power_button"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_PowerButtonShadow, new(
+          0f, Origin.TopRight, "game/ships/probe/power_button_shadow"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_AutopilotPanel, new(
+         0f, Origin.Center, "game/ships/probe/autopilot_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_AutopilotKnob, new(
+         0f, Origin.Center, "game/ships/probe/autopilot_knob"));
     }
 
     private void CreateSoundEntries() { }

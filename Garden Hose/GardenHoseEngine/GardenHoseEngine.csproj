@@ -33,4 +33,8 @@
     <PackageReference Include="NAudio" Version="2.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="IO\InputListener\" />
+  </ItemGroup>
+
 </Project>

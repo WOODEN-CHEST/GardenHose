@@ -105,6 +105,7 @@ public static class Display
 
     [ThreadStatic]
     private static Line s_sharedLine;
+    private static IInputListener _fullscreenListener;
 
 
     // Static methods.
@@ -118,6 +119,19 @@ public static class Display
 
 
     // Internal static methods.
+    internal static void Initialize(GameWindow window)
+    {
+        VirtualSize = GHEngine.StartupSettings!.VirtualSize;
+        WindowSize = GHEngine.StartupSettings.WindowSize ?? Display.ScreenSize / 1.5f;
+        FullScreenSize = ScreenSize;
+        SinglePixel = new(GraphicsManager.GraphicsDevice, 1, 1);
+        SinglePixel.SetData(new Color[] { Color.White });
+        SharedLine = new();
+        window.ClientSizeChanged += OnWindowSizeChangeByUserEvent;
+
+        _fullscreenListener = IInputListener.CreateSingleKey(KeyCondition.OnPress, Keys.F11);
+    }
+
     internal static void OnWindowSizeChangeByUserEvent(object? sender, EventArgs args)
     {
         if ((GHEngine.Game.Window.ClientBounds.Width < MinimumWindowSize.X)
@@ -131,18 +145,17 @@ public static class Display
         }
     }
 
-    internal static void OnUserToggleFullscreenEvent(object? sender, EventArgs args)
-    {
-        if (UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
-        {
-            CorrectWindowedSize();
-        }
-        else IsFullScreen = !IsFullScreen;
-    }
-
     internal static void Update(IProgramTime time)
     {
         FPS = 1f / time.PassedTimeSeconds;
+        if (_fullscreenListener.Listen())
+        {
+            if (UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
+            {
+                CorrectWindowedSize();
+            }
+            else IsFullScreen = !IsFullScreen;
+        }
     }
 
 

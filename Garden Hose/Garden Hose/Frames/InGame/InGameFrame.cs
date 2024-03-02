@@ -37,7 +37,7 @@ internal class InGameFrame : GameFrame
             Rotation = MathHelper.PiOver4
         });
 
-        List<PhysicalEntity> Ents = new();
+        //List<PhysicalEntity> Ents = new();
         //for (int i = 0; i < 30; i++)
         //{
         //    for (int j = 0; j < 30; j++)
@@ -50,7 +50,7 @@ internal class InGameFrame : GameFrame
         {
             Planet = Planet,
             PlayerShip = new ProbeEntity() { Position = new Vector2(800f, 0f), Rotation = MathF.PI * 0.5f },
-            StartingEntities = Ents.ToArray(),
+            StartingEntities = Array.Empty<PhysicalEntity>(),
             Background = new(GHGameAnimationName.Background_Default)
             {
                 SmallStarCount = 200,

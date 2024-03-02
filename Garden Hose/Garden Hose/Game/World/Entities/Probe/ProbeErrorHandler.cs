@@ -6,7 +6,7 @@ using System;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
-internal class ProbeErrorHandler
+internal class ProbeErrorHandler : ProbeSystemComponent
 {
     // Internal static fields.
     internal static Vector2 PANEL_SIZE { get; } = new(250f, 82.7f); 
@@ -24,10 +24,10 @@ internal class ProbeErrorHandler
     // Internal fields.
     internal Vector2 Position
     {
-        get => _position;
+        get => base.Position;
         set
         {
-            _position = value;
+            base.Position = value;
 
             _panel.Position = value;
             _glass.Position = value;
@@ -59,8 +59,6 @@ internal class ProbeErrorHandler
 
 
     // Private fields.
-    private Vector2 _position;
-
     private SpriteItem _panel;
     private SpriteItem _glass;
     private SpriteItem _leftThruster;
@@ -72,41 +70,49 @@ internal class ProbeErrorHandler
     private SpriteItem _leak;
 
 
-
-    // Constructors.
-    internal ProbeErrorHandler() { }
-
-
     // Internal methods.
-    internal void Tick(ProbeEntity probe)
+    internal override void Tick(GHGameTime time, ProbeEntity probe, bool isComponentPowered)
     {
         // Set errors.
-        IsInSpin = Math.Abs(probe.AngularMotion) > MathF.PI * 1.5f;
-        IsFuelLeaked = (probe.MainThrusterPart?.IsLeaking ?? false) || (probe.LeftThrusterPart?.IsLeaking ?? false)
-            || (probe.RightThrusterPart?.IsLeaking ?? false);
-
-        IsOxygenLow = probe.Oxygen <= SpaceshipEntity.MAX_OXYGEN / 2f;
-
-        IsMainThrusterDamaged = (probe.MainThrusterPart == null) || (probe.MainThrusterPart.MaterialInstance.CurrentStrength <=
-            probe.MainThrusterPart.MaterialInstance.Material.Strength * 0.65f);
-
-        IsLeftThrusterDamaged = (probe.LeftThrusterPart == null) || (probe.LeftThrusterPart.MaterialInstance.CurrentStrength <=
-            probe.LeftThrusterPart.MaterialInstance.Material.Strength * 0.65f);
-
-        IsRightThrusterDamaged = (probe.RightThrusterPart == null) || (probe.RightThrusterPart.MaterialInstance.CurrentStrength <=
-            probe.RightThrusterPart.MaterialInstance.Material.Strength * 0.65f);
-
-        float MaxFuel = (probe.MainThrusterPart?.MaxFuel ?? 0f) + (probe.LeftThrusterPart?.MaxFuel ?? 0f)
-            + (probe.RightThrusterPart?.MaxFuel ?? 0f);
-        if (MaxFuel == 0f)
+        if (isComponentPowered)
         {
-            IsFuelLow = false;
+            IsInSpin = Math.Abs(probe.AngularMotion) > MathF.PI * 1.5f;
+            IsFuelLeaked = (probe.MainThrusterPart?.IsLeaking ?? false) || (probe.LeftThrusterPart?.IsLeaking ?? false)
+                || (probe.RightThrusterPart?.IsLeaking ?? false);
+
+            IsOxygenLow = probe.Oxygen <= SpaceshipEntity.MAX_OXYGEN / 2f;
+
+            IsMainThrusterDamaged = (probe.MainThrusterPart == null) || (probe.MainThrusterPart.MaterialInstance.CurrentStrength <=
+                probe.MainThrusterPart.MaterialInstance.Material.Strength * 0.65f);
+
+            IsLeftThrusterDamaged = (probe.LeftThrusterPart == null) || (probe.LeftThrusterPart.MaterialInstance.CurrentStrength <=
+                probe.LeftThrusterPart.MaterialInstance.Material.Strength * 0.65f);
+
+            IsRightThrusterDamaged = (probe.RightThrusterPart == null) || (probe.RightThrusterPart.MaterialInstance.CurrentStrength <=
+                probe.RightThrusterPart.MaterialInstance.Material.Strength * 0.65f);
+
+            float MaxFuel = (probe.MainThrusterPart?.MaxFuel ?? 0f) + (probe.LeftThrusterPart?.MaxFuel ?? 0f)
+                + (probe.RightThrusterPart?.MaxFuel ?? 0f);
+            if (MaxFuel == 0f)
+            {
+                IsFuelLow = false;
+            }
+            else
+            {
+                float Fuel = (probe.MainThrusterPart?.Fuel ?? 0f) + (probe.LeftThrusterPart?.Fuel ?? 0f)
+                    + (probe.RightThrusterPart?.Fuel ?? 0f);
+                IsFuelLow = Fuel / MaxFuel <= 0.2f;
+            }
         }
         else
         {
-            float Fuel = (probe.MainThrusterPart?.Fuel ?? 0f) + (probe.LeftThrusterPart?.Fuel ?? 0f)
-                + (probe.RightThrusterPart?.Fuel ?? 0f);
-            IsFuelLow = Fuel / MaxFuel <= 0.2f;
+            IsInSpin = false;
+            IsFuelLeaked = false;
+            IsFuelLow = false;
+            IsOxygenLow = false;
+            IsMainThrusterDamaged = false;
+            IsLeftThrusterDamaged = false;
+            IsRightThrusterDamaged = false;
         }
 
 
@@ -120,7 +126,7 @@ internal class ProbeErrorHandler
         _leak.Mask = IsFuelLeaked ? COLOR_ERROR : COLOR_CLEAR;
     }
 
-    internal void Load(GHGameAssetManager assetManager)
+    internal override void Load(GHGameAssetManager assetManager)
     {
         _panel = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ErrorPanel).CreateInstance(), PANEL_SIZE);
         _glass = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ErrorGlass).CreateInstance(), GLASS_SIZE);
@@ -133,7 +139,7 @@ internal class ProbeErrorHandler
         _leak = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_ErrorLeak).CreateInstance(), LEAK_SIZE);
     }
 
-    internal void Draw(IDrawInfo info)
+    internal override void Draw(IDrawInfo info)
     {
         _panel.Draw(info);
         _leftThruster.Draw(info);

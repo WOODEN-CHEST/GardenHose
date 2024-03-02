@@ -10,45 +10,15 @@ public static class UserInput
 {
     // Fields.
     public static DeltaValue<KeyboardState> KeyboardState { get; private set; } = new();
-
     public static DeltaValue<int> KeysDownCount { get; private set; } = new();
-
-
     public static DeltaValue<MouseState> MouseState { get; private set; } = new ();
-
     public static DeltaValue<Vector2> VirtualMousePosition { get; private set; } = new();
-
     public static DeltaValue<int> MouseButtonsPressedCount { get; private set; } = new();
-
+    public static bool IsWindowFocused { get; private set; }
 
     public static event EventHandler<TextInputEventArgs>? TextInput;
 
     public static event EventHandler<FileDropEventArgs>? FileDrop;
-
-
-    // Private fields.
-    private static readonly DiscreteTimeList<IInputListener> s_listeners = new();
-
-
-    // Methods.
-    public static void AddListener(IInputListener listener)
-    {
-        if (listener == null)
-        {
-            throw new ArgumentNullException(nameof(listener));
-        }
-
-        if (s_listeners.Contains(listener))
-        {
-            return;
-        }
-        s_listeners.Add(listener);
-    }
-
-    public static void RemoveListener(IInputListener listener)
-    {
-         s_listeners.Remove(listener);
-    }
 
 
     // Internal methods.
@@ -56,12 +26,7 @@ public static class UserInput
     {
         UpdateKeyboardInfo();
         UpdateMouseInfo();
-
-        s_listeners.ApplyChanges();
-        foreach (var Listener in s_listeners)
-        {
-            Listener.Listen(isWindowFocused);
-        }
+        IsWindowFocused = isWindowFocused;
     }
 
 

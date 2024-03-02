@@ -1,7 +1,6 @@
 ﻿using GardenHose.Game.GameAssetManager;
+using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Ship;
-using GardenHose.Game.World.Entities.Ship.System;
-using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.IO;
 using GardenHoseEngine.Screen;
@@ -46,6 +45,18 @@ internal class ProbeSystem : ISpaceshipSystem
     private readonly ProbeRollPanel _rollPanel;
     private readonly ProbeMeter _speedometer;
     private readonly ProbeMeter _altimeter;
+    private readonly ProbeThrusterPanel _thrusterPanel;
+    private readonly ProbePowerButton _powerButton;
+    private readonly ProbeAutopilotSwitch _autopilotSwitch;
+
+    private float _systemStartupTimer = STARTUP_TIME;
+
+    private const float ERROR_HANDLER_TIME = 0.52f;
+    private const float ROLL_PANEL_TIME = 0.63f;
+    private const float SPEEDOMETER_TIME = 0.80f;
+    private const float ALTIMETER_TIME = 0.97f;
+    private const float THRUSTER_PANEL_TIME = 1.87f;
+    private const float STARTUP_TIME = 3.4f;
 
 
     // Constructors.
@@ -58,10 +69,24 @@ internal class ProbeSystem : ISpaceshipSystem
             (probe) => probe.Motion.Length() * 0.25f);
         _altimeter = new(0f, 450f, GHGameAnimationName.Ship_Probe_MeterMarkingA, GHGameAnimationName.Ship_Probe_MeterDigitsA,
             (probe) => probe.CommonMath.Altitude);
+        _powerButton = new(IsPowered ? ProbeSystemState.On : ProbeSystemState.Off);
+        _autopilotSwitch = new(AutopilotState);
+
+
+        _thrusterPanel = new(probe.LeftThrusterPart!.IsThrusterOn, probe.MainThrusterPart!.IsThrusterOn, probe.RightThrusterPart!.IsThrusterOn);
+        _thrusterPanel.EngineSwitch += OnEngineButtonSwitchEvent;
+        _probe.CollisionHandler.PartDamage += OnProbeDamageEvent;
+        _probe.LeftThrusterPart!.EngineSwitch += OnEngineSwitchEvent;
+        _probe.MainThrusterPart!.EngineSwitch += OnEngineSwitchEvent;
+        _probe.RightThrusterPart!.EngineSwitch += OnEngineSwitchEvent;
+        _autopilotSwitch.AutopilotChange += OnAutopilotSwitch;
     }
 
 
     // Private methods.
+
+
+    /* Flight controls. */
     private void ControlShipInSpin(float upwardsFactor)
     {
         _probe.MainThrusterPart?.SetTargetThrottle(upwardsFactor);
@@ -95,7 +120,6 @@ internal class ProbeSystem : ISpaceshipSystem
 
         return;
     }
-
     private void RemainStationary(float upwardsFactor)
     {
         // First try to control the ship if it's in a spin.
@@ -218,6 +242,82 @@ internal class ProbeSystem : ISpaceshipSystem
     }
 
 
+    /* Event handlers. */
+    private void OnProbeDamageEvent(object? sender, CollisionEventArgs args)
+    {
+        if (args.Case.SelfPart.Entity == _probe)
+        {
+            return;
+        }
+
+        if ((args.Case.SelfPart == _probe.LeftThrusterPart) || (args.Case.SelfPart == _probe.MainThrusterPart)
+            || (args.Case.SelfPart == _probe.RightThrusterPart))
+        {
+            ((ThrusterPart)args.Case.SelfPart).EngineSwitch -= OnEngineSwitchEvent;
+        }
+    }
+
+    private void OnEngineSwitchEvent(object? sender, bool isOn)
+    {
+        if (sender == _probe.LeftThrusterPart)
+        {
+            _thrusterPanel.SetLeftThrusterPanelState(isOn);
+        }
+        else if (sender == _probe.MainThrusterPart)
+        {
+            _thrusterPanel.SetMainThrusterPanelState(isOn);
+        }
+        else
+        {
+            _thrusterPanel.SetRightThrusterPanelState(isOn);
+        }
+    }
+
+    private void OnEngineButtonSwitchEvent(object? sender, EngineButtonSwitchEventArgs args)
+    {
+        switch (args.Thruster)
+        {
+            case ProbeThruster.LeftThruster:
+                if (_probe.LeftThrusterPart != null)
+                {
+                    _probe.LeftThrusterPart.IsThrusterOn = args.IsOn;
+                }
+                break;
+
+            case ProbeThruster.MainThruster:
+                if (_probe.MainThrusterPart != null)
+                {
+                    _probe.MainThrusterPart.IsThrusterOn = args.IsOn;
+                }
+                break;
+
+            case ProbeThruster.RightThruster:
+                if (_probe.RightThrusterPart != null)
+                {
+                    _probe.RightThrusterPart.IsThrusterOn = args.IsOn;
+                }
+                break;
+        }
+    }
+
+    private void OnPowerButtonPress(object? sender, EventArgs args)
+    {
+        IsPowered = !IsPowered;
+        if (!IsPowered)
+        {
+            _systemStartupTimer = 0f;
+            _probe.LeftThrusterPart?.SetTargetThrottle(0f);
+            _probe.MainThrusterPart?.SetTargetThrottle(0f);
+            _probe.RightThrusterPart?.SetTargetThrottle(0f);
+        }
+    }
+
+    private void OnAutopilotSwitch(object? sender, ProbeAutopilotState state)
+    {
+        AutopilotState = state;
+    }
+
+
     // Inherited methods.
     /* Drawing. */
     public void Draw(IDrawInfo info)
@@ -228,6 +328,8 @@ internal class ProbeSystem : ISpaceshipSystem
         _rollPanel.Draw(info);
         _speedometer.Draw(info);
         _altimeter.Draw(info);
+        _thrusterPanel.Draw(info);
+        _powerButton.Draw(info);
     }
 
     /* Navigating. */
@@ -264,26 +366,33 @@ internal class ProbeSystem : ISpaceshipSystem
 
     /* Tick. */
     [TickedFunction(false)]
-    public void Tick()
+    public void Tick(GHGameTime time)
     {
-        if (!IsPowered)
+        _powerButton.SystemState = IsPowered ?
+            (_systemStartupTimer < STARTUP_TIME ? ProbeSystemState.StartingUp : ProbeSystemState.On) : ProbeSystemState.Off;
+        _powerButton.Tick(time, _probe, true);
+
+        _rollPanel.Tick(time, _probe, _systemStartupTimer > ROLL_PANEL_TIME);
+        _errorHandler.Tick(time, _probe, _systemStartupTimer > ERROR_HANDLER_TIME);
+        _speedometer.Tick(time, _probe, _systemStartupTimer > SPEEDOMETER_TIME);
+        _altimeter.Tick(time, _probe, _systemStartupTimer > ALTIMETER_TIME);
+        _thrusterPanel.Tick(time, _probe, _systemStartupTimer > THRUSTER_PANEL_TIME);
+
+        if ((_systemStartupTimer < STARTUP_TIME) && (IsPowered))
         {
-            return;
+            _systemStartupTimer = Math.Clamp(_systemStartupTimer + time.WorldTime.PassedTimeSeconds, 0f, STARTUP_TIME);
         }
 
-        _rollPanel.Tick(_probe);
-        _errorHandler.Tick(_probe);
-        _speedometer.Tick(_probe);
-        _altimeter.Tick(_probe);
-
-        if (Ship.Pilot ==  SpaceshipPilot.Player)
+        if (_systemStartupTimer >= STARTUP_TIME)
         {
-            HandleManualThrusterInput();
-        }
-
-        if (AutopilotState != ProbeAutopilotState.Disabled)
-        {
-            NavigateToPosition(TargetNavigationPosition);
+            if (Ship.Pilot == SpaceshipPilot.Player)
+            {
+                HandleManualThrusterInput();
+            }
+            if (AutopilotState != ProbeAutopilotState.Disabled)
+            {
+                NavigateToPosition(TargetNavigationPosition);
+            }
         }
     }
 
@@ -293,6 +402,8 @@ internal class ProbeSystem : ISpaceshipSystem
         _rollPanel.Load(assetManager);
         _speedometer.Load(assetManager);
         _altimeter.Load(assetManager);
+        _thrusterPanel.Load(assetManager);
+        _powerButton.Load(assetManager);
 
         Vector2 PaddingX = new(10f, 0f);
         Vector2 PaddingY = new(0f, 10f);
@@ -306,13 +417,14 @@ internal class ProbeSystem : ISpaceshipSystem
         _rollPanel.Position = new Vector2(_altimeter.Position.X - (ProbeMeter.PANEL_SIZE.X * 0.5f) - (ProbeRollPanel.PANEL_SIZE.X * 0.5f), 
             _errorHandler.Position.Y - (ProbeErrorHandler.PANEL_SIZE.Y * 0.5f) - (ProbeRollPanel.PANEL_SIZE.Y * 0.5f)) - PaddingX - PaddingY;
 
+        _thrusterPanel.Position = (Display.VirtualSize * new Vector2(0f, 1f)) + (ProbeThrusterPanel.PANEL_SIZE * new Vector2(0.5f, -0.5f))
+            + PaddingX - PaddingY;
 
-
-
+        _powerButton.Position = new Vector2(Display.VirtualSize.X - ProbePowerButton.PANEL_SIZE.X * 0.5f,
+            _altimeter.Position.Y - ProbeMeter.PANEL_SIZE.Y * 0.5f  - ProbePowerButton.PANEL_SIZE.Y * 0.5f)
+            - PaddingX - PaddingY;
+        _powerButton.PowerSwitch += OnPowerButtonPress;
     }
 
-    public void OnPilotChange(SpaceshipPilot newPilot)
-    {
-
-    }
+    public void OnPilotChange(SpaceshipPilot newPilot) { }
 }

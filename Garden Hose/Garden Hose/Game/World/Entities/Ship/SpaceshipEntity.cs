@@ -1,6 +1,5 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical;
-using GardenHose.Game.World.Entities.Ship.System;
 using GardenHoseEngine;
 using GardenHoseEngine.IO;
 using System;
@@ -78,7 +77,7 @@ internal abstract class SpaceshipEntity : PhysicalEntity
 
         if (ShipSystem.IsEnabled)
         {
-            ShipSystem.Tick();
+            ShipSystem.Tick(time);
         }
     }
 

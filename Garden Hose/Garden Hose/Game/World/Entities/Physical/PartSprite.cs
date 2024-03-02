@@ -63,11 +63,11 @@ internal class PartSprite
 
 
     // Private fields.
-    private SpriteItem _undamagedSprite;
-    private SpriteItem _slightlyDamagedSprite;
-    private SpriteItem _damagedSprite;
-    private SpriteItem _heavilyDamagedSprite;
-    private SpriteItem _activeSprite;
+    private SpriteItem? _undamagedSprite;
+    private SpriteItem? _slightlyDamagedSprite;
+    private SpriteItem? _damagedSprite;
+    private SpriteItem? _heavilyDamagedSprite;
+    private SpriteItem? _activeSprite;
 
 
 
@@ -145,10 +145,10 @@ internal class PartSprite
         sprite.Opacity = Opacity;
         sprite.Brightness = Brightness;
         sprite.Effects = Effects;
-        sprite._undamagedSprite = (SpriteItem)_undamagedSprite.Clone();
-        sprite._slightlyDamagedSprite = (SpriteItem)_slightlyDamagedSprite.Clone();
-        sprite._damagedSprite = (SpriteItem)_damagedSprite.Clone();
-        sprite._heavilyDamagedSprite = (SpriteItem)_heavilyDamagedSprite.Clone();
+        sprite._undamagedSprite = (SpriteItem)_undamagedSprite!.Clone();
+        sprite._slightlyDamagedSprite = (SpriteItem)_slightlyDamagedSprite!.Clone();
+        sprite._damagedSprite = (SpriteItem)_damagedSprite!.Clone();
+        sprite._heavilyDamagedSprite = (SpriteItem)_heavilyDamagedSprite!.Clone();
 
         if (_activeSprite == _undamagedSprite)
         {
@@ -177,9 +177,9 @@ internal class PartSprite
         if (_undamagedSprite != null)
         {
             _undamagedSprite.Mask = _colorMask.Mask;
-            _slightlyDamagedSprite.Mask = _colorMask.Mask;
-            _damagedSprite.Mask = _colorMask.Mask;
-            _heavilyDamagedSprite.Mask = _colorMask.Mask;
+            _slightlyDamagedSprite!.Mask = _colorMask.Mask;
+            _damagedSprite!.Mask = _colorMask.Mask;
+            _heavilyDamagedSprite!.Mask = _colorMask.Mask;
         }
     }
 
@@ -188,9 +188,9 @@ internal class PartSprite
         if (_undamagedSprite != null)
         {
             _undamagedSprite.Opacity = _colorMask.Opacity;
-            _slightlyDamagedSprite.Opacity = _colorMask.Opacity;
-            _damagedSprite.Opacity = _colorMask.Opacity;
-            _heavilyDamagedSprite.Opacity = _colorMask.Opacity;
+            _slightlyDamagedSprite!.Opacity = _colorMask.Opacity;
+            _damagedSprite!.Opacity = _colorMask.Opacity;
+            _heavilyDamagedSprite!.Opacity = _colorMask.Opacity;
         }
     }
 
@@ -199,9 +199,9 @@ internal class PartSprite
         if (_undamagedSprite != null)
         {
             _undamagedSprite.Brightness = _colorMask.Brightness;
-            _slightlyDamagedSprite.Brightness = _colorMask.Brightness;
-            _damagedSprite.Brightness = _colorMask.Brightness;
-            _heavilyDamagedSprite.Brightness = _colorMask.Brightness;
+            _slightlyDamagedSprite!.Brightness = _colorMask.Brightness;
+            _damagedSprite!.Brightness = _colorMask.Brightness;
+            _heavilyDamagedSprite!.Brightness = _colorMask.Brightness;
         }
     }
 
@@ -210,9 +210,9 @@ internal class PartSprite
         if (_undamagedSprite != null)
         {
             _undamagedSprite.Effects = _effects;
-            _slightlyDamagedSprite.Effects = _effects;
-            _damagedSprite.Effects = _effects;
-            _heavilyDamagedSprite.Effects = _effects;
+            _slightlyDamagedSprite!.Effects = _effects;
+            _damagedSprite!.Effects = _effects;
+            _heavilyDamagedSprite!.Effects = _effects;
         }
     }
 }

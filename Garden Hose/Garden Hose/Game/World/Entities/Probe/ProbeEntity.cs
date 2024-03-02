@@ -2,7 +2,6 @@
 using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Ship;
-using GardenHose.Game.World.Entities.Ship.System;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
@@ -35,8 +34,6 @@ internal class ProbeEntity : SpaceshipEntity
     // Constructors.
     public ProbeEntity() : base(EntityType.Probe)
     {
-        ShipSystem = new ProbeSystem(this);
-
         PhysicalEntityPart Base = CreateBodyPart(this);
         HeadPart = CreateHeadPart(this);
         LeftThrusterPart = CreateSideThrusterPart(this, false);
@@ -52,6 +49,8 @@ internal class ProbeEntity : SpaceshipEntity
         MainPart = Base;
 
         IsInvulnerable = false;
+
+        ShipSystem = new ProbeSystem(this);
     }
 
 

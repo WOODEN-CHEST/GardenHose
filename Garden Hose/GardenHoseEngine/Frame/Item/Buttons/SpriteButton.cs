@@ -36,7 +36,7 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
 
 
     // Private fields.
-    private readonly Dictionary<ButtonEvent, ButtonHandler> _handlers = new();
+    private readonly Dictionary<ButtonEvent, ButtonListener> _handlers = new();
     private bool _wasMouseOverButton = false;
 
 
@@ -68,11 +68,11 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
                 or ButtonEvent.RightHold 
                 or ButtonEvent.LeftRelease
                 or ButtonEvent.MiddleRelease
-                or ButtonEvent.RightRelease => GetInputListenerLeftMiddleRight(buttonEvent, handler),
+                or ButtonEvent.RightRelease => GetInputListenerLeftMiddleRight(buttonEvent),
 
                 ButtonEvent.Scroll
                 or ButtonEvent.ScrollDown
-                or ButtonEvent.ScrollUp => GetInputListenerScroll(buttonEvent, handler),
+                or ButtonEvent.ScrollUp => GetInputListenerScroll(buttonEvent),
 
                 _ => throw new EnumValueException(nameof(buttonEvent), buttonEvent)
             };
@@ -86,25 +86,17 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
 
     public void RemoveHandler(ButtonEvent buttonEvent)
     {
-        if (_handlers.TryGetValue(buttonEvent, out ButtonHandler? Handler))
-        {
-            Handler!.StopListening();
-            _handlers.Remove(buttonEvent);
-        }
+        _handlers.Remove(buttonEvent);
     }
 
     public void ClearHandlers()
     {
-        foreach (ButtonHandler Handler in _handlers.Values)
-        {
-            Handler.StopListening();
-        }
         _handlers.Clear();
     }
 
 
     // Private methods.
-    private IInputListener GetInputListenerLeftMiddleRight(ButtonEvent buttonEvent, EventHandler handler)
+    private IInputListener GetInputListenerLeftMiddleRight(ButtonEvent buttonEvent)
     {
         MouseButton Button = ((int)buttonEvent % 3) switch
         {
@@ -121,61 +113,58 @@ public class SpriteButton : SpriteItem, ITimeUpdatable
             _ => throw new EnumValueException(nameof(buttonEvent), buttonEvent)
         };
 
-        return MouseListenerCreator.SingleButton(true, Condition, GetEventHandler(handler), Button);
+        return IInputListener.CreateSingleMouseButton(true, Condition, Button);
     }
 
-    private IInputListener GetInputListenerScroll(ButtonEvent buttonEvent, EventHandler handler)
+    private IInputListener GetInputListenerScroll(ButtonEvent buttonEvent)
     {
-        ScrollDirection Direction = ((int)buttonEvent % 3) switch
+        ScrollDirection Direction = buttonEvent switch
         {
-            0 => ScrollDirection.Up,
-            1 => ScrollDirection.Down,
-            2 => ScrollDirection.Any
+            ButtonEvent.ScrollUp => ScrollDirection.Up,
+            ButtonEvent.ScrollDown => ScrollDirection.Down,
+            ButtonEvent.Scroll => ScrollDirection.Any
         };
 
-        return MouseListenerCreator.Scroll(true, Direction, GetEventHandler(handler));
+        return IInputListener.CreateMouseScroll(true, Direction);
     }
-    
-    private EventHandler GetEventHandler(EventHandler innerHandler)
-    {
-        return (object? sender, EventArgs args) =>
-        {
-            if (IsMouseOverButton)
-            {
-                innerHandler.Invoke(this, EventArgs.Empty);
-            }
-        };
-    }
+
 
     // Inherited methods.
     public void Update(IProgramTime time)
     {
+        foreach (ButtonListener BHandler in _handlers.Values)
+        {
+            if ((BHandler.InputListener?.Listen() ?? false) && IsMouseOverButton)
+            {
+                BHandler.Handler.Invoke(this, EventArgs.Empty);
+            }
+        }
+
         bool IsCurrentMouseOverButton = IsMouseOverButton;
-        ButtonHandler? Handler;
+        ButtonListener Listener;
 
         if (IsCurrentMouseOverButton)
         {
-            if (!_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Hover, out Handler))
+            if (!_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Hover, out Listener))
             {
-                Handler?.InvokeEvent(this);
+                Listener.Handler.Invoke(this, EventArgs.Empty);
             }
-            if (_handlers.TryGetValue(ButtonEvent.Hovering, out Handler))
+            if (_handlers.TryGetValue(ButtonEvent.Hovering, out Listener))
             {
-                Handler?.InvokeEvent(this);
+                Listener.Handler.Invoke(this, EventArgs.Empty);
             }
         }
         else
         {
-            if (_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Unhover, out Handler))
+            if (_wasMouseOverButton && _handlers.TryGetValue(ButtonEvent.Unhover, out Listener))
             {
-                Handler?.InvokeEvent(this);
+                Listener.Handler.Invoke(this, EventArgs.Empty);
             }
-            if (_handlers.TryGetValue(ButtonEvent.NotHovering, out Handler))
+            if (_handlers.TryGetValue(ButtonEvent.NotHovering, out Listener))
             {
-                Handler?.InvokeEvent(this);
+                Listener.Handler.Invoke(this, EventArgs.Empty);
             }
         }
-
 
         _wasMouseOverButton = IsCurrentMouseOverButton;
     }

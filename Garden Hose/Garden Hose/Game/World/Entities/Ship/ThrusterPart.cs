@@ -34,7 +34,18 @@ internal class ThrusterPart : PhysicalEntityPart
 
     // Internal fields.
     /* Thrusters. */
-    internal bool IsThrusterOn { get; set; } = true;
+    internal bool IsThrusterOn
+    {
+        get => _isThrusterOn;
+        set
+        {
+            if  (value != _isThrusterOn)
+            {
+                _isThrusterOn = value;
+                EngineSwitch?.Invoke(this, value);
+            }
+        }
+    }
 
     internal float TargetThrusterThrottle
     {
@@ -90,9 +101,12 @@ internal class ThrusterPart : PhysicalEntityPart
 
     /* Events. */
     internal event EventHandler? OutOfFuel;
+    internal event EventHandler<bool>? EngineSwitch;
 
 
     // Private fields.
+    private bool _isThrusterOn = true;
+
     private float _currentThrusterThrottle = 0f;
     private float _targetThrusterThrottle = 0f;
     private float _fuel = DEFALT_FUEL;

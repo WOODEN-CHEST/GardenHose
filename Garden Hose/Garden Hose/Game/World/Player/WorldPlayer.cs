@@ -1,5 +1,4 @@
 ﻿using GardenHose.Game.World.Entities.Ship;
-using GardenHose.Game.World.Entities.Ship.System;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;

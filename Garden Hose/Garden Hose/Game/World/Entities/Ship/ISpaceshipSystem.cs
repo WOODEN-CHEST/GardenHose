@@ -2,7 +2,7 @@
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 
-namespace GardenHose.Game.World.Entities.Ship.System;
+namespace GardenHose.Game.World.Entities.Ship;
 
 internal interface ISpaceshipSystem : IDrawableItem
 {
@@ -15,9 +15,9 @@ internal interface ISpaceshipSystem : IDrawableItem
 
     // Internal methods.
     [TickedFunction(false)]
-    public void Tick();
+    public void Tick(GHGameTime time);
 
     public void Load(GHGameAssetManager assetManager);
 
-    public void OnPilotChange(SpaceshipPilot newPilot); 
+    public void OnPilotChange(SpaceshipPilot newPilot);
 }

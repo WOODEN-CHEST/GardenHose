@@ -43,10 +43,8 @@ internal class IntroFrame : GameFrame
     // Private methods.
     private void CreateSkipListeners()
     {
-        _keyboardListener = KeyboardListenerCreator.AnyKey(KeyCondition.WhileDown, OnUserInputEvent);
-        _mouseListener = MouseListenerCreator.AnyButton(true, MouseCondition.WhileDown, OnUserInputEvent);
-        _keyboardListener.StartListening();
-        _mouseListener.StartListening();
+        _keyboardListener = IInputListener.CreateAnyKey(KeyCondition.WhileDown);
+        _mouseListener = IInputListener.CreateAnyMouseButton(true, MouseCondition.WhileDown);
     }
 
     private void LoadSettings()
@@ -94,6 +92,14 @@ internal class IntroFrame : GameFrame
     public override void Update(IProgramTime time)
     {
         base.Update(time);
+
+        if (_keyboardListener.Listen() || _mouseListener.Listen()
+            && !(UserInput.KeyboardState.Current.IsKeyDown(Keys.F11) || UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl)))
+        {
+            SkipIntro();
+        }
+        _mouseListener.Listen();
+
         _passedTime += time.PassedTimeSeconds;
 
         if (_passedTime <= FIRST_LOGO_TIME)
@@ -128,24 +134,10 @@ internal class IntroFrame : GameFrame
     public override void OnEnd()
     {
         base.OnEnd();
-
-        _keyboardListener.StopListening();
-        _mouseListener.StopListening();
     }
 
 
     // Private methods.
-    private void OnUserInputEvent(object? sender, EventArgs args)
-    {
-        if (UserInput.KeyboardState.Current.IsKeyDown(Keys.F11)
-            || UserInput.KeyboardState.Current.IsKeyDown(Keys.LeftControl))
-        {
-            return;
-        }
-
-        SkipIntro();
-    }
-
     private void SkipIntro() => _passedTime = EXIT_TIME;
 
     public override void Draw(IDrawInfo info, RenderTarget2D layerPixelBuffer, RenderTarget2D framePixelBuffer)

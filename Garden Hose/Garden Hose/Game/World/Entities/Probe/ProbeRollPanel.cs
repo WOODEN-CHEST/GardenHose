@@ -1,10 +1,11 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
+using System;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
-internal class ProbeRollPanel
+internal class ProbeRollPanel : ProbeSystemComponent
 {
     // Internal static fields.
     internal static Vector2 PANEL_SIZE { get; } = new(150f, 150f);
@@ -17,12 +18,12 @@ internal class ProbeRollPanel
     // Internal fields.
     internal float IndicatedRoll {  get; private set; }
 
-    internal Vector2 Position
+    internal override Vector2 Position
     {
-        get => _position;
+        get => base.Position;
         set
         {
-            _position = value;
+            base.Position = value;
 
             _panel.Position = value;
             _display.Position = value;
@@ -34,27 +35,26 @@ internal class ProbeRollPanel
 
 
     // Private fields.
-    private Vector2 _position;
-
     private SpriteItem _panel;
     private SpriteItem _glass;
     private SpriteItem _display;
     private SpriteItem _indicator;
     private SpriteItem _indicatorShadow;
 
-
-    // Constructors.
-    internal ProbeRollPanel() { }
+    private const float ROLL_UPDATE_SPEED = 5f;
 
 
     // Internal methods.
-    internal void Tick(ProbeEntity probe)
+    internal override void Tick(GHGameTime time, ProbeEntity probe, bool isComponentPowered)
     {
-        IndicatedRoll = probe.CommonMath.Roll;
-        _display.Rotation = IndicatedRoll;
+        if (isComponentPowered)
+        {
+            IndicatedRoll += MathF.Asin(MathF.Sin(probe.CommonMath.Roll - IndicatedRoll)) * time.WorldTime.PassedTimeSeconds * ROLL_UPDATE_SPEED;
+            _display.Rotation = IndicatedRoll;
+        }
     }
 
-    internal void Load(GHGameAssetManager assetManager)
+    internal override void Load(GHGameAssetManager assetManager)
     {
         _panel = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_RollPanel).CreateInstance(), PANEL_SIZE);
         _glass = new(assetManager.GetAnimation(GHGameAnimationName.Ship_Probe_RollGlass).CreateInstance(), GLASS_SIZE);
@@ -64,7 +64,7 @@ internal class ProbeRollPanel
             INDICATOR_SHADOW_SIZE);
     }
 
-    internal void Draw(IDrawInfo info)
+    internal override void Draw(IDrawInfo info)
     {
         _display.Draw(info);
         _indicatorShadow.Draw(info);
