@@ -20,22 +20,36 @@ internal class ProbeSystem : ISpaceshipSystem
     public bool IsEnabled { get; set; } = true;
     public bool IsPowered { get; set; } = true;
     public SpaceshipEntity Ship => _probe;
-    
+
 
 
     // Internal fields.
-    internal const float TARGET_ALTITUDE = 100f;
+    internal const float ALTITUDE_BUFFER = 50f;
+    internal const float MAX_MAINTAIN_ALTITUDE_ROLL = 0.1f;
+    internal const float MAX_ALTITUDE = 1000f;
     internal const float SPEED_REDUCTION_ROLL = MathHelper.PiOver2;
     internal const float MAX_STATIONARY_SPEED = 3.5f;
-    internal const float MAX_FALLING_SPEED = 30f;
+    internal const float MAX_FALLING_SPEED = -30f;
     internal const float MAX_ANGULAR_MOTION = MathF.PI;
     internal const float MAX_FOLLOW_SPEED = 100f;
     internal const float MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW = 300f;
     internal const float FOLLOW_ROLL = MathHelper.PiOver4;
 
-
     internal ProbeAutopilotState AutopilotState { get; set; } = ProbeAutopilotState.FollowDirection;
     public Vector2 TargetNavigationPosition { get; set; }
+    internal float TargetAltitude
+    {
+        get
+        {
+            if (Ship.World!.Planet == null)
+            {
+                return 0f;
+            }
+
+            return Ship.World!.Planet!.CollisionHandler.BoundingRadius - Ship.World.Planet.Radius + ALTITUDE_BUFFER;
+        }
+    }
+    
 
 
     // Private fields.
@@ -48,6 +62,7 @@ internal class ProbeSystem : ISpaceshipSystem
     private readonly ProbeThrusterPanel _thrusterPanel;
     private readonly ProbePowerButton _powerButton;
     private readonly ProbeAutopilotSwitch _autopilotSwitch;
+    private readonly ProbeFuelGauge _fuelGauge;
 
     private float _systemStartupTimer = STARTUP_TIME;
 
@@ -56,6 +71,7 @@ internal class ProbeSystem : ISpaceshipSystem
     private const float SPEEDOMETER_TIME = 0.80f;
     private const float ALTIMETER_TIME = 0.97f;
     private const float THRUSTER_PANEL_TIME = 1.87f;
+    private const float FUEL_GAUGE_TIME = 2.21f;
     private const float STARTUP_TIME = 3.4f;
 
 
@@ -65,12 +81,11 @@ internal class ProbeSystem : ISpaceshipSystem
         _probe = probe ?? throw new ArgumentNullException(nameof(probe));
         _errorHandler = new ProbeErrorHandler();
         _rollPanel = new ProbeRollPanel();
-        _speedometer = new(0f, 90f, GHGameAnimationName.Ship_Probe_MeterMarkingS, GHGameAnimationName.Ship_Probe_MeterDigitsS,
-            (probe) => probe.Motion.Length() * 0.25f);
-        _altimeter = new(0f, 450f, GHGameAnimationName.Ship_Probe_MeterMarkingA, GHGameAnimationName.Ship_Probe_MeterDigitsA,
-            (probe) => probe.CommonMath.Altitude);
+        _speedometer = new(0f, 90f, GHGameAnimationName.Ship_Probe_MeterMarkingS, (probe) => probe.Motion.Length() * 0.25f);
+        _altimeter = new(0f, 450f, GHGameAnimationName.Ship_Probe_MeterMarkingA, (probe) => probe.CommonMath.Altitude);
         _powerButton = new(IsPowered ? ProbeSystemState.On : ProbeSystemState.Off);
         _autopilotSwitch = new(AutopilotState);
+        _fuelGauge = new(1f);
 
 
         _thrusterPanel = new(probe.LeftThrusterPart!.IsThrusterOn, probe.MainThrusterPart!.IsThrusterOn, probe.RightThrusterPart!.IsThrusterOn);
@@ -87,6 +102,43 @@ internal class ProbeSystem : ISpaceshipSystem
 
 
     /* Flight controls. */
+    /* The autopilot has shitty code because lack of understanding of how AI should work, but it does the job. */
+    private void AutopilotTick(Vector2 position)
+    {
+        if (_probe.World!.Planet == null)
+        {
+            return;
+        }
+
+
+        // Control spin or move towards planet.
+        float UpwardsFactor = Math.Max((MathHelper.PiOver2 - Math.Abs(Ship.CommonMath.Roll)) / MathHelper.PiOver2, 0f);
+        if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
+        {
+            ControlShipInSpin(UpwardsFactor);
+            return;
+        }
+        else if (Ship.CommonMath.Altitude > Math.Max(MAX_ALTITUDE, TargetAltitude * 3f))
+        {
+            MoveTowardsPlanet(UpwardsFactor);
+            return;
+        }
+
+        // Do target autopilot action.
+        Vector2 PlanetRelativeTargetLocation = Ship.World!.Planet!.GetPositionAboveSurface(TargetNavigationPosition, Ship.CommonMath.Altitude);
+
+        if ((AutopilotState == ProbeAutopilotState.StayStationary) ||
+            (Vector2.Distance(position, PlanetRelativeTargetLocation)
+            <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW))
+        {
+            RemainStationary(UpwardsFactor);
+        }
+        else
+        {
+            FollowPoint(position, PlanetRelativeTargetLocation, UpwardsFactor);
+        }
+    }
+
     private void ControlShipInSpin(float upwardsFactor)
     {
         _probe.MainThrusterPart?.SetTargetThrottle(upwardsFactor);
@@ -94,118 +146,144 @@ internal class ProbeSystem : ISpaceshipSystem
         _probe.RightThrusterPart?.SetTargetThrottle(Ship.AngularMotion > 0f ? 1f : 0f);
     }
 
+    private void ReachTargetRoll(float upwardsFactor, float targetRoll)
+    {
+        ThrusterPart? RollThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
+        ThrusterPart? RollReductionThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
+
+        float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - targetRoll) * Math.Sign(targetRoll);
+        bool UnderAltitude = Ship.CommonMath.AltitudeOneSecInFuture < TargetAltitude;
+        float UnderAltitudeFactor = (UnderAltitude ? 1f : 0f) * upwardsFactor;
+
+        _probe.MainThrusterPart?.SetTargetThrottle(UnderAltitude || 
+            Ship.CommonMath.PlanetRelativeYSpeed < MAX_FALLING_SPEED ? 1f : (1f - upwardsFactor));
+        if (OffsetFromTargetRoll > 0f)
+        {
+            RollReductionThruster?.SetTargetThrottle(1f);
+            RollThruster?.SetTargetThrottle(UnderAltitudeFactor);
+        }
+        else
+        {
+            RollReductionThruster?.SetTargetThrottle(UnderAltitudeFactor);
+            RollThruster?.SetTargetThrottle(1f);
+        }
+    }
+
     private void MaintainAltitude(float upwardsFactor)
     {
-        if (Ship.CommonMath.AltitudeOneSecInFuture > TARGET_ALTITUDE)
+        if ((Ship.CommonMath.AltitudeOneSecInFuture < TargetAltitude) || (Ship.CommonMath.PlanetRelativeYSpeed <= MAX_FALLING_SPEED))
         {
-            float TargetThrottle = ((Ship.Motion.Length() > MAX_FALLING_SPEED)
-                && (Ship.CommonMath.PlanetRelativeYSpeed < 0f)) ? 1f : 0f;
-            _probe.MainThrusterPart?.SetTargetThrottle(TargetThrottle);
-            _probe.RightThrusterPart?.SetTargetThrottle(TargetThrottle);
-            _probe.LeftThrusterPart?.SetTargetThrottle(TargetThrottle);
+            _probe.MainThrusterPart?.SetTargetThrottle(upwardsFactor);
+
+            if (MathF.Abs(_probe.CommonMath.Roll) > MAX_MAINTAIN_ALTITUDE_ROLL)
+            {
+                _probe.RightThrusterPart?.SetTargetThrottle(_probe.CommonMath.RollOneSecInFuture > 0f ? 1f : 0f);
+                _probe.LeftThrusterPart?.SetTargetThrottle(_probe.CommonMath.RollOneSecInFuture > 0f ? 0f : 1f);
+            }
+            else
+            {
+                _probe.RightThrusterPart?.SetTargetThrottle(1f);
+                _probe.LeftThrusterPart?.SetTargetThrottle(1f);
+            }
+        }
+        else
+        {
+            _probe.MainThrusterPart?.SetTargetThrottle(0f);
+            _probe.LeftThrusterPart?.SetTargetThrottle(0f);
+            _probe.RightThrusterPart?.SetTargetThrottle(0f);
+
+            if (MathF.Abs(_probe.CommonMath.Roll) > MAX_MAINTAIN_ALTITUDE_ROLL)
+            {
+                _probe.RightThrusterPart?.SetTargetThrottle(_probe.CommonMath.RollOneSecInFuture > 0f ? 1f : 0f);
+                _probe.LeftThrusterPart?.SetTargetThrottle(_probe.CommonMath.RollOneSecInFuture > 0f ? 0f : 1f);
+            }
+        }
+    }
+
+    private void MoveTowardsPlanet(float upwardsFactor)
+    {
+        if (Ship.CommonMath.PlanetRelativeYSpeed < MAX_FALLING_SPEED)
+        {
+            _probe.LeftThrusterPart?.SetTargetThrottle(0f);
+            _probe.MainThrusterPart?.SetTargetThrottle(0f);
+            _probe.RightThrusterPart?.SetTargetThrottle(0f);
             return;
         }
 
-        _probe.MainThrusterPart?.SetTargetThrottle(upwardsFactor);
-        if (Ship.CommonMath.RollOneSecInFuture > 0f)
-        {
-            _probe.RightThrusterPart?.SetTargetThrottle(1f);
-            _probe.LeftThrusterPart?.SetTargetThrottle(0f);
-        }
-        else if (Ship.CommonMath.RollOneSecInFuture < 0f)
-        {
-            _probe.RightThrusterPart?.SetTargetThrottle(0f);
-            _probe.LeftThrusterPart?.SetTargetThrottle(1f);
-        }
+        float OffsetFromTargetRoll = (MathF.PI * Math.Sign(Ship.CommonMath.RollOneSecInFuture)) - Ship.CommonMath.RollOneSecInFuture;
 
-        return;
+        _probe.MainThrusterPart?.SetTargetThrottle(1f - upwardsFactor);
+        _probe.LeftThrusterPart?.SetTargetThrottle((OffsetFromTargetRoll > 0f
+            && Ship.AngularMotion < 1f) ? 1f : 0f);
+        _probe.RightThrusterPart?.SetTargetThrottle((OffsetFromTargetRoll < 0f
+             && Ship.AngularMotion > -1f) ? 1f : 0f);
     }
+
     private void RemainStationary(float upwardsFactor)
     {
-        // First try to control the ship if it's in a spin.
-        if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
-        {
-            ControlShipInSpin(upwardsFactor);
-            return;
-        }
-
-        // Then try to maintain altitude if stationary enough.
-        if (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < MAX_STATIONARY_SPEED) 
+        // Try to maintain target altitude if stationary enough.
+        if (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < MAX_STATIONARY_SPEED)
         {
             MaintainAltitude(upwardsFactor);
             return;
         }
 
         // Otherwise try to reduce speed.
-        ThrusterPart? RollThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
-        ThrusterPart? RollReductionThruster = Ship.CommonMath.PlanetRelativeXSpeed > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
-        float TargetRollMultiplier = MathF.Min(MathF.Abs(Ship.CommonMath.PlanetRelativeXSpeed) / 125f, 1.75f);
+        float TargetRollMultiplier = MathF.Min(MathF.Abs(Ship.CommonMath.PlanetRelativeXSpeed) / 125f, 1f);
         float TargetRoll = (Ship.CommonMath.PlanetRelativeXSpeed > 0f ? -SPEED_REDUCTION_ROLL : SPEED_REDUCTION_ROLL) * TargetRollMultiplier;
-        float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
-
-        _probe.MainThrusterPart?.SetTargetThrottle(TARGET_ALTITUDE / Ship.CommonMath.AltitudeOneSecInFuture);
-        if (OffsetFromTargetRoll > 0f)
-        {
-            RollReductionThruster?.SetTargetThrottle(1f);
-            RollThruster?.SetTargetThrottle(0f);
-        }
-        else
-        {
-            RollReductionThruster?.SetTargetThrottle(0f);
-            RollThruster?.SetTargetThrottle(1f);
-        }
+        ReachTargetRoll(upwardsFactor, TargetRoll);
     }
 
     private void FollowPoint(Vector2 point, Vector2 shipFixedLocation, float upwardsFactor)
     {
-        // More math.
-        float TargetRotation = MathF.Atan2(point.X, -point.Y);
-        Vector2 RelativeFixedShipLocation = Vector2.Transform(shipFixedLocation, Matrix.CreateRotationZ(-TargetRotation));
-        float RelativeShipRotation = MathF.Atan2(RelativeFixedShipLocation.X, -RelativeFixedShipLocation.Y);
+        //// More math.
+        //float TargetRotation = MathF.Atan2(point.X, -point.Y);
+        //Vector2 RelativeFixedShipLocation = Vector2.Transform(shipFixedLocation, Matrix.CreateRotationZ(-TargetRotation));
+        //float RelativeShipRotation = MathF.Atan2(RelativeFixedShipLocation.X, -RelativeFixedShipLocation.Y);
 
-        float TargetRoll = RelativeShipRotation > 0f ? -FOLLOW_ROLL : FOLLOW_ROLL;
-        float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
-        bool IsMovingTowardsPoint = -Math.Sign(RelativeShipRotation) == Math.Sign(Ship.CommonMath.PlanetRelativeXSpeed);
+        //float TargetRoll = RelativeShipRotation > 0f ? -FOLLOW_ROLL : FOLLOW_ROLL;
+        //float OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
+        //bool IsMovingTowardsPoint = -Math.Sign(RelativeShipRotation) == Math.Sign(Ship.CommonMath.PlanetRelativeXSpeed);
 
-        // Rest the ship if too high, moving towards the target and has the correct roll.
-        if ((Ship.CommonMath.AltitudeOneSecInFuture > TARGET_ALTITUDE)
-            && (Ship.CommonMath.Roll <= FOLLOW_ROLL) && (IsMovingTowardsPoint))
-        {
-            _probe.MainThrusterPart?.SetTargetThrottle(0f);
-            _probe.LeftThrusterPart?.SetTargetThrottle(0f);
-            _probe.RightThrusterPart?.SetTargetThrottle(0f);
-            return;
-        } 
+        //// Rest the ship if too high, moving towards the target and has the correct roll.
+        //if ((Ship.CommonMath.AltitudeOneSecInFuture > TARGET_ALTITUDE)
+        //    && (Ship.CommonMath.Roll <= FOLLOW_ROLL) && (IsMovingTowardsPoint))
+        //{
+        //    _probe.MainThrusterPart?.SetTargetThrottle(0f);
+        //    _probe.LeftThrusterPart?.SetTargetThrottle(0f);
+        //    _probe.RightThrusterPart?.SetTargetThrottle(0f);
+        //    return;
+        //} 
         
-        // Try to reduce altitude (Maintain altitude also reduces it if too high)
-        if ((Ship.CommonMath.Altitude > TARGET_ALTITUDE * 1.3f) && (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < 10f))
-        {
-            MaintainAltitude(upwardsFactor);
-            return;
-        }
+        //// Try to reduce altitude (Maintain altitude also reduces it if too high)
+        //if ((Ship.CommonMath.Altitude > TARGET_ALTITUDE * 1.3f) && (Math.Abs(Ship.CommonMath.PlanetRelativeXSpeed) < 10f))
+        //{
+        //    MaintainAltitude(upwardsFactor);
+        //    return;
+        //}
 
-        // Try to slow down if moving away from point.
-        if (!IsMovingTowardsPoint)
-        {
-            //RemainStationary();
-            TargetRoll *= 2.5f;
-            OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
-        }
+        //// Try to slow down if moving away from point.
+        //if (!IsMovingTowardsPoint)
+        //{
+        //    //RemainStationary();
+        //    TargetRoll *= 2.5f;
+        //    OffsetFromTargetRoll = (Ship.CommonMath.RollOneSecInFuture - TargetRoll) * Math.Sign(TargetRoll);
+        //}
 
-        ThrusterPart? RollThruster = RelativeShipRotation > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
-        ThrusterPart? AntiRollThruster = RelativeShipRotation > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
+        //ThrusterPart? RollThruster = RelativeShipRotation > 0f ? _probe.RightThrusterPart : _probe.LeftThrusterPart;
+        //ThrusterPart? AntiRollThruster = RelativeShipRotation > 0f ? _probe.LeftThrusterPart : _probe.RightThrusterPart;
 
-        _probe.MainThrusterPart?.SetTargetThrottle(Ship.CommonMath.AltitudeOneSecInFuture <= TARGET_ALTITUDE || !IsMovingTowardsPoint ? 1f : 0f);
-        if (OffsetFromTargetRoll < 0f)
-        {
-            RollThruster?.SetTargetThrottle(1f);
-            AntiRollThruster?.SetTargetThrottle(0f);
-        }
-        else
-        {
-            RollThruster?.SetTargetThrottle(0f);
-            AntiRollThruster?.SetTargetThrottle(1f);
-        }
+        //_probe.MainThrusterPart?.SetTargetThrottle(Ship.CommonMath.AltitudeOneSecInFuture <= TARGET_ALTITUDE || !IsMovingTowardsPoint ? 1f : 0f);
+        //if (OffsetFromTargetRoll < 0f)
+        //{
+        //    RollThruster?.SetTargetThrottle(1f);
+        //    AntiRollThruster?.SetTargetThrottle(0f);
+        //}
+        //else
+        //{
+        //    RollThruster?.SetTargetThrottle(0f);
+        //    AntiRollThruster?.SetTargetThrottle(1f);
+        //}
     }
 
     private void HandleManualThrusterInput()
@@ -330,39 +408,10 @@ internal class ProbeSystem : ISpaceshipSystem
         _altimeter.Draw(info);
         _thrusterPanel.Draw(info);
         _powerButton.Draw(info);
+        _autopilotSwitch.Draw(info);
+        _fuelGauge.Draw(info);
     }
 
-    /* Navigating. */
-    public void NavigateToPosition(Vector2 position)
-    {
-        if (_probe.World!.Planet == null)
-        {
-            return;
-        }
-
-
-        // Control spin.
-        float UpwardsFactor = (MathHelper.PiOver2 - Math.Abs(Ship.CommonMath.Roll)) / MathHelper.PiOver2;
-        if (Math.Abs(Ship.AngularMotion) >= MAX_ANGULAR_MOTION)
-        {
-            ControlShipInSpin(UpwardsFactor);
-            return;
-        }
-
-        // Do target autopilot action.
-        Vector2 PlanetRelativeTargetLocation = Ship.World!.Planet!.GetPositionAboveSurface(TargetNavigationPosition, Ship.CommonMath.Altitude);
-
-        if ((AutopilotState == ProbeAutopilotState.StayStationary) ||
-            (Vector2.Distance(position, PlanetRelativeTargetLocation)
-            <= MAX_NAVIGATION_POINT_DISTANCE_BEFORE_FOLLOW))
-        {
-            RemainStationary(UpwardsFactor);
-        }
-        else
-        {
-            FollowPoint(position, PlanetRelativeTargetLocation, UpwardsFactor);
-        }
-    }
 
     /* Tick. */
     [TickedFunction(false)]
@@ -377,6 +426,10 @@ internal class ProbeSystem : ISpaceshipSystem
         _speedometer.Tick(time, _probe, _systemStartupTimer > SPEEDOMETER_TIME);
         _altimeter.Tick(time, _probe, _systemStartupTimer > ALTIMETER_TIME);
         _thrusterPanel.Tick(time, _probe, _systemStartupTimer > THRUSTER_PANEL_TIME);
+        _fuelGauge.Tick(time, _probe, _systemStartupTimer > FUEL_GAUGE_TIME);
+
+        _autopilotSwitch.Tick(time, _probe, true);
+        _autopilotSwitch.State = AutopilotState;
 
         if ((_systemStartupTimer < STARTUP_TIME) && (IsPowered))
         {
@@ -391,7 +444,7 @@ internal class ProbeSystem : ISpaceshipSystem
             }
             if (AutopilotState != ProbeAutopilotState.Disabled)
             {
-                NavigateToPosition(TargetNavigationPosition);
+                AutopilotTick(TargetNavigationPosition);
             }
         }
     }
@@ -404,6 +457,8 @@ internal class ProbeSystem : ISpaceshipSystem
         _altimeter.Load(assetManager);
         _thrusterPanel.Load(assetManager);
         _powerButton.Load(assetManager);
+        _autopilotSwitch.Load(assetManager);
+        _fuelGauge.Load(assetManager);
 
         Vector2 PaddingX = new(10f, 0f);
         Vector2 PaddingY = new(0f, 10f);
@@ -424,6 +479,13 @@ internal class ProbeSystem : ISpaceshipSystem
             _altimeter.Position.Y - ProbeMeter.PANEL_SIZE.Y * 0.5f  - ProbePowerButton.PANEL_SIZE.Y * 0.5f)
             - PaddingX - PaddingY;
         _powerButton.PowerSwitch += OnPowerButtonPress;
+
+        _autopilotSwitch.Position = new Vector2(ProbeAutopilotSwitch.PANEL_SIZE.X * 0.5f, _thrusterPanel.Position.Y
+            - (ProbeThrusterPanel.PANEL_SIZE.Y * 0.5f) - ProbeAutopilotSwitch.PANEL_SIZE.Y * 0.5f) - PaddingY + PaddingX;
+
+        _fuelGauge.Position = new Vector2(_thrusterPanel.Position.X + (ProbeThrusterPanel.PANEL_SIZE.X * 0.5f)
+            + (ProbeFuelGauge.PANEL_SIZE.X * 0.5f), Display.VirtualSize.Y - (ProbeFuelGauge.PANEL_SIZE.Y * 0.5f))
+            + PaddingX - PaddingY;
     }
 
     public void OnPilotChange(SpaceshipPilot newPilot) { }

@@ -107,7 +107,7 @@ internal class ProbeEntity : SpaceshipEntity
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_mainThrusterHitboxSize) },
             WorldMaterial.Test, entity)
         {
-            ThrusterPower = 31443,
+            ThrusterPower = 36443,
             ThrusterThrottleChangeSpeed = 5.8f,
             MaxFuel = FUEL,
             Fuel = FUEL,

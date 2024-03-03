@@ -1,6 +1,7 @@
 ﻿using GardenHoseEngine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
+using Microsoft.Xna.Framework;
 using System;
 
 namespace GardenHose.Game.GameAssetManager;

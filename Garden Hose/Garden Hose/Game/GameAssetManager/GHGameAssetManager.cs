@@ -174,12 +174,6 @@ internal class GHGameAssetManager
         _animations.Add(GHGameAnimationName.Ship_Probe_MeterMarkingS, new(
           0f, Origin.Center, "game/ships/probe/meter_marking_s"));
 
-        _animations.Add(GHGameAnimationName.Ship_Probe_MeterDigitsA, new(
-          0f, Origin.Center, "game/ships/probe/meter_digits_altitude"));
-
-        _animations.Add(GHGameAnimationName.Ship_Probe_MeterDigitsS, new(
-          0f, Origin.Center, "game/ships/probe/meter_digits_speed"));
-
         _animations.Add(GHGameAnimationName.Ship_Probe_ThrusterPanel, new(
           0f, Origin.Center, "game/ships/probe/thruster_panel"));
 
@@ -221,6 +215,24 @@ internal class GHGameAssetManager
 
         _animations.Add(GHGameAnimationName.Ship_Probe_AutopilotKnob, new(
          0f, Origin.Center, "game/ships/probe/autopilot_knob"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugePanel, new(
+                 0f, Origin.Center, "game/ships/probe/fuel_gauge_panel"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugeGlass, new(
+                 0f, Origin.Center, "game/ships/probe/fuel_gauge_glass"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugeIndicatorTop, new(
+                 0f, Origin.BottomMiddle, "game/ships/probe/fuel_gauge_indicator_top"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugeIndicatorBottom, new(
+                 0f, Origin.TopMiddle, "game/ships/probe/fuel_gauge_indicator_bottom"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugeIndicatorShadowTop, new(
+                 0f, Origin.BottomMiddle, "game/ships/probe/fuel_gauge_indicator_shadow_top"));
+
+        _animations.Add(GHGameAnimationName.Ship_Probe_FuelGaugeIndicatorShadowBottom, new(
+                 0f, Origin.TopMiddle, "game/ships/probe/fuel_gauge_indicator_shadow_bottom"));
     }
 
     private void CreateSoundEntries() { }

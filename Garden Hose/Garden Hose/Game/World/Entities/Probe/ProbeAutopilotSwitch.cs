@@ -5,18 +5,14 @@ using GardenHoseEngine.Frame.Item.Buttons;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GardenHose.Game.World.Entities.Probe;
 
 internal class ProbeAutopilotSwitch : ProbeSystemComponent
 {
     // Internal static fields.
-    internal static Vector2 PANEL_SIZE { get; } = new(251f, 52f);
-    internal static Vector2 KNOB_SIZE { get; } = new(37f, 39f);
+    internal static Vector2 PANEL_SIZE { get; } = new(200.8f, 41.6f);
+    internal static Vector2 KNOB_SIZE { get; } = new(29.6f, 31.2f);
 
 
     // Internal fields.
@@ -27,7 +23,7 @@ internal class ProbeAutopilotSwitch : ProbeSystemComponent
         {
             base.Position = value;
             _panel.Position = value;
-            _knob.Position = new Vector2(value.X + _targetKnobOffsetX, value.Y + 20f);
+            _knob.Position = new Vector2(value.X + _targetKnobOffsetX, value.Y + (PANEL_SIZE.Y * 0.15f));
         }
     }
 
@@ -36,12 +32,18 @@ internal class ProbeAutopilotSwitch : ProbeSystemComponent
         get => _state;
         set 
         {
+            if (value == _state)
+            {
+                return;
+            }
+
             _state = value;
+            const float RELATIVE_OFFSET = 0.33f;
             _targetKnobOffsetX = value switch
             {
-                ProbeAutopilotState.Disabled => -90f,
+                ProbeAutopilotState.Disabled => -(PANEL_SIZE.X * RELATIVE_OFFSET),
                 ProbeAutopilotState.StayStationary => 0f,
-                ProbeAutopilotState.FollowDirection => 90f,
+                ProbeAutopilotState.FollowDirection => PANEL_SIZE.X * RELATIVE_OFFSET,
                 _ => throw new EnumValueException(nameof(value), value)
             };
         }
@@ -56,7 +58,8 @@ internal class ProbeAutopilotSwitch : ProbeSystemComponent
 
     private ProbeAutopilotState _state;
     private float _targetKnobOffsetX = 0f;
-    private const float KNOB_MOVEMENT_SPEED = 2.2f;
+
+    private const float KNOB_MOVEMENT_SPEED = 10f;
 
 
     // Constructors.
@@ -87,7 +90,8 @@ internal class ProbeAutopilotSwitch : ProbeSystemComponent
             _panel.Update(time.WorldTime);
         }
 
-        _knob.Position += new(, 0f) * time.WorldTime.PassedTimeSeconds * KNOB_MOVEMENT_SPEED;
+        _knob.Position += new Vector2(_targetKnobOffsetX - (_knob.Position.X - Position.X), 0f)
+            * time.WorldTime.PassedTimeSeconds * KNOB_MOVEMENT_SPEED;
     }
 
 
