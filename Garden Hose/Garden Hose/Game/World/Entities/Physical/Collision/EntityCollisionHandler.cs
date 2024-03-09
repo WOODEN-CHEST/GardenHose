@@ -699,7 +699,15 @@ internal class EntityCollisionHandler
         switch (bound.Type)
         {
             case CollisionBoundType.Rectangle:
-                return ((RectangleCollisionBound)bound).GetVertices(partPosition, partRotation);
+                float BoundingRadius = ((RectangleCollisionBound)bound).BoundingRadius;
+                return new Vector2[]
+                {
+                    partPosition + new Vector2(BoundingRadius, BoundingRadius),
+                    partPosition + new Vector2(BoundingRadius, -BoundingRadius),
+                    partPosition + new Vector2(-BoundingRadius, BoundingRadius),
+                    partPosition + new Vector2(-BoundingRadius, -BoundingRadius),
+                };
+                //return ((RectangleCollisionBound)bound).GetVertices(partPosition, partRotation);
 
             case CollisionBoundType.Ball:
                 BallCollisionBound BallBound = (BallCollisionBound)bound;

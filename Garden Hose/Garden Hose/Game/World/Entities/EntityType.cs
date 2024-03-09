@@ -13,11 +13,12 @@ public enum EntityType
     Marker,
     Test,
     Stray,
+    Projectile,
 
     // Particles.
     Particle,
 
-    // player ships.
+    // Player ships.
     Probe,
     
     // Enemy ships.

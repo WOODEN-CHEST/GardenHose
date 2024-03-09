@@ -22,6 +22,7 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     }
 
     internal abstract ISpaceshipSystem ShipSystem { get; set; }
+
     internal virtual float Oxygen
     {
         get => _oxygen;
@@ -48,6 +49,19 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     protected abstract void AITick();
 
     protected abstract void PlayerTick();
+
+
+
+    // Internal methods.
+    internal void TriggerAllWeapons()
+    {
+
+    }
+
+    internal void FireAllWeapons()
+    {
+
+    }
 
 
     // Inherited methods.

@@ -44,7 +44,7 @@ internal class PhysicalEntityPart
         set
         {
             _selfRotation = value;
-            Entity?.ResetPartInfo();
+            //Entity?.ResetPartInfo();
             SetPositionAndRotation(Position, CombinedRotation - SelfRotation); // Forces sub-parts to update.
         }
     }

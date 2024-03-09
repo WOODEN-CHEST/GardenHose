@@ -72,6 +72,23 @@ internal class WorldMaterial
         Attraction = 0f
     };
 
+    internal static WorldMaterial A420Bullet { get; } = new()
+    {
+        Density = 0.084f,
+        Strength = 312_344,
+        Resistance = 2140f,
+        HeatCapacity = 12_000f,
+        HeatTransferRate = 0.06f,
+        MeltingPoint = 720f,
+        BoilingPoint = 1184f,
+        Friction = 0.45f,
+        Bounciness = 0.1f,
+        Magnetism = 0f,
+        Conductivity = 0f,
+        Attraction = 0f
+    };
+
+
 
     // Fields.
     /* Properties. */
