@@ -1,4 +1,6 @@
 ﻿using GardenHoseEngine;
+using GardenHoseEngine.Audio;
+using GardenHoseEngine.Collections;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Item;
 using GardenHoseEngine.Frame.Item.Buttons;
@@ -98,6 +100,9 @@ internal partial class ConnectorRectangleButton : ConnectorElement
 
     private const float TEXT_SCALE = 1000f;
 
+    private const float AUDIO_VOLUME = 0.02f;
+    private const float AUDIO_SPEED_VARIATION = 0.2f;
+
 
 
     /* Properties. */
@@ -120,6 +125,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
     private float _maxBounceDistance = DEFAULT_MAX_BOUNCE_DISTANCE;
 
     private readonly FittedText _text;
+    private readonly RandomSequence<Sound> _inSounds;
 
 
     // Constructors.
@@ -168,6 +174,8 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         
         _directionUnit = GetDirectionVector(connectDirection);
         Scale = 1f;
+
+        _inSounds = new(assets.ConnectorSoundsIn);
 
         IsFunctional = true;
     }
@@ -238,7 +246,10 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         if ((_connection == MAX_CONNECTION) && (_power != MAX_POWER))
         {
             _bouncePeriod = MIN_BOUNCE_PERIOD;
+            _inSounds.GetItem().CreateSoundInstance(volume: AUDIO_VOLUME, 
+                speed: 1f - (AUDIO_SPEED_VARIATION * 0.5f) + (Random.Shared.NextSingle() * AUDIO_SPEED_VARIATION)).Play();
         }
+
 
         _power = _connection == MAX_CONNECTION ? MAX_POWER : Math.Max(_power - POWER_CHANGE_SPEED * time.PassedTimeSeconds, MIN_POWER);
         _clickPower = Math.Max(_clickPower - CLICK_POWER_CHANGE_SPEED * time.PassedTimeSeconds, MIN_CLICK_POWER);
@@ -266,7 +277,6 @@ internal partial class ConnectorRectangleButton : ConnectorElement
         {
             UpdateReceiver(Position);
         }
-        
     }
 
     public override void Draw(IDrawInfo info)

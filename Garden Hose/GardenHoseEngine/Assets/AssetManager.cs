@@ -22,6 +22,8 @@ public static class AssetManager
     public const string DIR_FONTS = "fonts";
     public const string DIR_SHADERS = "shaders";
 
+    public const string EXTENSION_AUDIO_FILE = "mp3";
+
 
     // Fields.
     public static string BasePath { get; private set; }
@@ -47,7 +49,7 @@ public static class AssetManager
         {
             throw new ArgumentException($"base path \"{basePath}\" is not fully qualified");
         }
-        BasePath = basePath;
+        BasePath = FormatPath(basePath);
         GHEngine.Game.Content.RootDirectory = basePath;
     }
 
@@ -82,7 +84,8 @@ public static class AssetManager
 
     public static Sound GetSoundEffect(IGameFrame? user, string relativePath)
     {
-        return (Sound)GetAsset(user, $"{DIR_SOUNDS}{CORRECT_PATH_SEPARATOR}{relativePath}", AssetType.Sound);
+        return (Sound)GetAsset(user, 
+            Path.ChangeExtension($"{DIR_SOUNDS}{CORRECT_PATH_SEPARATOR}{relativePath}", EXTENSION_AUDIO_FILE), AssetType.Sound);
     }
 
     public static Effect GetShader(IGameFrame? user, string relativePath)
@@ -105,7 +108,7 @@ public static class AssetManager
 
         if (!s_assets.ContainsKey(relativePath))
         {
-            AssetEntry = new(relativePath, type);
+            AssetEntry = new($"{BasePath}{CORRECT_PATH_SEPARATOR}{relativePath}", type);
             s_assets[relativePath] = AssetEntry;
         }
 

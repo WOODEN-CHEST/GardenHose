@@ -17,7 +17,7 @@ internal class ProbeThrusterPanel : ProbeSystemComponent
     internal float ObservedMTValue => _mainIndicator.Value;
     internal float ObservedRTValue => _rightIndicator.Value;
     internal float ObservedLTValue => _leftIndicator.Value;
-    internal Vector2 Position
+    internal override Vector2 Position
     {
         get => base.Position;
         set
@@ -43,9 +43,9 @@ internal class ProbeThrusterPanel : ProbeSystemComponent
 
 
     // Private fields.
-    private ProbeThrusterIndicator _leftIndicator;
-    private ProbeThrusterIndicator _mainIndicator;
-    private ProbeThrusterIndicator _rightIndicator;
+    private readonly ProbeThrusterIndicator _leftIndicator;
+    private readonly ProbeThrusterIndicator _mainIndicator;
+    private readonly ProbeThrusterIndicator _rightIndicator;
     private SpriteItem _panel;
 
 

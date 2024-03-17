@@ -12,22 +12,18 @@ namespace GardenHoseEngine.Audio;
 public class Sound
 {
     // Public fields.
-    public readonly TimeSpan Length;
+    public TimeSpan Length { get; private init; }
 
 
     // Internal fields.
-    internal WaveFormat Format => SourceAudioEngine.WaveFormat;
-    internal readonly float[] Samples;
-    internal readonly AudioEngine SourceAudioEngine;
+    internal float[] Samples { get; private init; }
 
 
     // Constructors.
     internal Sound(string filePath, AudioEngine audioEngine) 
     {
-        SourceAudioEngine = audioEngine ?? throw new ArgumentNullException(nameof(audioEngine));
-
         AudioFileReader Reader = null!;
-        ISampleProvider Sampler = null!;
+        ISampleProvider Sampler;
         try
         {
             Reader = new(filePath);
@@ -39,7 +35,7 @@ public class Sound
             throw new AssetLoadException(filePath, $"Couldn't read audio file. {e}");
         }
 
-        if (!AreWaveFormatsSame(SourceAudioEngine.WaveFormat, Sampler.WaveFormat))
+        if (!AudioEngine.ActiveEngine.WaveFormat.Equals(Sampler.WaveFormat))
         {
             throw new AssetLoadException(filePath,
                 $"Wrong wave format: {Sampler.WaveFormat.Encoding} " +
@@ -49,8 +45,8 @@ public class Sound
         try
         {
             Length = Reader.TotalTime;
-            Samples = new float[(int)Reader.TotalTime.TotalSeconds
-                * SourceAudioEngine.WaveFormat.SampleRate * SourceAudioEngine.WaveFormat.Channels];
+            Samples = new float[(int)Math.Ceiling(Reader.TotalTime.TotalSeconds
+                * AudioEngine.ActiveEngine.WaveFormat.SampleRate * AudioEngine.ActiveEngine.WaveFormat.Channels)];
             Sampler.Read(Samples, 0, Samples.Length);
         }
         catch (IOException e)
@@ -69,14 +65,5 @@ public class Sound
         int? highPassCutoffFrequency = null)
     {
         return new SoundInstance(this, startTime, volume, pan, speed, lowPassCutoffFrequency, highPassCutoffFrequency);
-    }
-
-
-    // Private methods.
-    private bool AreWaveFormatsSame(WaveFormat format1, WaveFormat format2)
-    {
-        return (format1.SampleRate == format2.SampleRate)
-            && (format1.Channels == format2.Channels)
-            && (format1.Encoding == format2.Encoding);
     }
 }

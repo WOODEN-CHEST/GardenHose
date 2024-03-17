@@ -74,7 +74,7 @@ internal class WorldMaterial
 
     internal static WorldMaterial A420Bullet { get; } = new()
     {
-        Density = 0.084f,
+        Density = 0.334f,
         Strength = 312_344,
         Resistance = 2140f,
         HeatCapacity = 12_000f,

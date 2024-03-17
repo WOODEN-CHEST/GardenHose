@@ -36,7 +36,7 @@ public partial class GHEngineGame : Game
         Window.TextInput += UserInput.OnTextInputEvent;
 
         /*  Audio engine. */
-        AudioEngine.DefaultEngine = new();
+        AudioEngine.ActiveEngine = new();
 
         /* Asset manager. */
         AssetManager.Initialize(GHEngine.StartupSettings!.AssetBasePath);

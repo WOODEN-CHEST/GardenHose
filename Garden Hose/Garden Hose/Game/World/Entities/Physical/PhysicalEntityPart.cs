@@ -53,21 +53,23 @@ internal class PhysicalEntityPart
 
     internal virtual float AngularMotion { get; set; }
 
-    internal virtual float Mass
+    internal virtual float Mass => Area * MaterialInstance.Material.Density;
+
+    internal virtual float Area
     {
         get
         {
-            float TotalMass = 0f;
+            float TotalArea = 0f;
 
             if (CollisionBounds != null)
             {
                 foreach (ICollisionBound CBound in CollisionBounds)
                 {
-                    TotalMass += CBound.GetArea() * MaterialInstance.Material.Density;
+                    TotalArea += CBound.GetArea();
                 }
-            }  
+            }
 
-            return TotalMass;
+            return TotalArea;
         }
     }
 

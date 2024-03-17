@@ -15,7 +15,7 @@ internal class EntityCollisionHandler
     internal PhysicalEntity Entity { get; private init; }
     internal bool IsCollisionEnabled { get; set; } = true;
     internal bool IsCollisionReactionEnabled { get; set; } = true;
-    internal float BoundingRadius { get; private set; }
+    internal float BoundingRadius => _boundingRadius;
 
     internal event EventHandler<CollisionEventArgs>? Collision;
     internal event EventHandler<CollisionEventArgs>? PartDamage;
@@ -26,6 +26,8 @@ internal class EntityCollisionHandler
     // Private fields.
     private readonly HashSet<PhysicalEntity> _collisionIgnorableEntities = new();
     private readonly HashSet<PhysicalEntity> _entitiesCollidedWith = new();
+
+    private float _boundingRadius;
 
 
     // Constructors.
@@ -43,7 +45,7 @@ internal class EntityCollisionHandler
 
     internal virtual EntityCollisionHandler CloneDataToObject(EntityCollisionHandler handler)
     {
-        handler.BoundingRadius = BoundingRadius;
+        handler._boundingRadius = _boundingRadius;
         handler.IsCollisionEnabled = IsCollisionEnabled;
         handler.IsCollisionReactionEnabled = IsCollisionReactionEnabled;
         handler.PartDestroy = PartDestroy;
@@ -334,7 +336,7 @@ internal class EntityCollisionHandler
 
     internal void CreateBoundingBox()
     {
-        BoundingRadius = 0f;
+        _boundingRadius = 0f;
 
         if (Entity.MainPart == null)
         {
@@ -356,7 +358,7 @@ internal class EntityCollisionHandler
             }
         }
 
-        BoundingRadius = FurthestDistance;
+        _boundingRadius = FurthestDistance;
     }
 
 
@@ -537,10 +539,14 @@ internal class EntityCollisionHandler
 
     protected void DamagePart(CollisionEventArgs collisionArgs)
     {
-        CreateDamageParticles(collisionArgs);
+        const float ARBITRARY_AREA_DOWNSCALE = 0.01f;
+        float Resistance = collisionArgs.Case.SelfPart.MaterialInstance.Material.Resistance
+            * Math.Min(collisionArgs.Case.TargetPart.Area * ARBITRARY_AREA_DOWNSCALE, 2f);
+        Resistance = float.IsNaN(Resistance) ? 0f : Resistance;
 
-        if (collisionArgs.ForceApplied >= collisionArgs.Case.SelfPart.MaterialInstance.Material.Resistance)
+        if (collisionArgs.ForceApplied >= Resistance)
         {
+            CreateDamageParticles(collisionArgs);
             collisionArgs.Case.SelfPart.MaterialInstance.CurrentStrength -= collisionArgs.ForceApplied;
 
             if (collisionArgs.Case.SelfPart.MaterialInstance.Stage == WorldMaterialStage.Destroyed)
@@ -645,11 +651,41 @@ internal class EntityCollisionHandler
 
     private void OnHardCollision(CollisionCase collisionCase)
     {
+        // Overcompliacted mess but works convincingly enough.
+        // Commented out code is WIP reimplimentation of the collision, but needs work to become stable.
+
+
+        //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness +
+        //    collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
+        //float CombinedFriction = (collisionCase.SelfPart.MaterialInstance.Material.Friction +
+        //    collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
+        //float MinMass = Math.Min(Entity.Mass, collisionCase.TargetEntity.Mass); // What the hell are these physics.
+
+        //Vector2 RelativeLinearMotion = collisionCase.SelfMotion - collisionCase.TargetMotion;
+        //Vector2 RelativeAngularMotion = collisionCase.SelfRotationalMotionAtPoint - collisionCase.TargetRotationalMotionAtPoint;
+        //Vector2 Surface = GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal);
+
+        //Vector2 RelativeLinearXForce = Vector2.Dot(-RelativeLinearMotion, Surface) * Surface * MinMass * CombinedFriction;
+        //Vector2 RelativeLinearYForce = Vector2.Dot(-RelativeLinearMotion, collisionCase.SurfaceNormal) * collisionCase.SurfaceNormal * MinMass;
+        //Vector2 RelativeAngularXForce = Vector2.Dot(-RelativeAngularMotion, Surface) * Surface * MinMass * CombinedFriction;
+        //Vector2 RelativeAngularYForce = Vector2.Dot(-RelativeAngularMotion, collisionCase.SurfaceNormal) * collisionCase.SurfaceNormal * MinMass;
+
+        //Vector2 AddedBounceFromLinear = CombinedBounciness * RelativeLinearYForce;
+        //float BounceAddedByAngularMotion = RelativeAngularYForce.Length() / AddedBounceFromLinear.Length();
+        //if (float.IsNaN(BounceAddedByAngularMotion) || float.IsInfinity(BounceAddedByAngularMotion))
+        //{
+        //    BounceAddedByAngularMotion = 0f;
+        //}
+        //AddedBounceFromLinear *= Math.Max(0f, 1f - BounceAddedByAngularMotion);
+
+        //Vector2 ForceApplied = RelativeLinearXForce + RelativeLinearYForce + RelativeAngularXForce 
+        //    + RelativeAngularYForce + AddedBounceFromLinear;
+
         //float CombinedBounciness = (collisionCase.SelfPart.MaterialInstance.Material.Bounciness +
         //    collisionCase.TargetPart.MaterialInstance.Material.Bounciness) * 0.5f;
         float CombinedFriction = (collisionCase.SelfPart.MaterialInstance.Material.Friction +
             collisionCase.TargetPart.MaterialInstance.Material.Friction) * 0.5f;
-        Vector2 RelativeMotion = Entity.Motion + collisionCase.SelfRotationalMotionAtPoint 
+        Vector2 RelativeMotion = Entity.Motion + collisionCase.SelfRotationalMotionAtPoint
             - collisionCase.TargetMotion - collisionCase.TargetRotationalMotionAtPoint;
 
         float MinMass = Math.Min(Entity.Mass, collisionCase.TargetEntity.Mass); // What the hell are these physics.
@@ -658,8 +694,7 @@ internal class EntityCollisionHandler
             GHMath.PerpVectorClockwise(collisionCase.SurfaceNormal), -RelativeMotion) * CombinedFriction;
 
         Vector2 RelativeYForce = collisionCase.SurfaceNormal * Vector2.Dot(-RelativeMotion, collisionCase.SurfaceNormal)
-            * MinMass;//* (1.0f + cCombinedBounciness);
-                      //TODO: finish bounciness implementation. Why not done: Values above 1.0f cause physics instability.
+            * MinMass;
 
         Vector2 ForceApplied = RelativeXForce + RelativeYForce;
 

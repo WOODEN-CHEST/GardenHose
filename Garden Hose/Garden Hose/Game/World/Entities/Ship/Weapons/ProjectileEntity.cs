@@ -10,8 +10,9 @@ namespace GardenHose.Game.World.Entities.Ship.Weapons;
 internal class ProjectileEntity : PhysicalEntity
 {
     // Internal fields.
-    internal float TimeLeft { get; set; } = 10f;
+    internal float TimeLeft { get; set; } = DEFAULT_LIFETIME;
     internal bool IsCollided { get; set; } = false;
+    internal const float DEFAULT_LIFETIME = 10f;
 
 
 
@@ -20,11 +21,12 @@ internal class ProjectileEntity : PhysicalEntity
 
 
     // Constructors.
-    public ProjectileEntity(float timeLeft) : base(EntityType.Projectile)
+    internal ProjectileEntity(float timeLeft) : base(EntityType.Projectile)
     {
         CollisionHandler = new ProjectileCollisionHandler(this);
         TimeLeft = timeLeft;
         CommonMath.IsCalculated = false;
+        ZIndex = ZINDEX_PROJECTILE;
     }
 
 

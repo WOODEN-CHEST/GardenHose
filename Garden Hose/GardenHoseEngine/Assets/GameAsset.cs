@@ -89,7 +89,7 @@ internal class GameAsset
         Asset = Type switch
         {
             AssetType.Texture => contentManager.Load<Texture2D>(RelativePath),
-            AssetType.Sound => new Sound(RelativePath, AudioEngine.DefaultEngine),
+            AssetType.Sound => new Sound(RelativePath, AudioEngine.ActiveEngine),
             AssetType.Font => contentManager.Load<SpriteFont>(RelativePath),
             AssetType.Shader => contentManager.Load<Effect>(RelativePath),
             _ => throw new EnumValueException(nameof(Type), Type)

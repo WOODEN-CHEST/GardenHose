@@ -79,8 +79,15 @@ internal sealed class WorldMaterialInstance
     internal void HeatByCollision(float force)
     {
         const float ARBITRARY_REDUCTION_VALUE = 0.294f;
-        Temperature += force / Material.HeatCapacity * ARBITRARY_REDUCTION_VALUE * Material.HeatTransferRate;
+        Temperature += force / Material.HeatCapacity * ARBITRARY_REDUCTION_VALUE * Material.HeatTransferRate; 
+        // Questionable to multiply by HeatTransferRate.
     }
+
+    internal void HeatByEnergy(float energy)
+    {
+        Temperature += (energy / Material.HeatCapacity);
+    }
+
 
     internal void Update(GHGameTime time, bool isDamageEnabled)
     {

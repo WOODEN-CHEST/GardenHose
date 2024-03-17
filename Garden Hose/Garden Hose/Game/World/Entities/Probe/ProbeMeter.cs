@@ -17,7 +17,7 @@ internal class ProbeMeter : ProbeSystemComponent
 
 
     // Internal fields.
-    internal Vector2 Position
+    internal override Vector2 Position
     {
         get => base.Position;
         set

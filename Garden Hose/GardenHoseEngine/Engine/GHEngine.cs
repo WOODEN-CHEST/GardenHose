@@ -79,6 +79,6 @@ public static class GHEngine
     private static void Stop()
     {
         Logger.Stop();
-        AudioEngine.DefaultEngine.Dispose();
+        AudioEngine.ActiveEngine.Dispose();
     }
 }

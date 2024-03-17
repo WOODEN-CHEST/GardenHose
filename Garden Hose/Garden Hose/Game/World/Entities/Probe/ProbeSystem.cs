@@ -46,7 +46,7 @@ internal class ProbeSystem : ISpaceshipSystem
                 return 0f;
             }
 
-            return Ship.World!.Planet!.CollisionHandler.BoundingRadius - Ship.World.Planet.Radius + ALTITUDE_BUFFER;
+            return Math.Max(100f, Ship.World!.Planet!.CollisionHandler.BoundingRadius - Ship.World.Planet.Radius + ALTITUDE_BUFFER);
         }
     }
     
@@ -438,6 +438,8 @@ internal class ProbeSystem : ISpaceshipSystem
 
         if (_systemStartupTimer >= STARTUP_TIME)
         {
+            Ship.AimWeapons(Ship.World.Player.Camera.ToWorldPosition(UserInput.VirtualMousePosition.Current));
+
             if (Ship.Pilot == SpaceshipPilot.Player)
             {
                 HandleManualThrusterInput();

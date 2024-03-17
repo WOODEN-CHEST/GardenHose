@@ -10,6 +10,5 @@ namespace Tests.Audio;
 public enum SoundInstanceState
 {
     Playing,
-    Paused,
     Stopped
 }

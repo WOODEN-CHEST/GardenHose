@@ -13,7 +13,21 @@ public class AudioEngine : IDisposable, ISampleProvider
     // Static fields.
     public const int MAX_SOUNDS = 128;
     public const int AUDIO_LATENCY_MS = 30;
-    public static AudioEngine DefaultEngine { get; internal set; }
+    public static AudioEngine ActiveEngine
+    {
+        get => s_defaultEngine;
+        set
+        {
+            s_defaultEngine?.Dispose();
+            s_defaultEngine = value ?? throw new ArgumentNullException(nameof(value));
+        }
+    }
+
+
+
+    // Private static fields.
+    private static AudioEngine s_defaultEngine;
+
 
 
     // Fields.
@@ -53,7 +67,17 @@ public class AudioEngine : IDisposable, ISampleProvider
         }
     }
 
-    // Internal static methods.
+
+    // Methods.
+    public void StopAllSounds()
+    {
+        foreach (SoundInstance SoundInst in _sounds)
+        {
+            SoundInst.Stop();
+        }
+    }
+
+
 
     // Internal methods.
     internal void AddSound(SoundInstance sound) => _soundsToAdd.Enqueue(sound);
@@ -116,7 +140,10 @@ public class AudioEngine : IDisposable, ISampleProvider
             // Early exit (fill with silence).
             if (_sounds.Count == 0)
             {
-                return FillBufferWithSilence(buffer, offset, count);
+                int Count = FillBufferWithSilence(buffer, offset, count);
+                _executionMeasurer.Stop();
+                _executionTime = _executionMeasurer.Elapsed;
+                return Count;
             }
 
             // Overwrite buffer data with the first sound.
@@ -125,7 +152,6 @@ public class AudioEngine : IDisposable, ISampleProvider
             {
                 buffer[i] = _soundBuffer[Source];
             }
-
 
             // Add remaining sounds.
             for (int SoundIndex = 1; SoundIndex < _sounds.Count; SoundIndex++)

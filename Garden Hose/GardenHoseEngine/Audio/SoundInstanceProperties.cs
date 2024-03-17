@@ -10,19 +10,19 @@ namespace Tests.Audio;
 internal struct SoundInstanceProperties
 {
     // Fields.
-    internal SoundInstanceState State;
-    internal bool IsLooped;
-    internal float Volume;
-    internal float Pan;
-    internal double Speed;
-    internal int? LowPassCutoffFrequency;
-    internal int? HighPassCutoffFrequency;
+    internal SoundInstanceState State { get; set; }
+    internal bool IsLooped { get; set; }
+    internal float Volume { get; set; }
+    internal float Pan { get; set; }
+    internal double Speed { get; set; }
+    internal int? LowPassCutoffFrequency { get; set; }
+    internal int? HighPassCutoffFrequency { get; set; }
 
 
     // Constructors.
     public SoundInstanceProperties()
     {
-        State = SoundInstanceState.Playing;
+        State = SoundInstanceState.Stopped;
         IsLooped = false;
         Volume = SoundInstance.VOLUME_MAX;
         Pan = SoundInstance.PAN_MIDDLE;

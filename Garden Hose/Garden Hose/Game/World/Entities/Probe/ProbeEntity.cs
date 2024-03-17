@@ -2,6 +2,7 @@
 using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Ship;
+using GardenHose.Game.World.Entities.Ship.Weapons;
 using GardenHose.Game.World.Material;
 using GardenHoseEngine.IO;
 using Microsoft.Xna.Framework;
@@ -48,7 +49,8 @@ internal class ProbeEntity : SpaceshipEntity
 
         MainPart = Base;
 
-        IsInvulnerable = false;
+        WeaponSlots = new WeaponSlot[] { new WeaponSlot(WeaponType.Light, Base, Vector2.Zero) };
+        WeaponSlots[0].SetWeapon(new A420(null));
 
         ShipSystem = new ProbeSystem(this);
     }
@@ -122,13 +124,14 @@ internal class ProbeEntity : SpaceshipEntity
 
 
     // Inherited methods.
-    protected override void AITick()
+    protected override void AITick(GHGameTime time)
     {
         throw new InvalidOperationException("A Probe cannot be AI ticked.");
     }
 
-    protected override void PlayerTick()
+    protected override void PlayerTick(GHGameTime time)
     {
+        base.PlayerTick(time);
         ShipSystem.TargetNavigationPosition = World!.Player.Camera.ToWorldPosition(UserInput.VirtualMousePosition.Current);
     }
 

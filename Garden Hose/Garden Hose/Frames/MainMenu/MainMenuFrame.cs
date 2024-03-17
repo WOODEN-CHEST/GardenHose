@@ -1,7 +1,9 @@
 ﻿using GardenHoseEngine;
+using GardenHoseEngine.Audio;
 using GardenHoseEngine.Engine;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.IO;
+using GardenHoseEngine.Screen;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace GardenHose.Frames.MainMenu;

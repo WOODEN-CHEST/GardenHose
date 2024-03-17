@@ -15,6 +15,8 @@ internal abstract class ShipWeapon : PhysicalEntityPart
     internal float? LastFireTime { get; set; } = null;
     internal float TurretTurnSpeed { get; set; } = 1f;
     internal float TurretMaxAngle { get; set; } = float.PositiveInfinity;
+    internal string Description { get; init; } = "Default Weapon Description.";
+    internal string Name { get; init; } = "Default Weapon Name.";
 
     internal event EventHandler<WeaponFireEventArgs>? WeaponFire;
 
@@ -31,15 +33,27 @@ internal abstract class ShipWeapon : PhysicalEntityPart
     internal virtual void Fire(GHGameTime time)
     {
         LastFireTime = time.WorldTime.TotalTimeSeconds;
+        WeaponFire?.Invoke(this, new WeaponFireEventArgs());
     }
 
-    internal abstract void Trigger();
+    internal abstract void Trigger(GHGameTime time);
+
+    internal float GetAngleWithSpread(float angle, float totalSpread)
+    {
+        return angle + (Random.Shared.NextSingle() - 0.5f) * totalSpread;
+    }
 
 
     // Protected methods.
     protected virtual void Recoil(ProjectileEntity projectile)
     {
-        Entity?.ApplyForce(Position, -GHMath.NormalizeOrDefault(projectile.Motion) * (projectile.Motion.Length() * projectile.Mass));
+        float Force = projectile.Motion.Length() * projectile.Mass;
+        Entity?.ApplyForce(-GHMath.NormalizeOrDefault(projectile.Motion) * Force, Position);
+    }
+
+    protected virtual void HeatFromFiring(float energy)
+    {
+        MaterialInstance.HeatByEnergy(energy);
     }
 
 
@@ -51,7 +65,7 @@ internal abstract class ShipWeapon : PhysicalEntityPart
 
         float OffsetFromTargetRotation = MathF.Asin(MathF.Sin(TargetRotation - CombinedRotation));
 
-        float TargetMovement = TurretTurnSpeed * time.WorldTime.PassedTimeSeconds * OffsetFromTargetRotation;
+        float TargetMovement = TurretTurnSpeed * time.WorldTime.PassedTimeSeconds * Math.Sign(OffsetFromTargetRotation);
         if (Math.Abs(TargetMovement) > Math.Abs(OffsetFromTargetRotation))
         {
             TargetMovement = OffsetFromTargetRotation;

@@ -78,7 +78,7 @@ public class SoundInstance
             lock (this)
             {
                 _properties.LowPassCutoffFrequency = value.HasValue ?
-                    Math.Clamp(value!.Value, 0, SourceSound.Format.SampleRate / 2)
+                    Math.Clamp(value!.Value, 0, AudioEngine.ActiveEngine.WaveFormat.SampleRate / 2)
                     : null;
             }
         }
@@ -92,10 +92,10 @@ public class SoundInstance
             lock (this)
             {
                 _properties.HighPassCutoffFrequency = value.HasValue ?
-                    Math.Clamp(value!.Value, 0, SourceSound.Format.SampleRate / 2)
+                    Math.Clamp(value!.Value, 0, AudioEngine.ActiveEngine.WaveFormat.SampleRate / 2)
                     : null;
-                _filterLeft.SetHighPassFilter(SourceSound.Format.SampleRate, (float)value!, 2f);
-                _filterRight.SetHighPassFilter(SourceSound.Format.SampleRate, (float)value!, 2f);
+                _filterLeft.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, (float)value!, 2f);
+                _filterRight.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, (float)value!, 2f);
             }
         }
     }
@@ -127,7 +127,6 @@ public class SoundInstance
         int? highPassCutoffFrequency)
     {
         SourceSound = sourceSound ?? throw new ArgumentNullException(nameof(sourceSound));
-        SourceSound.SourceAudioEngine.AddSound(this);
 
         _properties = new();
         
@@ -146,33 +145,21 @@ public class SoundInstance
 
 
     // Methods.
-    public void Stop(bool fade = true) => EndSound();
-
-    public void Pause(bool fade = true)
+    public void Play()
     {
-        if (_properties.State == SoundInstanceState.Stopped)
-        {
-            throw new InvalidOperationException("Sound is stopped and cannot be paused.");
-        }
-
-        lock (this)
-        {
-            _properties.State = SoundInstanceState.Paused;
-            SourceSound.SourceAudioEngine.RemoveSound(this);
-        }
-    }
-
-    public void Continue(bool fade = true)
-    {
-        if (_properties.State == SoundInstanceState.Stopped)
-        {
-            throw new InvalidOperationException("Sound is stopped and cannot be continued.");
-        }
-
+        AudioEngine.ActiveEngine.AddSound(this);
         lock (this)
         {
             _properties.State = SoundInstanceState.Playing;
-            SourceSound.SourceAudioEngine.AddSound(this);
+        }
+    }
+
+    public void Stop()
+    {
+        AudioEngine.ActiveEngine.RemoveSound(this);
+        lock (this)
+        {
+            _properties.State = SoundInstanceState.Stopped;
         }
     }
 
@@ -202,8 +189,8 @@ public class SoundInstance
         lock (this)
         {
             _properties.State = SoundInstanceState.Stopped;
-            SourceSound.SourceAudioEngine.RemoveSound(this);
         }
+        AudioEngine.ActiveEngine.RemoveSound(this);
         SoundFinished?.Invoke(this, EventArgs.Empty);
     }
 
@@ -375,18 +362,18 @@ public class SoundInstance
         }
         if (_appliedProperties.LowPassCutoffFrequency != null)
         {
-            _filterLeft.SetLowPassFilter(SourceSound.Format.SampleRate, 
+            _filterLeft.SetLowPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, 
                 _appliedProperties.LowPassCutoffFrequency.Value, FILTER_ORDER);
-            _filterRight.SetLowPassFilter(SourceSound.Format.SampleRate,
+            _filterRight.SetLowPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate,
                 _appliedProperties.LowPassCutoffFrequency.Value, FILTER_ORDER);
 
             BiQuadFilterPass(buffer, sampleCount);
         }
         if (_appliedProperties.HighPassCutoffFrequency != null)
         {
-            _filterLeft.SetHighPassFilter(SourceSound.Format.SampleRate, 
+            _filterLeft.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, 
                 _appliedProperties.HighPassCutoffFrequency.Value, FILTER_ORDER);
-            _filterRight.SetHighPassFilter(SourceSound.Format.SampleRate,
+            _filterRight.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate,
                 _appliedProperties.HighPassCutoffFrequency.Value, FILTER_ORDER);
 
             BiQuadFilterPass(buffer, sampleCount);

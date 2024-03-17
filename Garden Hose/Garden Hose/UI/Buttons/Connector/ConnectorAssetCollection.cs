@@ -1,4 +1,5 @@
 ﻿using GardenHoseEngine;
+using GardenHoseEngine.Audio;
 using GardenHoseEngine.Frame;
 using GardenHoseEngine.Frame.Animation;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,6 +31,8 @@ internal class ConnectorAssetCollection
 
     internal SpriteFont TextFont { get; private set; }
 
+    internal Sound[] ConnectorSoundsIn { get; private set; }
+
 
 
 
@@ -44,11 +47,23 @@ internal class ConnectorAssetCollection
         LoadToggle(owner);
         LoadSlider(owner);
         LoadConnectorAndReceiver(owner);
+        LoadConnectorSounds(owner);
     }
 
     internal void LoadFont(IGameFrame? owner)
     {
         TextFont = AssetManager.GetFont(owner, "geeich_large");
+    }
+
+    internal void LoadConnectorSounds(IGameFrame? owner)
+    {
+        ConnectorSoundsIn = new Sound[]
+        {
+            AssetManager.GetSoundEffect(owner, "ui/connector/click_in_1"),
+            AssetManager.GetSoundEffect(owner, "ui/connector/click_in_2"),
+            AssetManager.GetSoundEffect(owner, "ui/connector/click_in_3"),
+            AssetManager.GetSoundEffect(owner, "ui/connector/click_in_4"),
+        };
     }
 
     internal void LoadNormalButton(IGameFrame? owner)

@@ -1,8 +1,13 @@
 ﻿using GardenHose.Game.GameAssetManager;
 using GardenHose.Game.World.Entities.Physical;
+using GardenHose.Game.World.Entities.Physical.Collision;
+using GardenHose.Game.World.Entities.Ship.Weapons;
 using GardenHoseEngine;
 using GardenHoseEngine.IO;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
+using System.Linq;
 
 namespace GardenHose.Game.World.Entities.Ship;
 
@@ -22,7 +27,6 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     }
 
     internal abstract ISpaceshipSystem ShipSystem { get; set; }
-
     internal virtual float Oxygen
     {
         get => _oxygen;
@@ -35,10 +39,22 @@ internal abstract class SpaceshipEntity : PhysicalEntity
     internal const float MIN_OXYGEN = 0f;
     internal const float MAX_OXYGEN = 1f;
 
+    internal WeaponSlot[] WeaponSlots
+    {
+        get => _weaponSlots.ToArray();
+        init
+        {
+            _weaponSlots = value ?? throw new ArgumentNullException(nameof(value));
+        }
+    }
+
+
 
     // Private fields.
     private SpaceshipPilot _pilot = SpaceshipPilot.None;
     private float _oxygen = MAX_OXYGEN;
+
+    private WeaponSlot[] _weaponSlots;
 
 
     // Constructors.
@@ -46,22 +62,50 @@ internal abstract class SpaceshipEntity : PhysicalEntity
 
 
     // Protected methods.
-    protected abstract void AITick();
+    protected abstract void AITick(GHGameTime time);
 
-    protected abstract void PlayerTick();
+    protected virtual void PlayerTick(GHGameTime time)
+    {
+        if (UserInput.MouseState.Current.LeftButton == ButtonState.Pressed)
+        {
+            TriggerAllWeapons(time);
+        }
+    }
 
 
 
     // Internal methods.
-    internal void TriggerAllWeapons()
+    internal void TriggerAllWeapons(GHGameTime time)
     {
-
+        foreach (WeaponSlot Slot in _weaponSlots)
+        {
+            Slot.Weapon?.Trigger(time);
+        }
     }
 
-    internal void FireAllWeapons()
+    internal void FireAllWeapons(GHGameTime time)
     {
-
+        foreach (WeaponSlot Slot in _weaponSlots)
+        {
+            if (Slot.TargetPart.Entity == this)
+            {
+                Slot.Weapon?.Fire(time);
+            }
+        }
     }
+
+    internal void AimWeapons(Vector2 location)
+    {
+        foreach (WeaponSlot Slot in _weaponSlots)
+        {
+            if ((Slot.TargetPart.Entity == this) && (Slot.Weapon != null))
+            {
+                Slot.Weapon.AimLocation = location;
+            }
+        }
+    }
+
+    internal virtual void Repair() { }
 
 
     // Inherited methods.
@@ -71,7 +115,7 @@ internal abstract class SpaceshipEntity : PhysicalEntity
 
         if (Pilot == SpaceshipPilot.Player)
         {
-            PlayerTick();
+            PlayerTick(time);
 
             if (World!.Planet != null)
             {
@@ -86,7 +130,7 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         }
         else if (Pilot == SpaceshipPilot.AI)
         {
-            AITick();
+            AITick(time);
         }
 
         if (ShipSystem.IsEnabled)
@@ -109,5 +153,23 @@ internal abstract class SpaceshipEntity : PhysicalEntity
         Spaceship._pilot = Pilot;
 
         return newEntity;
+    }
+
+    internal override void OnCollision(CollisionEventArgs args)
+    {
+        base.OnCollision(args);
+
+        foreach (WeaponSlot Slot in _weaponSlots)
+        {
+            if (Slot.Weapon != args.Case.SelfPart)
+            {
+                continue;
+            }
+
+            if (args.Case.SelfPart.Entity != this)
+            {
+                Slot.SetWeapon(null);
+            }
+        }
     }
 }

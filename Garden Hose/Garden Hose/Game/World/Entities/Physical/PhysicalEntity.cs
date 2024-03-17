@@ -20,6 +20,7 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
     // Internal static fields.
     internal const float ZINDEX_PLANET = 0.1f;
+    internal const float ZINDEX_PROJECTILE = 0.3f;
     internal const float ZINDEX_STRAY = 0.45f;
     internal const float ZINDEX_DEFAULT_OBJECT = 0.5f;
     internal const float ZINDEX_PARTICLE = 0.75f;
