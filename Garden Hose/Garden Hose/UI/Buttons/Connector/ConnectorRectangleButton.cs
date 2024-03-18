@@ -100,7 +100,7 @@ internal partial class ConnectorRectangleButton : ConnectorElement
 
     private const float TEXT_SCALE = 1000f;
 
-    private const float AUDIO_VOLUME = 0.02f;
+    private const float AUDIO_VOLUME = 0.25f;
     private const float AUDIO_SPEED_VARIATION = 0.2f;
 
 

@@ -3,7 +3,9 @@ using GardenHose.Game.World.Entities.Particle;
 using GardenHose.Game.World.Entities.Physical;
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Material;
+using GardenHose.Game.World.Player.Sound;
 using GardenHoseEngine;
+using GardenHoseEngine.Audio;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -118,10 +120,21 @@ internal class ThrusterPart : PhysicalEntityPart
     internal const float TIME_PER_LEAK = 0.2f;
     private const float FUEL_LOSS_PER_LEAK = 1_000_000 * TIME_PER_LEAK;
 
+    private readonly WorldSound? _thrustSound;
+
 
     // Constructors.
+    internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity, Sound? thrustSound)
+        : base(bounds, material, entity)
+    {
+        if (thrustSound != null)
+        {
+            _thrustSound = new(this, thrustSound.CreateSoundInstance());
+        }
+    }
+
     internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity)
-        : base(bounds, material, entity) { }
+        : this(bounds, material, entity, null) { }
 
     internal ThrusterPart(WorldMaterial material, PhysicalEntity? entity) : this(Array.Empty<ICollisionBound>(), material, entity) { }
 

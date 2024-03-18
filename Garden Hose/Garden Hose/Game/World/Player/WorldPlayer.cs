@@ -1,4 +1,5 @@
 ﻿using GardenHose.Game.World.Entities.Ship;
+using GardenHose.Game.World.Player.Sound;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -37,10 +38,9 @@ internal class WorldPlayer
     }
 
     internal ISpaceshipSystem ShipSystem => SpaceShip.ShipSystem;
-
     internal PlayerCamera Camera { get; private init; }
-
     internal GameWorld World { get; private init; }
+    internal SoundManager PlayerSoundManager { get; private init; }
 
 
     // Private fields.
@@ -52,7 +52,8 @@ internal class WorldPlayer
     {
         SpaceShip = playerShip;
         World = world ?? throw new ArgumentNullException(nameof(world));
-        Camera = new(this); 
+        Camera = new(this);
+        PlayerSoundManager = new();
     }
 
 
@@ -61,6 +62,7 @@ internal class WorldPlayer
     internal void Tick(GHGameTime time)
     {
         Camera.Tick(time);
+        PlayerSoundManager.Tick(time, this);
     }
 
 

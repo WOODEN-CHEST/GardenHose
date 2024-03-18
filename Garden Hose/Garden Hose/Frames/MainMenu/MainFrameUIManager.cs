@@ -21,8 +21,8 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
 
     private ConnectorAssetCollection _connectorAssets = new();
     private ConnectorRectangleButton _play;
-    private ConnectorRectangleButton _editor;
-    private ConnectorRectangleButton _options;
+    //private ConnectorRectangleButton _editor;
+    //private ConnectorRectangleButton _options;
     private ConnectorRectangleButton _exit;
 
 
@@ -34,24 +34,11 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
 
 
     // Internal methods.
-    internal void SetMainButtonAbility(bool ability)
-    {
-        _play.IsFunctional = ability;
-        _play.IsVisible = ability;
-        _editor.IsFunctional = ability;
-        _editor.IsVisible = ability;
-        _options.IsFunctional = ability;
-        _options.IsVisible = ability;
-        _exit.IsFunctional = ability;
-        _exit.IsVisible = ability;
-
-    }
-    
     internal void SetMainButtonClickability(bool clickability)
     {
         _play.IsClickable = clickability;
-        _editor.IsClickable = clickability;
-        _options.IsClickable = clickability;
+        //_editor.IsClickable = clickability;
+        //_options.IsClickable = clickability;
         _exit.IsClickable = clickability;
     }
 
@@ -70,31 +57,31 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
         _uiLayer.AddDrawableItem(_play);
         ParentFrame.AddItem(_play);
 
-        _editor = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
-        {
-            Text = "Level Editor",
-            Scale = MAIN_BUTTON_SCALE,
-            Position = _play.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
-                + SEQUENTIAL_BUTTON_PADDING
-        };
-        _uiLayer.AddDrawableItem(_editor);
-        ParentFrame.AddItem(_editor);
+        //_editor = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
+        //{
+        //    Text = "Level Editor",
+        //    Scale = MAIN_BUTTON_SCALE,
+        //    Position = _play.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+        //        + SEQUENTIAL_BUTTON_PADDING
+        //};
+        //_uiLayer.AddDrawableItem(_editor);
+        //ParentFrame.AddItem(_editor);
 
-        _options = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
-        {
-            Text = "Options",
-            Scale = MAIN_BUTTON_SCALE,
-            Position = _editor.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
-                + SEQUENTIAL_BUTTON_PADDING
-        };
-        _uiLayer.AddDrawableItem(_options);
-        ParentFrame.AddItem(_options);
+        //_options = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
+        //{
+        //    Text = "Options",
+        //    Scale = MAIN_BUTTON_SCALE,
+        //    Position = _editor.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+        //        + SEQUENTIAL_BUTTON_PADDING
+        //};
+        //_uiLayer.AddDrawableItem(_options);
+        //ParentFrame.AddItem(_options);
 
         _exit = new(Direction.Right, RectangleButtonType.Normal, _connectorAssets)
         {
             Text = "Exit",
             Scale = MAIN_BUTTON_SCALE,
-            Position = _options.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
+            Position = _play.Position + new Vector2(0f, ConnectorRectangleButton.NORMAL_BUTTON_SIZE.Y * MAIN_BUTTON_SCALE)
                 + SEQUENTIAL_BUTTON_PADDING
         };
         _exit.Click += OnExitClickEvent;
@@ -131,9 +118,6 @@ internal class MainFrameUIManager : FrameComponentManager<MainMenuFrame>
 
     internal override void OnEnd()
     {
-        _play.IsFunctional = false;
-        _editor.IsFunctional = false;
-        _options.IsFunctional = false;
-        _exit.IsFunctional = false;
+
     }
 }

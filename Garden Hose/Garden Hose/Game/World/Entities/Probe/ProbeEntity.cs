@@ -107,7 +107,7 @@ internal class ProbeEntity : SpaceshipEntity
         const float FUEL = 17_000_000;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_mainThrusterHitboxSize) },
-            WorldMaterial.Test, entity)
+            WorldMaterial.Test, entity, )
         {
             ThrusterPower = 36443,
             ThrusterThrottleChangeSpeed = 5.8f,

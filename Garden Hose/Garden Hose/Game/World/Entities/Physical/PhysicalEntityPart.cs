@@ -2,6 +2,7 @@
 using GardenHose.Game.World.Entities.Physical.Collision;
 using GardenHose.Game.World.Entities.Stray;
 using GardenHose.Game.World.Material;
+using GardenHose.Game.World.Player.Sound;
 using GardenHoseEngine;
 using GardenHoseEngine.Frame.Item;
 using Microsoft.Xna.Framework;
@@ -13,9 +14,14 @@ using System.Linq;
 namespace GardenHose.Game.World.Entities.Physical;
 
 
-internal class PhysicalEntityPart
+internal class PhysicalEntityPart : ISoundSource
 {
     // Fields.
+    public Vector2 SoundSourcePosition => Position;
+    public Vector2 SoundSourceMotion => Entity?.Motion ?? Vector2.Zero;
+
+
+    // Internal fields.
     internal virtual PhysicalEntity? Entity
     {
         get => _entity;
