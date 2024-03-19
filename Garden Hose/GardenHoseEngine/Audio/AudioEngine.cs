@@ -32,10 +32,13 @@ public class AudioEngine : IDisposable, ISampleProvider
 
     // Fields.
     public WaveFormat WaveFormat => _format;
+
     public TimeSpan ExecutionTime
     {
         get { lock (this) { return _executionTime; } }
     }
+
+    public int SamplesPerSecond => WaveFormat.SampleRate * WaveFormat.Channels;
 
 
     // Private static fields.

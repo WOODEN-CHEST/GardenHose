@@ -235,5 +235,8 @@ internal class GHGameAssetManager
                  0f, Origin.TopMiddle, "game/ships/probe/fuel_gauge_indicator_shadow_bottom"));
     }
 
-    private void CreateSoundEntries() { }
+    private void CreateSoundEntries()
+    {
+        _sounds.Add(GHGameSoundName.Ship_Probe_MainThrusterThrust, new("game/ships/probe/main_engine_thrust"));
+    }
 }

@@ -37,6 +37,8 @@ internal class PhysicalEntityPart : ISoundSource
             {
                  SetPositionAndRotation(Entity.Position, Entity.Rotation);
             }
+
+            
         }
     }
 
@@ -168,6 +170,22 @@ internal class PhysicalEntityPart : ISoundSource
     }
 
     internal virtual void OnCollision(CollisionEventArgs args) { }
+
+    internal virtual void OnAddToWorld()
+    {
+        foreach (PartLink Link in SubPartLinks)
+        {
+            Link.LinkedPart.OnAddToWorld();
+        }
+    }
+
+    internal virtual void OnDeleteFromWorld()
+    {
+        foreach (PartLink Link in SubPartLinks)
+        {
+            Link.LinkedPart.OnDeleteFromWorld();
+        }
+    }
 
 
     /* Cloning. */

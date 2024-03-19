@@ -94,8 +94,6 @@ public class SoundInstance
                 _properties.HighPassCutoffFrequency = value.HasValue ?
                     Math.Clamp(value!.Value, 0, AudioEngine.ActiveEngine.WaveFormat.SampleRate / 2)
                     : null;
-                _filterLeft.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, (float)value!, 2f);
-                _filterRight.SetHighPassFilter(AudioEngine.ActiveEngine.WaveFormat.SampleRate, (float)value!, 2f);
             }
         }
     }
@@ -173,7 +171,7 @@ public class SoundInstance
         factor = Math.Clamp(factor, 0f, 1f);
         lock (this)
         {
-            _newSourceIndex = (int)((SourceSound.Samples.Length - 1) * factor);
+            _newSourceIndex = (int)((SourceSound.SampleCount - 1) * factor);
         }
     }
 
@@ -256,7 +254,7 @@ public class SoundInstance
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void NormalRead(float[] buffer, int offset, int count)
     {
-        int SamplesRead = Math.Min(count, (SourceSound.Samples.Length - 1) - _sourceIndex);
+        int SamplesRead = Math.Min(count, (SourceSound.SampleCount - 1) - _sourceIndex);
 
         for (int i = offset; i < (offset + SamplesRead); i++, _sourceIndex++)
         {
@@ -292,12 +290,12 @@ public class SoundInstance
         {
             // Check for end of sound buffer.
             _sourceIndex = (int)_doubleSourceIndex * 2;
-            if (((SourceSound.Samples.Length - _sourceIndex) < 4) || _sourceIndex < 0)
+            if (((SourceSound.SampleCount - _sourceIndex) < 4) || _sourceIndex < 0)
             {
                 if (_appliedProperties.IsLooped)
                 {
                     SoundLooped?.Invoke(this, EventArgs.Empty);
-                    _doubleSourceIndex = _sourceIndex > 0 ? 0d : ((SourceSound.Samples.Length -4) / 2);
+                    _doubleSourceIndex = _sourceIndex > 0 ? 0d : ((SourceSound.SampleCount -4) / 2);
                     continue;
                 }
                 else

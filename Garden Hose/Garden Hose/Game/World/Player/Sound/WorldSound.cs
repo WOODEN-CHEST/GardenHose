@@ -20,17 +20,21 @@ internal class WorldSound
         set => _instance.IsLooped = value;
     }
 
-    internal float Volume { get; set; }
-    internal float Pan { get; set; }
-    internal double Speed { get; set; }
-    internal int? LowPassCutoffFrequency { get; set; }
-    internal int? HighPassCutoffFrequency { get; set; }
+    internal float Volume { get; set; } = SoundInstance.VOLUME_MAX;
+    internal float Pan { get; set; } = SoundInstance.PAN_MIDDLE;
+    internal double Speed { get; set; } = SoundInstance.SPEED_DEFAULT;
+    internal int? LowPassCutoffFrequency { get; set; } = null;
+    internal int? HighPassCutoffFrequency { get; set; } = null;
 
     internal EventHandler? SoundFinished;
 
-    internal const float POSITION_PAN_DIVIDER = 300f;
-    internal const float VOLUME_DISTANCE_MULTIPLIER = 0.003f;
+    internal const float POSITION_PAN_DIVIDER = 1000f;
+    internal const float VOLUME_DISTANCE_MULTIPLIER = 0.0015f;
     internal const float VOLUME_SPEED_MULTIPLIER = 0.01f;
+    internal const float LOW_PASS_DISTANCE_MULITPLIER = 0.01f;
+    internal const float LOW_PASS_MIN_DISTANCE = 400f;
+    internal const float LOW_PASS_START_FREQUENCY = 20000;
+    internal const float LOW_PASS_MIN_FREQUENCY = 400;
 
 
     // Private fields.
@@ -63,10 +67,18 @@ internal class WorldSound
             return;
         }
 
-        _instance.Volume = 1f / Math.Min((Source.SoundSourcePosition - player.Camera.CameraCenter).Length() * VOLUME_DISTANCE_MULTIPLIER, 1);
-        _instance.Pan = (Source.SoundSourcePosition.X - player.Camera.CameraCenter.X) / POSITION_PAN_DIVIDER;
-        _instance.Speed = 1f + (Vector2.Dot(GHMath.NormalizeOrDefault(player.SpaceShip.Motion), GHMath.NormalizeOrDefault(Source.SoundSourceMotion))
-            * player.SpaceShip.Motion.Length() - Source.SoundSourceMotion.Length() * VOLUME_SPEED_MULTIPLIER);
+        _instance.Volume = Volume / Math.Max((Source.SoundSourcePosition - player.Camera.CameraCenter).Length() * VOLUME_DISTANCE_MULTIPLIER, 1f);
+        _instance.Pan = Pan + (Source.SoundSourcePosition.X - player.Camera.CameraCenter.X) / POSITION_PAN_DIVIDER;
+
+        float MotionDot = Vector2.Dot(GHMath.NormalizeOrDefault(player.SpaceShip.Motion), GHMath.NormalizeOrDefault(Source.SoundSourceMotion));
+        float RelativeMotionSpeed = player.SpaceShip.Motion.Length() - Source.SoundSourceMotion.Length();
+
+        _instance.Speed = Speed + (MotionDot * RelativeMotionSpeed * VOLUME_SPEED_MULTIPLIER);
+
+        float DistanceBeteenSourceAndCamera = (Source.SoundSourcePosition - player.Camera.CameraCenter).Length();
+        _instance.LowPassCutoffFrequency = DistanceBeteenSourceAndCamera < LOW_PASS_MIN_DISTANCE ? null :
+            (int)Math.Max(LOW_PASS_START_FREQUENCY / Math.Max(1f, (DistanceBeteenSourceAndCamera - LOW_PASS_MIN_DISTANCE)
+            * LOW_PASS_DISTANCE_MULITPLIER), LOW_PASS_MIN_FREQUENCY);
     }
 
 

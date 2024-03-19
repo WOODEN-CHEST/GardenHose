@@ -17,6 +17,7 @@ public class Sound
 
     // Internal fields.
     internal float[] Samples { get; private init; }
+    internal int SampleCount { get; private init; }
 
 
     // Constructors.
@@ -44,10 +45,9 @@ public class Sound
 
         try
         {
-            Length = Reader.TotalTime;
-            Samples = new float[(int)Math.Ceiling(Reader.TotalTime.TotalSeconds
-                * AudioEngine.ActiveEngine.WaveFormat.SampleRate * AudioEngine.ActiveEngine.WaveFormat.Channels)];
-            Sampler.Read(Samples, 0, Samples.Length);
+            Samples = new float[(int)Math.Ceiling(Reader.TotalTime.TotalSeconds * AudioEngine.ActiveEngine.SamplesPerSecond)];
+            SampleCount = Sampler.Read(Samples, 0, Samples.Length);
+            Length = new(0, 0, 0, 0, (int)((double)SampleCount * 1000d / (double)AudioEngine.ActiveEngine.SamplesPerSecond));
         }
         catch (IOException e)
         {

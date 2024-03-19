@@ -408,4 +408,18 @@ internal abstract class PhysicalEntity : Entity, IDrawableItem
 
         return newEntity;
     }
+
+    internal override void OnAddToWorld()
+    {
+        base.OnAddToWorld();
+
+        MainPart.OnAddToWorld();
+    }
+
+    internal override void Delete()
+    {
+        base.Delete();
+
+        MainPart.OnDeleteFromWorld();
+    }
 }

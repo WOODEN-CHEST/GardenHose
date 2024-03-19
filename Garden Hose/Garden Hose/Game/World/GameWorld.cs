@@ -292,6 +292,7 @@ public class GameWorld : IIDProvider
         foreach (Entity WorldEntity in _entitiesCreated)
         {
             _livingEntities.Add(WorldEntity);
+            WorldEntity.OnAddToWorld();
 
             if (!WorldEntity.IsPhysical)
             {

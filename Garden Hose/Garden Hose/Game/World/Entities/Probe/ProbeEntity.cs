@@ -107,14 +107,16 @@ internal class ProbeEntity : SpaceshipEntity
         const float FUEL = 17_000_000;
 
         ThrusterPart Part = new(new ICollisionBound[] { new RectangleCollisionBound(s_mainThrusterHitboxSize) },
-            WorldMaterial.Test, entity, )
+            WorldMaterial.Test, entity)
         {
             ThrusterPower = 36443,
             ThrusterThrottleChangeSpeed = 5.8f,
             MaxFuel = FUEL,
             Fuel = FUEL,
             FuelUsageRate = 2.51f,
-            ForceDirection = 0f
+            ForceDirection = 0f,
+            ThrustSound = GHGameSoundName.Ship_Probe_MainThrusterThrust,
+            ThrustSoundVolume = 0.2f
         };
 
         Part.AddSprite(new(GHGameAnimationName.Ship_Probe_MainThruster) {Size = s_mainThrusterHitboxSize });

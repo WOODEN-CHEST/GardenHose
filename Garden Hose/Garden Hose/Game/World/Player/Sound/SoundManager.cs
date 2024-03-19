@@ -32,6 +32,7 @@ internal class SoundManager
     internal void AddSound(WorldSound sound)
     {
         _sounds.Add(sound ?? throw new ArgumentNullException(nameof(sound)));
+        sound.Play();
         sound.SoundFinished += OnSoundFinishedEvent;
     }
 
@@ -39,6 +40,7 @@ internal class SoundManager
     {
         _sounds.Remove(sound ?? throw new ArgumentNullException(nameof(sound)));
         sound.Stop();
+        sound.SoundFinished -= OnSoundFinishedEvent;
     }
 
     internal void ClearSounds()
@@ -58,6 +60,5 @@ internal class SoundManager
         {
             RemoveSound((WorldSound)sender!);
         }
-        ((WorldSound)sender!).SoundFinished -= OnSoundFinishedEvent;
     }
 }

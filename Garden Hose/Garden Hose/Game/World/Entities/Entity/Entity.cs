@@ -29,6 +29,8 @@ internal abstract class Entity
 
     internal abstract void Load(GHGameAssetManager assetManager);
 
+    internal virtual void OnAddToWorld() { }
+
     internal virtual void Delete()
     {
         EntityDelete?.Invoke(this, EventArgs.Empty);

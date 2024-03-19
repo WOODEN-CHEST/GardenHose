@@ -71,6 +71,7 @@ internal class ThrusterPart : PhysicalEntityPart
     internal float ThrusterPower { get; set; }
     internal float ForceDirection { get; set; } = 0f;
     internal override float Mass => base.Mass + Fuel * FUEL_MASS;
+
     internal const float FUEL_MASS = 0.000_01f;
 
 
@@ -94,11 +95,27 @@ internal class ThrusterPart : PhysicalEntityPart
         }
     }
 
-    internal float FuelUsageRate { get; set; } = 1f; // Lower values indicate better efficiency, range is (0;inf)
+    internal float FuelUsageRate { get; set; } = 1f; // Lower values indicate better efficiency, range is [0;+infinity)
     internal bool IsFuelUsed { get; set; } = true;
     internal float PotentialFuelTime => MaxFuel / (FuelUsageRate * ThrusterPower);
     internal float EstimatedFuelTimeLeft => Fuel / (FuelUsageRate * ThrusterPower);
     internal bool IsLeaking => _fuelLeakLocations.Count > 0;
+
+
+    /* Sounds. */
+    internal GHGameSoundName? ThrustSound { get; init; }
+    internal float ThrustSoundVolume
+    {
+        get => _thrustSoundVolume;
+        set
+        {
+            _thrustSoundVolume = Math.Clamp(value, SoundInstance.VOLUME_MIN, SoundInstance.VOLUME_MAX);
+            if (_thrustSound != null)
+            {
+                _thrustSound.Volume = _thrustSoundVolume;
+            }
+        }
+    }
 
 
     /* Events. */
@@ -120,21 +137,14 @@ internal class ThrusterPart : PhysicalEntityPart
     internal const float TIME_PER_LEAK = 0.2f;
     private const float FUEL_LOSS_PER_LEAK = 1_000_000 * TIME_PER_LEAK;
 
-    private readonly WorldSound? _thrustSound;
+    private WorldSound? _thrustSound;
+    private float _thrustSoundVolume = 1f;
 
 
     // Constructors.
-    internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity, Sound? thrustSound)
-        : base(bounds, material, entity)
-    {
-        if (thrustSound != null)
-        {
-            _thrustSound = new(this, thrustSound.CreateSoundInstance());
-        }
-    }
 
     internal ThrusterPart(ICollisionBound[] bounds, WorldMaterial material, PhysicalEntity entity)
-        : this(bounds, material, entity, null) { }
+        : base(bounds, material, entity) { }
 
     internal ThrusterPart(WorldMaterial material, PhysicalEntity? entity) : this(Array.Empty<ICollisionBound>(), material, entity) { }
 
@@ -243,6 +253,38 @@ internal class ThrusterPart : PhysicalEntityPart
         if (Random.Shared.NextSingle() <= (args.ForceApplied / args.Case.SelfPart.MaterialInstance.Material.Strength))
         {
             _fuelLeakLocations.Add(new(this, args.Case.AverageCollisionPoint));
+        }
+    }
+
+    internal override void Load(GHGameAssetManager assetManager)
+    {
+        base.Load(assetManager);
+
+        if (ThrustSound != null)
+        {
+            _thrustSound = new(this, assetManager.GetSound(ThrustSound.Value).CreateSoundInstance());
+            _thrustSound.IsLooped = true;
+        }
+    }
+
+    internal override void OnAddToWorld()
+    {
+        base.OnAddToWorld();
+
+        if (_thrustSound != null)
+        {
+            Entity!.World!.Player.PlayerSoundManager.AddSound(_thrustSound!);
+            _thrustSound.Volume = ThrustSoundVolume;
+        }
+    }
+
+    internal override void OnDeleteFromWorld()
+    {
+        base.OnDeleteFromWorld();
+
+        if (_thrustSound != null)
+        {
+            Entity!.World!.Player.PlayerSoundManager.RemoveSound(_thrustSound!);
         }
     }
 }

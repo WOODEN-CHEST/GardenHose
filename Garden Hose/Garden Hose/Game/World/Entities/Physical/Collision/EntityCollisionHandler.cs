@@ -577,14 +577,15 @@ internal class EntityCollisionHandler
         if (!collisionArgs.Case.SelfPart.IsMainPart)
         {
             collisionArgs.Case.SelfPart.ParentLink!.ParentPart.UnlinkPart(collisionArgs.Case.SelfPart);
+            collisionArgs.Case.SelfPart.OnDeleteFromWorld();
             return;
         }
 
         foreach (PartLink Link in collisionArgs.Case.SelfPart.SubPartLinks)
         {
             StrayEntity Stray = StrayEntity.MovePartToStrayEntity(Link.LinkedPart);
-
             Entity.World!.AddEntity(Stray);
+            collisionArgs.Case.SelfPart.OnDeleteFromWorld();
         }
 
         Entity.Delete();

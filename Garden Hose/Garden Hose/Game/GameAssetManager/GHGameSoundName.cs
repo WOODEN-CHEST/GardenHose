@@ -8,5 +8,5 @@ namespace GardenHose.Game.GameAssetManager;
 
 internal enum GHGameSoundName
 {
-
+    Ship_Probe_MainThrusterThrust
 }
